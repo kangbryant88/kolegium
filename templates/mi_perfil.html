@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Mi Perfil - Kolegium{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-avatar-container {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 4px solid #fff;
+        background: #f8fafc;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--primary);
+        cursor: pointer;
+        transition: transform 0.2s;
+        flex-shrink: 0;
+    }
+    .profile-avatar-container:hover {
+        transform: scale(1.05);
+    }
+    .profile-avatar-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .camera-btn {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 36px;
+        height: 36px;
+        background: var(--primary);
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        border: 2px solid #fff;
+        transition: all 0.2s;
+        z-index: 2;
+    }
+    .profile-avatar-container:hover .camera-btn {
+        transform: scale(1.1);
+    }
+    @media (max-width: 768px) {
+        .profile-avatar-container { width: 110px; height: 110px; }
+        .camera-btn { width: 32px; height: 32px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8">
+        
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-4 gap-md-5">
+                    <!-- Elemento Izquierdo: Avatar -->
+                    <form action="{{ url_for('mi_perfil') }}" method="POST" enctype="multipart/form-data" id="fotoForm">
+                        <div class="profile-avatar-container" onclick="document.getElementById('foto_perfil_input').click()" title="Cambiar foto de perfil">
+                            {% if usuario.foto_perfil_path %}
+                                <img src="{{ url_for('ver_documento_personal', filename=usuario.foto_perfil_path) }}" alt="Mi Foto" class="profile-avatar-img">
+                            {% else %}
+                                {{ usuario.nombre_completo[0] | upper }}
+                            {% endif %}
+                            <div class="camera-btn">
+                                <i data-lucide="camera" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <input type="file" name="foto_perfil" id="foto_perfil_input" class="d-none" accept="image/png, image/jpeg" onchange="document.getElementById('fotoForm').submit()">
+                        </div>
+                    </form>
+                    
+                    <!-- Elemento Derecho: Textos -->
+                    <div class="d-flex flex-column align-items-center align-items-md-start">
+                        <div class="mb-2">
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1 fw-medium" style="font-size: 0.85rem;">Activo</span>
+                        </div>
+                        <h2 class="h3 fw-bold text-dark mb-1 text-nowrap" style="overflow: hidden; text-overflow: ellipsis; max-width: 100%;">{{ usuario.nombre_completo }}</h2>
+                        <p class="text-muted mb-0 d-flex align-items-center gap-2 fs-6">
+                            <i data-lucide="briefcase" style="width: 18px; height: 18px;"></i> {{ usuario.area_trabajo }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 rounded-4 h-100">
+                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                        <h3 class="h6 fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i data-lucide="user" class="text-primary" style="width: 18px; height: 18px;"></i> Datos Personales
+                        </h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <form action="{{ url_for('mi_perfil') }}" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted text-uppercase mb-1">Nombre Completo</label>
+                                <input type="text" class="form-control bg-light border-0" name="nombre_completo" value="{{ usuario.nombre_completo }}" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold text-muted text-uppercase mb-1">Correo Electrónico</label>
+                                <input type="email" class="form-control bg-light border-0 text-muted" value="{{ usuario.email }}" readonly disabled>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 fw-bold rounded-3">Guardar Cambios</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 rounded-4 h-100">
+                    <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                        <h3 class="h6 fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i data-lucide="briefcase" class="text-primary" style="width: 18px; height: 18px;"></i> Estado Laboral
+                        </h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <form action="{{ url_for('mi_perfil') }}" method="POST">
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold text-muted text-uppercase mb-1">Cargo / Área de Trabajo</label>
+                                {% if usuario.cargo_solicitado %}
+                                    <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-warning-emphasis p-3 mb-3 d-flex align-items-start gap-2" style="font-size: 0.9rem;">
+                                        <i data-lucide="clock" class="mt-1 flex-shrink-0" style="width: 18px; height: 18px;"></i>
+                                        <div>
+                                            ⏳ Tienes una solicitud en proceso para cambiar tu cargo a: <strong>{{ usuario.cargo_solicitado }}</strong>.
+                                        </div>
+                                    </div>
+                                    <input type="text" class="form-control bg-light border-0 text-muted" value="{{ usuario.area_trabajo }}" readonly disabled>
+                                {% else %}
+                                    <select name="area_trabajo" class="form-select bg-light border-0">
+                                        {% set cargos = [
+                                            'Docente de Aula (1ro a 6to)',
+                                            'Especialista (Robótica / Deportes)',
+                                            'Defensoría Estudiantil',
+                                            'Equipo Directivo / Administrativo',
+                                            'Obrero',
+                                            'Personal de Vigilancia',
+                                            'Personal de Cocina'
+                                        ] %}
+                                        {% for cargo in cargos %}
+                                            <option value="{{ cargo }}" {% if usuario.area_trabajo == cargo %}selected{% endif %}>{{ cargo }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text text-muted small mt-2">
+                                        Selecciona un nuevo cargo para enviar una solicitud a Dirección.
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% if not usuario.cargo_solicitado %}
+                            <button type="submit" class="btn btn-outline-primary w-100 fw-bold rounded-3">Solicitar Cambio</button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

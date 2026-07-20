@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - EduPlanner OS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --surface: #f7f9fb;
+            --primary: #4648d4;
+            --primary-container: #6063ee;
+            --on-primary: #ffffff;
+            --on-surface: #191c1e;
+            --on-surface-variant: #464554;
+            --sidebar-bg: #0f172a;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--surface);
+            color: var(--on-surface);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .register-card {
+            width: 100%;
+            max-width: 480px;
+            background: #fff;
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+        }
+
+        .card-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+        }
+
+        .card-logo .logo-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-container));
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .card-logo .logo-icon i { color: #fff; width: 18px; height: 18px; }
+        .card-logo span { font-weight: 700; font-size: 0.95rem; letter-spacing: -0.02em; }
+
+        .register-card h2 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-align: center;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.3rem;
+        }
+
+        .register-card .subtitle {
+            text-align: center;
+            color: var(--on-surface-variant);
+            font-size: 0.85rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .field-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--on-surface-variant);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .edu-input, .edu-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            border: none;
+            background-color: #eceef0;
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--on-surface);
+            transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .edu-input:focus, .edu-select:focus {
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(70, 72, 212, 0.15);
+        }
+
+        .edu-select { cursor: pointer; }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.08);
+            color: #dc2626;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--primary), var(--primary-container));
+            color: var(--on-primary);
+            font-size: 0.9rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(70, 72, 212, 0.3);
+        }
+
+        .link-login {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link-login:hover { text-decoration: underline; }
+
+        .row-fields { display: flex; gap: 12px; }
+        .row-fields > div { flex: 1; }
+    </style>
+</head>
+<body>
+
+    <div class="register-card">
+        <div class="card-logo">
+            <div class="logo-icon"><i data-lucide="rocket"></i></div>
+            <span>EduPlanner OS</span>
+        </div>
+
+        <h2>Crea tu cuenta</h2>
+        <p class="subtitle">Completa tus datos para solicitar acceso al sistema.</p>
+
+        {% if error %} <div class="alert-error">{{ error }}</div> {% endif %}
+
+        <form action="/registro" method="POST">
+            <div class="mb-3">
+                <label class="field-label">Nombre Completo</label>
+                <input type="text" name="nombre_completo" class="edu-input" placeholder="Tu nombre y apellido" required>
+            </div>
+            <div class="mb-3">
+                <label class="field-label">Correo Electrónico</label>
+                <input type="email" name="email" class="edu-input" placeholder="correo@ejemplo.com" required>
+            </div>
+            <div class="mb-3">
+                <label class="field-label">¿A qué área perteneces?</label>
+                <select name="area_trabajo" class="edu-select" required>
+                    <option value="" disabled selected>Selecciona tu área...</option>
+                    <option value="Docente de Aula (1ro a 6to)">Docente de Aula (1ro a 6to)</option>
+                    <option value="Especialista (Robótica / Deportes)">Especialista (Robótica / Deportes)</option>
+                    <option value="Defensoría Estudiantil">Defensoría Estudiantil</option>
+                    <option value="Equipo Directivo / Administrativo">Equipo Directivo / Administrativo</option>
+                </select>
+            </div>
+            <div class="row-fields mb-3">
+                <div>
+                    <label class="field-label">Usuario</label>
+                    <input type="text" name="username" class="edu-input" placeholder="Nombre de usuario" required>
+                </div>
+                <div>
+                    <label class="field-label">Contraseña</label>
+                    <input type="password" name="password" class="edu-input" placeholder="••••••••" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-register">Solicitar Registro</button>
+        </form>
+
+        <div class="text-center mt-3" style="font-size: 0.85rem;">
+            ¿Ya tienes cuenta? <a href="/login" class="link-login">Inicia sesión</a>
+        </div>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>

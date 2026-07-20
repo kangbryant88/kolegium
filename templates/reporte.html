@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Centro de Exportación - Kolegium{% endblock %}
+{% block header_title %}Centro de Exportación{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header .title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
+
+    .controls-card {
+        background: #fff; border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+        padding: 24px; margin-bottom: 24px;
+    }
+
+    .edu-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--on-surface-variant); margin-bottom: 6px; display: block; }
+
+    .edu-input, .edu-textarea {
+        width: 100%; padding: 0.7rem 0.9rem; border-radius: 10px;
+        border: none; background: #eceef0; font-size: 0.85rem;
+        font-family: 'Inter', sans-serif; color: var(--on-surface);
+        transition: all 0.2s; outline: none;
+    }
+
+    .edu-input:focus, .edu-textarea:focus { background: #fff; box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
+    .edu-textarea { resize: vertical; }
+
+    .btn-back {
+        padding: 8px 18px; border-radius: 999px; border: 1px solid #eceef0;
+        background: #fff; color: var(--on-surface); font-weight: 600;
+        font-size: 0.8rem; text-decoration: none;
+        display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;
+    }
+
+    .btn-back:hover { background: var(--surface); color: var(--on-surface); }
+    .btn-back i { width: 14px; height: 14px; }
+
+    .report-card {
+        background: #fff; border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+    }
+
+    .report-inner { padding: 28px; }
+
+    .doc-header {
+        border-bottom: 2px solid #000;
+        padding-bottom: 12px;
+        margin-bottom: 20px;
+    }
+
+    .doc-header .title-doc { font-weight: 800; text-transform: uppercase; font-size: 1rem; color: #000; }
+    .doc-header .sub-doc { color: var(--on-surface-variant); font-size: 0.75rem; }
+
+    .edu-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+
+    .edu-table thead th {
+        font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.5px; color: #000; padding: 10px 14px;
+        background: var(--surface); border-bottom: 1px solid #e2e8f0;
+        text-align: center;
+    }
+
+    .edu-table tbody td {
+        padding: 10px 14px; vertical-align: middle; font-size: 0.82rem;
+        border-bottom: 1px solid #f2f4f6; color: #000;
+    }
+
+    .export-btns { margin-top: 24px; margin-bottom: 2rem; }
+
+    .btn-export {
+        width: 100%; padding: 14px; border: none; border-radius: 14px;
+        font-weight: 700; font-size: 0.9rem; cursor: pointer;
+        font-family: 'Inter', sans-serif; transition: all 0.25s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-export:hover { transform: translateY(-2px); }
+    .btn-export i { width: 18px; height: 18px; }
+    .btn-export.pdf { background: #0f172a; color: #fff; }
+    .btn-export.pdf:hover { box-shadow: 0 6px 16px rgba(15,23,42,0.2); color: #fff; }
+    .btn-export.excel { background: #059669; color: #fff; }
+    .btn-export.excel:hover { box-shadow: 0 6px 16px rgba(5,150,105,0.3); color: #fff; }
+    .btn-export.word { background: var(--primary); color: #fff; }
+    .btn-export.word:hover { box-shadow: 0 6px 16px rgba(70,72,212,0.3); color: #fff; }
+
+    @media print {
+        @page { size: portrait; margin: 1cm; }
+        .navbar, .offcanvas, .no-imprimir, #zona-controles, .export-btns, .sidebar { display: none !important; }
+        body { background-color: white !important; padding: 0 !important; font-size: 10pt; color: black; }
+        .main-content { margin-left: 0 !important; padding: 0 !important; }
+        .container-fluid { width: 100% !important; padding: 0 !important; margin: 0 !important; }
+        .report-card { box-shadow: none !important; border: none !important; width: 100% !important; border-radius: 0 !important; }
+        table { width: 100% !important; border-collapse: collapse !important; margin-top: 10px; }
+        th, td { padding: 5px !important; border: 1px solid #000 !important; color: black !important; }
+        th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; font-weight: bold; }
+        #span_area, #span_fecha_rep { color: black !important; font-weight: bold; }
+        #vista-impresion-notas { display: block !important; margin-top: 15px; border-top: 1px solid #000; padding-top: 10px; }
+    }
+
+    /* 1. Oscurecer la tarjeta de controles superior */
+    html[data-bs-theme="dark"] body .controls-card {
+        background-color: #111111 !important;
+        border: 1px solid rgba(255,255,255,0.05) !important;
+    }
+    html[data-bs-theme="dark"] body .controls-card .edu-label {
+        color: #a1a1aa !important;
+    }
+
+    /* 2. Excepción para la hoja de reporte (Siempre Blanca) */
+    html[data-bs-theme="dark"] body .report-card,
+    html[data-bs-theme="dark"] body .report-card * {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        border-color: #e2e8f0 !important;
+    }
+    
+    /* 3. Vencer la regla global de las tablas específicamente aquí */
+    html[data-bs-theme="dark"] body .report-card .edu-table thead th {
+        background-color: #f8fafc !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        border-bottom: 2px solid #000000 !important;
+    }
+    
+    html[data-bs-theme="dark"] body .report-card .edu-table tbody td,
+    html[data-bs-theme="dark"] body .report-card .edu-table tbody tr {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 1000px;">
+
+    <div id="zona-controles" class="no-imprimir">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="page-header">
+                <h3 class="title">Configuración del Reporte</h3>
+            </div>
+            <a href="/planificador" class="btn-back"><i data-lucide="arrow-left"></i> Volver</a>
+        </div>
+
+        <div class="controls-card">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="edu-label">Área o Especialidad (Manual)</label>
+                    <input type="text" id="input_area" class="edu-input" placeholder="Ej: Robótica, Aula..." oninput="sincronizar()">
+                </div>
+                <div class="col-md-4">
+                    <label class="edu-label">Fecha del Reporte (Manual)</label>
+                    <input type="text" id="input_fecha_rep" class="edu-input" placeholder="Ej: 10 de Abril del 2026" oninput="sincronizar()">
+                </div>
+                <div class="col-md-4">
+                    <label class="edu-label">Notas Opcionales</label>
+                    <textarea id="input_notas" class="edu-textarea" rows="1" placeholder="Observaciones..." oninput="sincronizar()"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-card mb-4">
+        <div class="report-inner">
+            <div class="doc-header">
+                <div class="row">
+                    <div class="col-12 text-center mb-3">
+                        <h4 class="title-doc m-0">Reporte Diario de Actividades</h4>
+                        <small class="sub-doc">Sistema Institucional Kolegium</small>
+                    </div>
+                    <div class="col-7">
+                        <p class="mb-1" style="color: black;"><strong>Docente:</strong> {{ session['nombre_completo'] }}</p>
+                        <p class="mb-1" style="color: black;"><strong>Área:</strong> <span id="span_area" style="color: black;">________</span></p>
+                    </div>
+                    <div class="col-5 text-end">
+                        <p class="mb-1" style="color: black;"><strong>Fecha:</strong> <span id="span_fecha_rep" style="color: black;">________</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="edu-table">
+                    <thead>
+                        <tr>
+                            <th width="12%">FECHA</th>
+                            <th width="12%">HORA</th>
+                            <th width="15%">GRADO</th>
+                            <th>ACTIVIDAD / TEMA REALIZADO</th>
+                            <th width="12%">ESTADO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in registros %}
+                        <tr>
+                            <td class="text-center">{{ r.fecha.strftime('%d/%m/%Y') }}</td>
+                            <td class="text-center" style="font-weight:700;">{{ r.fecha.strftime('%I:%M %p') }}</td>
+                            <td class="text-center">{{ r.grado }}</td>
+                            <td>{{ r.actividad }}</td>
+                            <td class="text-center" style="text-transform:uppercase; font-size:0.75rem;">{{ r.estado }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="vista-impresion-notas" style="display: none;">
+                <h6 style="font-weight:800; margin-bottom:4px; color:black;">OBSERVACIONES:</h6>
+                <p id="texto-notas" class="m-0" style="text-align: justify; color: black;"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 export-btns no-imprimir mb-4">
+        <div class="col-md-4">
+            <button onclick="window.print()" class="btn-export pdf">
+                <i data-lucide="printer"></i> Generar PDF
+            </button>
+        </div>
+        <div class="col-md-4">
+            <a href="/exportar_excel" class="btn-export excel">
+                <i data-lucide="file-spreadsheet"></i> Descargar Excel
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/exportar_word" class="btn-export word">
+                <i data-lucide="file-text"></i> Descargar Word
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function sincronizar() {
+        document.getElementById('span_area').innerText = document.getElementById('input_area').value || "________";
+        document.getElementById('span_fecha_rep').innerText = document.getElementById('input_fecha_rep').value || "________";
+        const n = document.getElementById('input_notas').value;
+        const v = document.getElementById('vista-impresion-notas');
+        if (n.trim() !== "") {
+            document.getElementById('texto-notas').innerText = n;
+            v.style.display = 'block';
+        } else {
+            v.style.display = 'none';
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+{% block title %}Mi Aula - EduPlanner OS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h3 fw-bold mb-0 text-dark d-flex align-items-center">
+            <i data-lucide="book-open" class="text-primary me-2" style="width:28px;height:28px;"></i>
+            Módulo Mi Aula
+        </h2>
+        <p class="text-muted mb-0">Gestión de asistencia e incidencias diarias</p>
+    </div>
+
+    {% if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo'] %}
+    <div>
+        <form action="{{ url_for('mi_aula') }}" method="GET" class="d-flex align-items-center">
+            <select name="grado_id" class="form-select border-primary shadow-sm me-2" style="min-width: 250px;" onchange="this.form.submit()">
+                <option value="">-- Seleccione un Salón --</option>
+                {% for g in grados %}
+                <option value="{{ g.id }}" {% if grado and grado.id == g.id %}selected{% endif %}>
+                    {{ g.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+{% if not grado %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 text-center py-5">
+            <div class="card-body">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex mx-auto align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i data-lucide="school" style="width: 40px; height: 40px;"></i>
+                </div>
+                <h4 class="fw-bold text-dark mb-2">Seleccione un Salón</h4>
+                <p class="text-muted mb-0">Elija un grado en el menú desplegable superior para ver los estudiantes y tomar asistencia.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card border-0 shadow-sm mb-4" style="border-radius: 20px; background: linear-gradient(135deg, rgba(70,72,212,0.1), rgba(70,72,212,0.02));">
+            <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h4 class="text-primary mb-2 d-flex align-items-center" style="font-weight: 900; letter-spacing: -0.02em;">
+                        {{ grado.nombre }}
+                    </h4>
+                    <p class="text-muted fw-bold mb-3"><i data-lucide="user-check" style="width:16px;height:16px;" class="me-1"></i> Docente Titular: <span class="text-dark">{{ docente_titular }}</span></p>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge bg-white text-dark shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem;"><i data-lucide="users" style="width:14px;height:14px;" class="me-1 text-primary"></i> Total: {{ total_matricula }}</span>
+                        <span class="badge bg-white text-dark shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem;"><i data-lucide="user" style="width:14px;height:14px;" class="me-1 text-danger"></i> Niñas: {{ total_hembras }}</span>
+                        <span class="badge bg-white text-dark shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem;"><i data-lucide="user" style="width:14px;height:14px;" class="me-1 text-info"></i> Varones: {{ total_varones }}</span>
+                    </div>
+                </div>
+                <div>
+                    <a href="{{ url_for('descargar_inscripcion_inicial', grado_id=grado.id) }}" class="btn btn-success btn-lg shadow rounded-pill px-4 fw-bold d-flex align-items-center" style="letter-spacing: 0.5px;">
+                        <i data-lucide="download" class="me-2" style="width:20px;height:20px;"></i> Inscripción Inicial
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4">
+            
+            <div class="row g-3 px-4 pt-4 pb-2">
+                <div class="col-12 col-md-6 col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
+                            <h6 class="fw-bold text-primary mb-3"><i data-lucide="calendar-check" class="me-2" style="width:18px;"></i>Asistencia Mensual</h6>
+                            <div style="position: relative; width: 140px; height: 140px;">
+                                <canvas id="chartAsistencia"></canvas>
+                                <div class="position-absolute top-50 start-50 translate-middle text-center" style="margin-top: 5px;">
+                                    <span class="fs-4 fw-bold text-primary">{{ asistencia_promedio_salon }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6 col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card-body p-4">
+                            <h6 class="fw-bold text-dark mb-3"><i data-lucide="bar-chart-2" class="me-2 text-warning" style="width:18px;"></i>Análisis de Incidencias</h6>
+                            <div style="height: 140px;">
+                                <canvas id="chartIncidencias"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('guardar_asistencia_aula') }}" method="POST">
+                <input type="hidden" name="grado_id" value="{{ grado.id }}">
+                
+                <div class="card-body p-0 mt-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-borderless align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="px-4 py-3 text-muted fw-semibold" style="font-size: 0.85rem; letter-spacing: 0.5px;">ESTUDIANTE (C.I Escolar)</th>
+                                    <th class="py-3 text-center text-muted fw-semibold" style="font-size: 0.85rem;">STATUS</th>
+                                    <th class="py-3 text-center text-muted fw-semibold" style="font-size: 0.85rem;">ASISTENCIA HOY</th>
+                                    <th class="px-4 py-3 text-end text-muted fw-semibold" style="font-size: 0.85rem;">ACCIONES RÁPIDAS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for est in estudiantes %}
+                                <tr class="border-bottom">
+                                    <td class="px-4 py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold" style="width:40px;height:40px;">
+                                                {{ est.nombre_completo[0]|upper }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-dark" style="font-size: 0.95rem;">{{ est.nombre_completo }}</div>
+                                                <div class="text-muted small">{{ est.cedula_escolar }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="text-center py-3">
+                                        {% set porc = asistencia_porcentaje[est.id] %}
+                                        <div class="d-inline-flex align-items-center justify-content-center" data-bs-toggle="tooltip" title="{{ porc }}% Resumen de Asistencia">
+                                            {% if porc >= 90 %}
+                                                <span class="badge rounded-circle p-2 bg-success text-white shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="check" style="width:16px;"></i></span>
+                                            {% elif porc >= 75 %}
+                                                <span class="badge rounded-circle p-2 bg-warning text-dark shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="minus" style="width:16px;"></i></span>
+                                            {% else %}
+                                                <span class="badge rounded-circle p-2 bg-danger text-white shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="alert-circle" style="width:16px;"></i></span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="text-center py-3">
+                                        <div class="form-check form-switch d-flex justify-content-center mt-1 scale-125" style="transform: scale(1.2);">
+                                            <input class="form-check-input" type="checkbox" name="asistio_{{ est.id }}" id="asistio_{{ est.id }}" checked>
+                                            <label class="form-check-label d-none" for="asistio_{{ est.id }}"></label>
+                                        </div>
+                                    </td>
+                                    
+                                    <td class="text-end px-4 py-3">
+                                        <div class="btn-group gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalFicha_{{ est.id }}">
+                                                <i data-lucide="activity" class="me-1" style="width:14px;height:14px;"></i> Ficha Médica
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 d-flex align-items-center text-dark" data-bs-toggle="modal" data-bs-target="#modalNota_{{ est.id }}">
+                                                <i data-lucide="file-plus" class="me-1" style="width:14px;height:14px;"></i> Añadir Nota
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">No hay estudiantes registrados en este salón.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-white border-top-0 p-4 text-center">
+                    <button type="submit" class="btn btn-primary px-5 py-2 fw-bold text-white shadow-sm rounded-pill" style="font-size: 1.05rem; letter-spacing: 0.5px;">
+                        <i data-lucide="save" class="me-2" style="width:18px;"></i> Guardar Asistencia del Día
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modales por Estudiante -->
+{% for est in estudiantes %}
+<!-- Modal Ficha Médica -->
+<div class="modal fade" id="modalFicha_{{ est.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-info text-white p-2 rounded-3 me-3">
+                        <i data-lucide="activity" style="width:24px;height:24px;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark">Alerta Médica</h5>
+                        <p class="text-muted small mb-0">{{ est.nombre_completo }}</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-4">
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center border-0 mb-2">
+                        <span class="text-muted fw-semibold">Alergias:</span>
+                        <span class="fw-bold text-dark">{{ est.alergias or 'Ninguna' }}</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center border-0 mb-2">
+                        <span class="text-muted fw-semibold">Tipaje Sanguíneo:</span>
+                        <span class="badge bg-danger rounded-pill px-3 py-1">{{ est.tipaje or 'No Registrado' }}</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between align-items-center border-0 mb-2">
+                        <span class="text-muted fw-semibold">Neurodivergencia:</span>
+                        <span class="fw-bold text-dark">{{ est.neuro_detalle if est.neurodivergencia else 'No Aplica' }}</span>
+                    </li>
+                </ul>
+                <div class="p-3 bg-primary bg-opacity-10 rounded-3 border border-primary border-opacity-25 mt-3">
+                    <div class="d-flex align-items-center mb-1">
+                        <i data-lucide="phone-call" class="text-primary me-2" style="width:16px;"></i>
+                        <span class="fw-bold text-primary">Contacto de Emergencia</span>
+                    </div>
+                    <div class="text-dark fw-semibold ms-4">
+                        {% if est.representante_info %}
+                            {{ est.representante_info.nombre_completo }} ({{ est.representante_info.telefono or 'S/T' }})
+                        {% else %}
+                            <span class="text-muted">Sin representante registrado</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Añadir Nota (Incidencia) -->
+<div class="modal fade" id="modalNota_{{ est.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <form action="{{ url_for('agregar_incidencia') }}" method="POST">
+                <input type="hidden" name="estudiante_id" value="{{ est.id }}">
+                <input type="hidden" name="grado_id" value="{{ grado.id }}">
+                
+                <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning text-dark p-2 rounded-3 me-3">
+                            <i data-lucide="file-plus" style="width:24px;height:24px;"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark">Nueva Nota Anecdótica</h5>
+                            <p class="text-muted small mb-0">{{ est.nombre_completo }}</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">Categoría</label>
+                        <select name="categoria" class="form-select border-warning" required>
+                            <option value="">-- Seleccione Categoría --</option>
+                            <option value="Conducta">Conducta y Disciplina</option>
+                            <option value="Académico">Aptitud Académica</option>
+                            <option value="Salud">Reporte de Salud</option>
+                            <option value="Familiar">Nota Familiar</option>
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold text-dark">Descripción de la Observación</label>
+                        <textarea name="descripcion" class="form-control" rows="4" placeholder="Describa el evento, comportamiento o reporte de manera objetiva..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer px-4 py-3 bg-light rounded-bottom-4 border-top-0">
+                    <button type="button" class="btn btn-outline-secondary fw-semibold rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning fw-semibold rounded-pill px-4 text-dark shadow-sm border-0">
+                        Guardar Nota
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const asist = {{ asistencia_promedio_salon | default(0) }};
+        const ctxA = document.getElementById('chartAsistencia');
+        if(ctxA) {
+            new Chart(ctxA.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Asistencias', 'Inasistencias'],
+                    datasets: [{
+                        data: [asist, 100 - asist],
+                        backgroundColor: ['#4648d4', '#e2e8f0'],
+                        borderWidth: 0,
+                        cutout: '75%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: true } }
+                }
+            });
+        }
+
+        const dataInc = {{ datos_incidencias | tojson | safe }};
+        const ctxI = document.getElementById('chartIncidencias');
+        if(ctxI) {
+            new Chart(ctxI.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(dataInc),
+                    datasets: [{
+                        label: 'Reportes M. Actual',
+                        data: Object.values(dataInc),
+                        backgroundColor: ['#f59e0b', '#3b82f6', '#ef4444', '#8b5cf6'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

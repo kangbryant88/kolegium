@@ -1,0 +1,430 @@
+{% extends 'base.html' %}
+{% block title %}Expediente: {{ estudiante.nombre_completo }} - EduPlanner OS{% endblock %}
+
+{% block content %}
+<!-- Cabecera del Expediente -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom">
+    <div class="mb-3 mb-md-0 d-flex align-items-center">
+        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold" style="width:56px;height:56px;font-size:1.5rem;">
+            {{ estudiante.nombre_completo[0]|upper }}
+        </div>
+        <div>
+            <div class="d-flex align-items-center mb-1">
+                <h2 class="h3 fw-bold mb-0 text-dark me-3">{{ estudiante.nombre_completo }}</h2>
+                {% if estudiante.estatus == 'Activo' %}
+                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-1 fw-semibold border border-success border-opacity-25" style="letter-spacing:0.5px;">ACTIVO</span>
+                {% else %}
+                    <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 fw-semibold border border-danger border-opacity-25" style="letter-spacing:0.5px;">EGRESO</span>
+                {% endif %}
+            </div>
+            <p class="text-muted mb-0 d-flex align-items-center">
+                <i data-lucide="hash" class="me-1" style="width:16px;"></i> 
+                Cédula Escolar Generada: <strong> <span class="ms-1">{{ estudiante.cedula_escolar }}</span></strong>
+            </p>
+        </div>
+    </div>
+    
+    <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-outline-primary px-3 fw-semibold rounded-pill d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalEditar">
+            <i data-lucide="edit-3" class="me-2" style="width:16px;"></i> Editar Datos
+        </button>
+        
+        {% if estudiante.estatus == 'Activo' %}
+            <button type="button" class="btn btn-outline-warning px-3 fw-semibold rounded-pill d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalEgreso">
+                <i data-lucide="log-out" class="me-2" style="width:16px;"></i> Registrar Egreso
+            </button>
+        {% else %}
+            <form action="{{ url_for('egresar_estudiante', id=estudiante.id) }}" method="POST" class="m-0">
+                <button type="submit" class="btn btn-outline-success px-3 fw-semibold rounded-pill d-flex align-items-center">
+                    <i data-lucide="log-in" class="me-2" style="width:16px;"></i> Reingresar Estudiante
+                </button>
+            </form>
+        {% endif %}
+
+        <button type="button" class="btn btn-outline-danger px-3 fw-semibold rounded-pill d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalEliminar">
+            <i data-lucide="trash-2" class="me-2" style="width:16px;"></i> Eliminar
+        </button>
+    </div>
+</div>
+
+<!-- Cuerpo del Expediente en Tarjetas -->
+<div class="row g-4">
+    
+    <!-- Tarjeta 1: Identidad y Legal -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                <h6 class="fw-bold text-primary mb-0 d-flex align-items-center text-uppercase" style="letter-spacing:0.5px;">
+                    <i data-lucide="id-card" class="me-2 text-primary opacity-75"></i> Identidad y Legal
+                </h6>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Fecha de Nacimiento</span>
+                        <span class="fw-semibold text-dark">{{ estudiante.fecha_nacimiento.strftime('%d/%m/%Y') if estudiante.fecha_nacimiento else 'N/A' }}</span>
+                    </li>
+                    <li class="mb-3">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Lugar de Nacimiento</span>
+                        <span class="fw-semibold text-dark">{{ estudiante.lugar_nacimiento or 'N/A' }}</span>
+                    </li>
+                    <li class="mb-3">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Género</span>
+                        <span class="fw-semibold text-dark">{{ estudiante.genero or 'N/A' }}</span>
+                    </li>
+                    <li class="mb-3">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Número de Acta</span>
+                        <span class="fw-semibold text-dark">{{ estudiante.num_acta or 'N/A' }}</span>
+                    </li>
+                    <li class="mb-0">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Número de Oficio</span>
+                        <span class="fw-semibold text-dark">{{ estudiante.num_oficio or 'N/A' }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjeta 2: Salud y Física -->
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                <h6 class="fw-bold text-primary mb-0 d-flex align-items-center text-uppercase" style="letter-spacing:0.5px;">
+                    <i data-lucide="activity" class="me-2 text-primary opacity-75"></i> Salud y Física
+                </h6>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Talla</span>
+                        <span class="fw-semibold text-dark">{{ estudiante.talla }} cm</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Peso</span>
+                        <span class="fw-semibold text-dark">{{ estudiante.peso }} kg</span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Calzado</span>
+                        <span class="fw-semibold text-dark">{{ estudiante.calzado or 'N/A' }}</span>
+                    </div>
+                    <div class="col-6">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Grupo Sanguíneo</span>
+                        <span class="badge bg-danger bg-opacity-10 text-danger fw-bold rounded-pill px-2">{{ estudiante.tipaje or '-' }}</span>
+                    </div>
+                </div>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Vacunación</span>
+                        <span class="fw-semibold text-dark">{{ estudiante.vacunacion_completa or 'N/A' }}</span>
+                    </li>
+                    <li class="mb-3">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Alergias</span>
+                        <span class="fw-semibold text-dark">{{ estudiante.alergias or 'Ninguna reportada' }}</span>
+                    </li>
+                    <li class="mb-0 p-3 rounded-3 {% if estudiante.neurodivergencia %}bg-warning bg-opacity-10 border border-warning border-opacity-25{% else %}bg-light{% endif %}">
+                        <span class="d-flex align-items-center text-muted small fw-bold text-uppercase mb-1" style="letter-spacing:0.5px;">
+                            <i data-lucide="brain" class="me-1" style="width:14px;"></i> Condición / Neurodivergencia
+                        </span>
+                        {% if estudiante.neurodivergencia %}
+                            <span class="fw-semibold text-dark">{{ estudiante.neuro_detalle or 'Registrado (Sin detalle especificado)' }}</span>
+                        {% else %}
+                            <span class="text-muted small">No aplica / Sin N.E.E reportada</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjeta 3: Referencia Familiar y Procedencia -->
+    <div class="col-md-12 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                <h6 class="fw-bold text-primary mb-0 d-flex align-items-center text-uppercase" style="letter-spacing:0.5px;">
+                    <i data-lucide="users" class="me-2 text-primary opacity-75"></i> Familiar y Académico
+                </h6>
+            </div>
+            <div class="card-body px-4 pb-4">
+                
+                <div class="p-3 bg-light rounded-3 mb-4">
+                    <span class="d-block text-muted small fw-bold text-uppercase mb-2" style="letter-spacing:0.5px;">Representante Legal</span>
+                    {% if estudiante.representante_info %}
+                        <div class="fw-bold text-dark mb-1">{{ estudiante.representante_info.nombre_completo }}</div>
+                        <div class="text-muted small mb-2">C.I: {{ estudiante.representante_info.cedula }} <span class="mx-1">•</span> Vinculo: {{ estudiante.representante_info.parentesco }}</div>
+                        <div class="d-flex align-items-center text-primary">
+                            <i data-lucide="phone-call" class="me-2" style="width:14px;"></i> {{ estudiante.representante_info.telefono or 'No registrado' }}
+                        </div>
+                    {% else %}
+                        <span class="text-danger fw-semibold">Error: Sin Representante Asignado</span>
+                    {% endif %}
+                </div>
+
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Grado/Sección Asignado</span>
+                        <span class="fw-bold text-dark fs-6">
+                            {% if estudiante.grado_id %}
+                                {% for g in grados %}
+                                    {% if g.id == estudiante.grado_id %}{{ g.nombre }}{% endif %}
+                                {% endfor %}
+                            {% else %}
+                                Sin Asignar
+                            {% endif %}
+                        </span>
+                    </li>
+                    <li class="mb-3">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Naturaleza del Ingreso</span>
+                        {% if estudiante.nuevo_ingreso %}
+                            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2">Nuevo Ingreso</span>
+                        {% else %}
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2">Regular / Continuidad</span>
+                        {% endif %}
+                    </li>
+                    <li class="mb-3">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Institución de Procedencia</span>
+                        <span class="fw-semibold text-dark">{{ estudiante.institucion_procedencia or 'N/A' }}</span>
+                    </li>
+                    <li class="mb-0 border-top pt-3">
+                        <span class="d-block text-muted small fw-medium text-uppercase" style="letter-spacing:0.5px;">Fecha de Registro en Sistema</span>
+                        <span class="text-muted small"><i data-lucide="clock" class="me-1 d-inline" style="width:12px;"></i> {{ estudiante.fecha_registro.strftime('%d/%m/%Y a las %I:%M %p') }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edición de Estudiante -->
+<div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <form action="{{ url_for('editar_estudiante', id=estudiante.id) }}" method="POST">
+                
+                <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary text-white p-2 rounded-3 me-3">
+                            <i data-lucide="edit" style="width:24px;height:24px;"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark" id="modalEditarLabel">Editar Expediente de {{ estudiante.nombre_completo }}</h5>
+                            <p class="mb-0 text-muted small">Nota: Los datos de Representante y Cédula Escolar no son editables directamente aquí por trazabilidad.</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body px-4 py-4" style="max-height: 70vh; overflow-y: auto;">
+                    
+                    <h6 class="fw-bold text-primary mb-3 text-uppercase" style="font-size:0.8rem;letter-spacing:1px;"><i data-lucide="id-card" class="me-1" style="width:16px;"></i> Identidad y Legal</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold text-dark">Nombre Completo del Estudiante</label>
+                            <input type="text" class="form-control" name="nombre_estudiante" value="{{ estudiante.nombre_completo }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-dark">Fecha Nacimiento</label>
+                            <input type="date" class="form-control" name="fecha_nacimiento" value="{{ estudiante.fecha_nacimiento.strftime('%Y-%m-%d') if estudiante.fecha_nacimiento else '' }}" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-dark">Género</label>
+                            <select class="form-select" name="genero">
+                                <option value="Masculino" {% if estudiante.genero == 'Masculino' %}selected{% endif %}>Masculino</option>
+                                <option value="Femenino" {% if estudiante.genero == 'Femenino' %}selected{% endif %}>Femenino</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-dark">Lugar Nacimiento</label>
+                                    <input type="text" class="form-control" name="lugar_nacimiento" value="{{ estudiante.lugar_nacimiento or '' }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold text-dark">Nro de Acta</label>
+                                    <input type="text" class="form-control" name="num_acta" value="{{ estudiante.num_acta or '' }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold text-dark">Nro de Oficio</label>
+                                    <input type="text" class="form-control" name="num_oficio" value="{{ estudiante.num_oficio or '' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-primary mb-3 text-uppercase" style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i data-lucide="activity" class="me-1" style="width:16px;"></i> Referencia Médica y Física</h6>
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-dark">Medida Talla</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" class="form-control" name="talla" value="{{ estudiante.talla or '' }}">
+                                <span class="input-group-text bg-light text-muted">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-dark">Medida Peso</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" class="form-control" name="peso" value="{{ estudiante.peso or '' }}">
+                                <span class="input-group-text bg-light text-muted">kg</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-dark">Talla Calzado</label>
+                            <input type="text" class="form-control" name="calzado" value="{{ estudiante.calzado or '' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-dark">Grupo Sanguíneo</label>
+                            <select class="form-select" name="tipaje">
+                                <option value="O+" {% if estudiante.tipaje == 'O+' %}selected{% endif %}>O+</option>
+                                <option value="O-" {% if estudiante.tipaje == 'O-' %}selected{% endif %}>O-</option>
+                                <option value="A+" {% if estudiante.tipaje == 'A+' %}selected{% endif %}>A+</option>
+                                <option value="A-" {% if estudiante.tipaje == 'A-' %}selected{% endif %}>A-</option>
+                                <option value="B+" {% if estudiante.tipaje == 'B+' %}selected{% endif %}>B+</option>
+                                <option value="B-" {% if estudiante.tipaje == 'B-' %}selected{% endif %}>B-</option>
+                                <option value="AB+" {% if estudiante.tipaje == 'AB+' %}selected{% endif %}>AB+</option>
+                                <option value="AB-" {% if estudiante.tipaje == 'AB-' %}selected{% endif %}>AB-</option>
+                                <option value="No Sabe" {% if estudiante.tipaje == 'No Sabe' %}selected{% endif %}>No Sabe</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-dark">Alergias</label>
+                            <input type="text" class="form-control" name="alergias" value="{{ estudiante.alergias or '' }}">
+                        </div>
+
+                        <div class="col-md-4 mt-3">
+                            <label class="form-label fw-semibold text-dark">Esquema de Vacunación</label>
+                            <select class="form-select" name="vacunacion_completa">
+                                <option value="Si" {% if estudiante.vacunacion_completa == 'Si' %}selected{% endif %}>Sí, Esquema Completo</option>
+                                <option value="Parcial" {% if estudiante.vacunacion_completa == 'Parcial' %}selected{% endif %}>No, Incompleto</option>
+                                <option value="No" {% if estudiante.vacunacion_completa == 'No' %}selected{% endif %}>Sin Vacunación</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-8 mt-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="form-check form-switch me-3">
+                                    <input class="form-check-input mt-1" type="checkbox" role="switch" id="switchNeuroEdit" name="neurodivergencia" {% if estudiante.neurodivergencia %}checked{% endif %}>
+                                    <label class="form-check-label fw-semibold" for="switchNeuroEdit">Estudiante Neurodivergente / N.E.E</label>
+                                </div>
+                            </div>
+                            <input type="text" class="form-control {% if not estudiante.neurodivergencia %}bg-light{% endif %}" name="neuro_detalle" id="inputNeuroDetalleEdit" value="{{ estudiante.neuro_detalle or '' }}" placeholder="Indique diagnóstico (TEA, TDAH, Dislexia, Condición Motora...)" {% if not estudiante.neurodivergencia %}disabled{% endif %}>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-primary mb-3 text-uppercase" style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i data-lucide="graduation-cap" class="me-1" style="width:16px;"></i> Referencia Académica</h6>
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Grado/Sección a Asignar</label>
+                            <select class="form-select" name="grado_id">
+                                <option value="">-- Seleccione Grado --</option>
+                                {% for g in grados %}
+                                <option value="{{ g.id }}" {% if estudiante.grado_id == g.id %}selected{% endif %}>{{ g.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-dark">Institución Procedencia</label>
+                            <input type="text" class="form-control" name="institucion_procedencia" value="{{ estudiante.institucion_procedencia or '' }}">
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer px-4 py-3 bg-light rounded-bottom-4 border-top-0">
+                    <button type="button" class="btn btn-outline-secondary fw-semibold rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary fw-semibold rounded-pill px-4 shadow-sm" style="background: linear-gradient(135deg, var(--primary), var(--primary-container)); border:none;">
+                        Actualizar Expediente
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Egreso -->
+<div class="modal fade" id="modalEgreso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <form action="{{ url_for('egresar_estudiante', id=estudiante.id) }}" method="POST">
+                <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning text-dark p-2 rounded-3 me-3">
+                            <i data-lucide="log-out" style="width:24px;height:24px;"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark">Confirmar Egreso</h5>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-4">
+                    <p class="mb-0 text-muted">¿Está seguro que desea registrar el egreso de este estudiante? Esta acción actualizará las estadísticas generales.</p>
+                </div>
+                <div class="modal-footer px-4 py-3 bg-light rounded-bottom-4 border-top-0">
+                    <button type="button" class="btn btn-outline-secondary fw-semibold rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning fw-semibold rounded-pill px-4 text-dark shadow-sm border-0" style="background-color: #f59e0b;">
+                        Confirmar Egreso
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Eliminar Registro Permanente -->
+<div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <form action="{{ url_for('eliminar_estudiante', id=estudiante.id) }}" method="POST">
+                <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-danger text-white p-2 rounded-3 me-3">
+                            <i data-lucide="alert-triangle" style="width:24px;height:24px;"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold text-dark">⚠️ Eliminar Registro Permanente</h5>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-4">
+                    <p class="mb-0 text-muted">ATENCIÓN: ¿Seguro que desea eliminar TODO el registro de este estudiante? Esta acción borrará permanentemente sus datos y no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer px-4 py-3 bg-light rounded-bottom-4 border-top-0">
+                    <button type="button" class="btn btn-outline-secondary fw-semibold rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger fw-semibold rounded-pill px-4 shadow-sm border-0">
+                        Eliminar Definitivamente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+        const switchNeuroEdit = document.getElementById('switchNeuroEdit');
+        const inputNeuroEdit = document.getElementById('inputNeuroDetalleEdit');
+        
+        if(switchNeuroEdit && inputNeuroEdit) {
+            switchNeuroEdit.addEventListener('change', function() {
+                if(this.checked) {
+                    inputNeuroEdit.disabled = false;
+                    inputNeuroEdit.classList.remove('bg-light');
+                    inputNeuroEdit.focus();
+                } else {
+                    inputNeuroEdit.disabled = true;
+                    inputNeuroEdit.classList.add('bg-light');
+                    inputNeuroEdit.value = '';
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

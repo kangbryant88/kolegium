@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}Asistencia del Personal - Kolegium{% endblock %}
+{% block header_title %}Asistencia del Personal{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Headers */
+    .page-header { margin-bottom: 24px; }
+    .page-header .title { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 4px; }
+    .page-header .subtitle { color: var(--on-surface-variant); font-size: 0.9rem; }
+
+    /* Cards */
+    .card-edu {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(15,23,42,0.03);
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+    
+    .table-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(15,23,42,0.03);
+        overflow: hidden;
+    }
+
+    /* Form Grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--on-surface-variant);
+        margin-bottom: 6px;
+    }
+
+    .edu-input {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--surface-container-high);
+        background: var(--surface);
+        font-size: 0.9rem;
+        font-family: 'Inter', sans-serif;
+        color: var(--on-surface);
+        transition: all 0.2s;
+        outline: none;
+    }
+
+    .edu-input:focus {
+        background: #fff;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(70,72,212,0.12);
+    }
+
+    /* Button */
+    .btn-primary-edu {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff;
+        font-size: 0.9rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        width: auto;
+    }
+
+    .btn-primary-edu:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(70,72,212,0.25);
+    }
+
+    /* Table */
+    .edu-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .edu-table thead th {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--on-surface-variant);
+        padding: 16px 20px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--surface-container-high);
+        text-align: left;
+    }
+    
+    .edu-table tbody td {
+        padding: 16px 20px;
+        vertical-align: middle;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #f2f4f6;
+        color: var(--on-surface);
+    }
+    
+    .edu-table tbody tr:last-child td { border-bottom: none; }
+    .edu-table tbody tr:hover { background: rgba(70,72,212,0.02); }
+
+    /* Badges */
+    .badge-pct {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+    .badge-pct.green { background: rgba(34,197,94,0.15); color: #166534; }
+    .badge-pct.yellow { background: rgba(245,158,11,0.15); color: #92400e; }
+    .badge-pct.red { background: rgba(239,68,68,0.15); color: #991b1b; }
+    
+    .badge-category {
+        font-weight: 600;
+        color: var(--primary);
+        background: rgba(70,72,212,0.08);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+    }
+
+    /* Actions Buttons */
+    .btn-action-sm {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        background: var(--surface-container);
+        color: var(--on-surface-variant);
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    .btn-action-sm:hover { background: var(--primary-container); color: white; transform: translateY(-1px); }
+    .btn-action-sm.danger:hover { background: #ef4444; color: white; }
+    .btn-action-sm i { width: 14px; height: 14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mx-auto" style="max-width: 1200px;">
+
+    <div class="page-header">
+        <h2 class="title">Control de Asistencia de Personal</h2>
+        <p class="subtitle">Registra diariamente el índice de asistencia de los distintos equipos de trabajo.</p>
+    </div>
+
+    <!-- Formulario -->
+    <div class="card-edu">
+        <form action="{{ url_for('asistencia_personal') }}" method="POST">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="fecha">Fecha</label>
+                    <!-- Preseleccionamos la fecha de hoy usando la variable que pasamos desde el controlador -->
+                    <input type="date" name="fecha" id="fecha" class="edu-input" value="{{ hoy }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="categoria">Categoría</label>
+                    <select name="categoria" id="categoria" class="edu-input" required>
+                        <option value="" disabled selected>-- Selecciona una categoría --</option>
+                        <option value="Docentes">Docentes</option>
+                        <option value="Administrativos">Administrativos</option>
+                        <option value="Obreros">Obreros</option>
+                        <option value="Vigilantes">Vigilantes</option>
+                        <option value="Cocina">Cocina</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="matricula_base">Matrícula Base (Total)</label>
+                    <input type="number" name="matricula_base" id="matricula_base" class="edu-input" min="1" placeholder="Ej: 25" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="asistentes">Asistentes Hoy</label>
+                    <input type="number" name="asistentes" id="asistentes" class="edu-input" min="0" placeholder="Ej: 23" required>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-end mt-2">
+                <button type="submit" class="btn-primary-edu">
+                    <i data-lucide="save"></i> Guardar Registro
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Historial de Registros -->
+    <div class="page-header mt-4">
+        <h3 class="title" style="font-size: 1.25rem;">Historial de Registros</h3>
+    </div>
+
+    <div class="table-card">
+        <div style="height: 500px; overflow-y: auto;">
+        <div class="table-responsive">
+            <table class="edu-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Categoría</th>
+                        <th class="text-center">Matrícula Total</th>
+                        <th class="text-center">Asistencias</th>
+                        <th class="text-center">% de Asistencia</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in registros %}
+                    <tr>
+                        <td style="font-weight: 600; color: var(--on-surface-variant);">
+                            <i data-lucide="calendar" style="width: 14px; height: 14px; margin-right: 4px; vertical-align: middle;"></i>
+                            {{ r.fecha.strftime('%d/%m/%Y') }}
+                        </td>
+                        <td>
+                            <span class="badge-category">{{ r.categoria }}</span>
+                        </td>
+                        <td class="text-center" style="font-weight: 600;">{{ r.matricula_base }}</td>
+                        <td class="text-center" style="font-weight: 600;">{{ r.asistentes }}</td>
+                        <td class="text-center">
+                            {% if r.porcentaje == 100 %}
+                                <span class="badge-pct green"><i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> {{ "{:.1f}".format(r.porcentaje) }}%</span>
+                            {% elif r.porcentaje >= 75 %}
+                                <span class="badge-pct yellow"><i data-lucide="alert-circle" style="width: 14px; height: 14px;"></i> {{ "{:.1f}".format(r.porcentaje) }}%</span>
+                            {% else %}
+                                <span class="badge-pct red"><i data-lucide="x-circle" style="width: 14px; height: 14px;"></i> {{ "{:.1f}".format(r.porcentaje) }}%</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-1">
+                                <a href="{{ url_for('editar_asistencia_personal', id=r.id) }}" class="btn-action-sm" title="Editar">
+                                    <i data-lucide="edit-2"></i>
+                                </a>
+                                <a href="{{ url_for('eliminar_asistencia_personal', id=r.id) }}" class="btn-action-sm danger link-eliminar" title="Eliminar">
+                                    <i data-lucide="trash-2"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5" style="color: var(--outline);">
+                            <div style="margin-bottom: 12px; opacity: 0.5;">
+                                <i data-lucide="clipboard-list" style="width: 48px; height: 48px;"></i>
+                            </div>
+                            <p style="margin: 0; font-weight: 500;">No hay registros de asistencia de personal aún.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const basesConocidas = {{ bases | tojson }};
+        const categoriaSelect = document.getElementById('categoria');
+        const matriculaBaseInput = document.getElementById('matricula_base');
+
+        if(categoriaSelect && matriculaBaseInput) {
+            categoriaSelect.addEventListener('change', function() {
+                const cat = this.value;
+                if (basesConocidas[cat] !== undefined) {
+                    matriculaBaseInput.value = basesConocidas[cat];
+                }
+            });
+        }
+        
+        document.querySelectorAll('.link-eliminar').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetUrl = this.getAttribute('href');
+                Swal.fire({
+                    title: '¿Estás seguro de eliminar este registro?',
+                    text: 'No podrás revertir esto.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#9a9a9a',
+                    confirmButtonText: 'Confirmar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if(result.isConfirmed) {
+                        window.location.href = targetUrl;
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

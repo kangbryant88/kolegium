@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kolegium | Moderniza tu colegio</title>
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Colores Base Exactos */
+            --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --solid-blue: #3b82f6;
+            
+            /* Fondos Modo Oscuro Corregidos (Deep Smooth Black) */
+            --bg-color: #050505;
+            --text-color: #ffffff;
+            --card-bg: #121212;
+            --border-color: rgba(255, 255, 255, 0.06);
+        }
+        
+        [data-bs-theme="light"] {
+            --bg-color: #f8fafc;
+            --text-color: #0f172a;
+            --card-bg: #ffffff;
+            --border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        /* --- MAGIA DEL SCROLL SNAP --- */
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Gradientes de fondo: Glow ultra sutil y extendido */
+        [data-bs-theme="light"] body {
+            background-image: radial-gradient(circle at top left, #e0f2fe 0%, #f8fafc 40%, #f3e8ff 100%);
+            background-attachment: fixed;
+        }
+        [data-bs-theme="dark"] body {
+            background-image: radial-gradient(circle at top right, rgba(88, 28, 135, 0.35) 0%, #050505 50%);
+            background-attachment: fixed;
+        }
+
+        .navbar {
+            backdrop-filter: blur(12px);
+            background: transparent !important;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Contenedores de Sección Encajables */
+        .snap-section {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-top: 80px; /* Compensación del Navbar fijo */
+            padding-bottom: 2rem;
+        }
+
+        /* Utilidad para Textos e Íconos con Gradiente */
+        .text-gradient {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+        .icon-gradient {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+            margin-bottom: 1.2rem;
+        }
+
+        /* Botones */
+        .btn-gradient {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            transition: opacity 0.3s ease, transform 0.2s ease;
+        }
+        .btn-gradient:hover {
+            opacity: 0.9;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline-custom {
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+        .btn-outline-custom:hover {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+        }
+
+        /* --- Mockup Window CSS Puro (Derecha del Hero) --- */
+        .mockup-window {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+            transition: all 0.3s ease;
+        }
+        [data-bs-theme="light"] .mockup-window {
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1);
+        }
+        .mockup-dots {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+        }
+        .mockup-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .mockup-dot.red { background-color: #ef4444; }
+        .mockup-dot.yellow { background-color: #eab308; }
+        .mockup-dot.green { background-color: #22c55e; }
+        
+        .mockup-block {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+        [data-bs-theme="light"] .mockup-block {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+        .mockup-line {
+            height: 6px;
+            border-radius: 3px;
+            background-color: rgba(100, 116, 139, 0.4);
+            margin-bottom: 0.75rem;
+        }
+        .mockup-line:last-child { margin-bottom: 0; }
+
+        /* --- Bento Box Cards --- */
+        .bento-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            padding: 1.5rem 1.8rem;
+            height: 100%;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+        .bento-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        /* --- Stats Section --- */
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        /* --- ADAPTACIÓN PARA MÓVILES Y TABLETS --- */
+        @media (max-width: 991.98px) {
+            /* 1. Desactivar Scroll Snap para evitar cortes de contenido apilado */
+            html {
+                scroll-snap-type: none !important;
+            }
+            .snap-section {
+                min-height: auto !important;
+                height: auto !important;
+                scroll-snap-align: none !important;
+                padding-top: 100px !important;
+                padding-bottom: 40px !important;
+            }
+            /* 2. Reducir tipografías masivas y centrar textos */
+            .hero-main-title {
+                font-size: 3.5rem !important;
+                text-align: center;
+            }
+            .hero-subtitle {
+                font-size: 2rem !important;
+                text-align: center;
+            }
+            .hero-text {
+                text-align: center;
+                font-size: 1rem !important;
+                padding-right: 0 !important;
+            }
+            .hero-buttons {
+                flex-direction: column !important;
+                width: 100%;
+                padding: 0 1rem;
+                margin-bottom: 3rem;
+            }
+            .hero-buttons .btn {
+                width: 100% !important;
+            }
+            /* 3. Ajustes de tarjetas e íconos */
+            .stat-number {
+                font-size: 2.8rem !important;
+            }
+            .bento-card {
+                padding: 1.5rem !important;
+            }
+        }
+
+    /* ====== EFECTO 3D MOCKUP KOLEGIUM (COLUMNA DERECHA) ====== */
+    .hero-mockup-wrapper {
+        perspective: 1200px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        z-index: 10;
+    }
+    .mockup-frame {
+        width: 100%;
+        background: #121212;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.1);
+        overflow: hidden;
+        /* Inclinación 3D mirando hacia el texto (izquierda) */
+        transform: rotateX(10deg) rotateY(-15deg) scale(0.95); 
+        box-shadow: -20px 20px 50px -10px rgba(0,0,0,0.7), 0 0 60px rgba(139, 92, 246, 0.2);
+        transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.6s ease;
+        cursor: pointer;
+    }
+    .hero-mockup-wrapper:hover .mockup-frame {
+        /* Al pasar el mouse, se pone de frente */
+        transform: rotateX(0deg) rotateY(0deg) scale(1.05);
+        box-shadow: 0 30px 60px -12px rgba(0,0,0,0.9), 0 0 80px rgba(139, 92, 246, 0.4);
+    }
+    .mockup-header {
+        background: rgba(255,255,255,0.03);
+        padding: 12px 16px;
+        display: flex;
+        gap: 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .mockup-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+    .mockup-img { width: 100%; display: block; }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg fixed-top py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-4 text-gradient" href="#">
+                Kolegium
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-link nav-link text-body p-0" id="theme-toggle">
+                    <i class="ph ph-sun fs-4"></i>
+                </button>
+                <a href="{{ url_for('login') }}" class="btn btn-gradient rounded-pill px-4 py-2 fw-semibold">Iniciar Sesión</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION (Snap 1) -->
+    <section class="snap-section">
+        <div class="container">
+            <div class="row align-items-center gy-5">
+                <!-- Textos Izquierda -->
+                <div class="col-lg-6 pe-lg-5">
+                    <h1 class="fw-bolder mb-2 hero-main-title" style="font-size: 5.5rem; letter-spacing: -2px;">Kolegium</h1>
+                    <h2 class="display-6 fw-bold mb-4 hero-subtitle" style="line-height: 1.2;">
+                        <span style="color: var(--solid-blue);">Moderniza tu colegio.</span><br>
+                        <span class="text-body-secondary">Automatiza tu tiempo.</span>
+                    </h2>
+                    <p class="lead text-body-secondary mb-5 pe-lg-4 hero-text" style="font-size: 1.15rem;">
+                        El sistema de gestión escolar definitivo. Diseñado para ofrecer una experiencia limpia, rápida y enfocada en lo que realmente importa: la educación.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3 hero-buttons">
+                        <a href="{{ url_for('login') }}" class="btn btn-gradient rounded-pill px-5 py-3 fw-semibold text-center">
+                            Solicitar Demo / Iniciar<br>Sesión
+                        </a>
+                        <a href="#caracteristicas" class="btn btn-outline-custom rounded-pill px-5 py-3 fw-semibold d-flex align-items-center justify-content-center">
+                            Ver<br>Características
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Mockup Derecha -->
+                <div class="col-lg-6">
+        <div class="hero-mockup-wrapper">
+            <div class="mockup-frame">
+                <!-- Barra superior estilo macOS -->
+                <div class="mockup-header">
+                    <div class="mockup-dot dot-red"></div>
+                    <div class="mockup-dot dot-yellow"></div>
+                    <div class="mockup-dot dot-green"></div>
+                </div>
+                <!-- Imagen del sistema -->
+                <img src="{{ url_for('static', filename='img/mockup_kolegium.png') }}" alt="Interfaz de Kolegium" class="mockup-img">
+            </div>
+        </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BENTO BOX FEATURES (Snap 2) -->
+    <section id="caracteristicas" class="snap-section">
+        <div class="container d-flex flex-column justify-content-center h-100">
+            <div class="text-center mb-3 pb-1">
+                <h2 class="fs-2 fw-bold">Todo lo que tu escuela necesita, en un ecosistema inteligente</h2>
+                <p class="text-body-secondary mt-1">Diseñado con un enfoque modular para que cada proceso sea rápido e intuitivo.</p>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-7">
+                    <div class="bento-card">
+                        <i class="ph-duotone ph-sparkle fs-2 icon-gradient mb-2"></i>
+                        <h3 class="fw-bold mb-3 fs-4">Kolegium AI</h3>
+                        <p class="text-body-secondary mb-0">Automatización impulsada por Inteligencia Artificial. Planificación de clases, resúmenes de historiales y búsqueda de datos en segundos.</p>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="bento-card">
+                        <i class="ph-duotone ph-folder-lock fs-2 icon-gradient mb-2"></i>
+                        <h3 class="fw-bold mb-3 fs-4">Bóveda de Expedientes</h3>
+                        <p class="text-body-secondary mb-0">Dile adiós al papel. Documentos del personal y estudiantes a un clic de distancia.</p>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="bento-card">
+                        <i class="ph-duotone ph-users-three fs-2 icon-gradient mb-2"></i>
+                        <h3 class="fw-bold mb-3 fs-4">Control Integral</h3>
+                        <p class="text-body-secondary mb-0">Gestión total de matrícula estudiantil y personal docente, administrativo y obrero.</p>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="bento-card">
+                        <i class="ph-duotone ph-device-mobile fs-2 icon-gradient mb-2"></i>
+                        <h3 class="fw-bold mb-3 fs-4">Asistencia Remota</h3>
+                        <p class="text-body-secondary mb-0">Pase de lista y reportes de inasistencias en tiempo real desde cualquier dispositivo.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS SECTION (Snap 3) -->
+    <section class="snap-section">
+        <div class="container text-center">
+            <div class="row justify-content-center mb-5">
+                <div class="col-lg-9">
+                    <h2 class="display-5 fw-bold mb-4">Hecho desde las aulas, para las aulas</h2>
+                    <p class="lead text-body-secondary fs-5" style="line-height: 1.8;">
+                        Conocemos el día a día de la educación venezolana. Kolegium no es solo software, es una solución diseñada para atacar los verdaderos cuellos de botella administrativos. Nuestra meta: ahorrarte una cantidad absurda de tiempo para que te enfoques en lo que importa: educar.
+                    </p>
+                </div>
+            </div>
+
+            <div class="row g-4 mt-4">
+                <div class="col-md-4">
+                    <div class="stat-number text-gradient">+500</div>
+                    <h5 class="text-body-secondary fw-semibold">Horas Ahorradas</h5>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-number text-gradient">100%</div>
+                    <h5 class="text-body-secondary fw-semibold">Digital</h5>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-number"><i class="ph-fill ph-map-pin text-gradient"></i></div>
+                    <h5 class="text-body-secondary fw-semibold">Soporte Local</h5>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SCRIPT TEMA CLARO/OSCURO -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const toggleBtn = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        const icon = toggleBtn ? toggleBtn.querySelector('i') : null;
+
+        function updateIcon(theme) {
+          if (!icon) return;
+          if (theme === 'dark') {
+            icon.classList.remove('ph-moon');
+            icon.classList.add('ph-sun');
+          } else {
+            icon.classList.remove('ph-sun');
+            icon.classList.add('ph-moon');
+          }
+        }
+
+        const savedTheme = localStorage.getItem('kolegium-theme') || 'dark';
+        htmlElement.setAttribute('data-bs-theme', savedTheme);
+        updateIcon(savedTheme);
+
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            htmlElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('kolegium-theme', newTheme);
+            updateIcon(newTheme);
+          });
+        }
+      });
+    </script>
+</body>
+</html>

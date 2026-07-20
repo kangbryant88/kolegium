@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Administración - EduPlanner OS{% endblock %}
+{% block header_title %}Panel de Administración{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header .title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
+    .page-header .subtitle { color: var(--on-surface-variant); font-size: 0.85rem; }
+
+    .table-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+        overflow: hidden;
+    }
+
+    .edu-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .edu-table thead th {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--on-surface-variant);
+        padding: 14px 20px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--surface-container-high);
+    }
+
+    .edu-table tbody td {
+        padding: 16px 20px;
+        vertical-align: middle;
+        font-size: 0.875rem;
+        border-bottom: 1px solid #f2f4f6;
+        color: var(--on-surface);
+    }
+
+    .edu-table tbody tr:last-child td { border-bottom: none; }
+    .edu-table tbody tr:hover { background: rgba(70,72,212,0.02); }
+    .edu-table tbody tr.pending-row { background: #fffbeb; }
+
+    .user-cell .name { font-weight: 700; color: var(--on-surface); display: block; font-size: 0.875rem; }
+    .user-cell .email { color: var(--on-surface-variant); font-size: 0.75rem; }
+    .user-cell .area { font-size: 0.7rem; font-weight: 600; }
+    .user-cell .username { font-size: 0.75rem; color: var(--on-surface-variant); }
+
+    .badge-role {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    .badge-role.supreme { background: #0f172a; color: #fff; }
+    .badge-role.supreme i { width: 12px; height: 12px; }
+    .badge-role.pending { background: rgba(245,158,11,0.12); color: #d97706; }
+    .badge-role.pending i { width: 12px; height: 12px; }
+    .badge-role.area { background: rgba(70,72,212,0.08); color: var(--primary); }
+
+    .edu-select-sm {
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: none;
+        background: #eceef0;
+        font-size: 0.8rem;
+        font-family: 'Inter', sans-serif;
+        color: var(--on-surface);
+        outline: none;
+        width: 180px;
+        transition: all 0.2s;
+    }
+
+    .edu-select-sm:focus { background: #fff; box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
+
+    .btn-auth {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-auth:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(70,72,212,0.3); }
+    .btn-auth i { width: 14px; height: 14px; }
+
+    .btn-icon-round {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-icon-round i { width: 14px; height: 14px; }
+    .btn-icon-round.danger { background: rgba(239,68,68,0.06); color: #ef4444; }
+    .btn-icon-round.danger:hover { background: rgba(239,68,68,0.12); }
+    .btn-icon-round.shield { background: var(--surface); color: var(--on-surface-variant); cursor: default; }
+
+    .modal-edu .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 20px 40px rgba(15,23,42,0.12);
+    }
+
+    .modal-edu .icon-warning {
+        width: 64px; height: 64px;
+        border-radius: 50%;
+        background: rgba(239,68,68,0.08);
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+    }
+
+    .modal-edu .icon-warning i { width: 28px; height: 28px; }
+
+    .btn-cancel-modal {
+        flex: 1;
+        padding: 10px;
+        border-radius: 999px;
+        border: 1px solid #eceef0;
+        background: #fff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Inter', sans-serif;
+        color: var(--on-surface);
+    }
+
+    .btn-cancel-modal:hover { background: var(--surface); }
+
+    .btn-danger-modal {
+        flex: 1;
+        padding: 10px;
+        border-radius: 999px;
+        border: none;
+        background: #ef4444;
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .btn-danger-modal:hover { background: #dc2626; transform: translateY(-1px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 1200px;">
+
+    <div class="page-header mb-4">
+        <h3 class="title">Control de Accesos y Roles</h3>
+        <p class="subtitle">Gestiona los permisos o da de baja a los profesores del plantel.</p>
+    </div>
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="edu-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre Completo</th>
+                        <th>Usuario (Login)</th>
+                        <th>Rol Actual</th>
+                        <th style="text-align:right;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr class="{% if not usuario.rol_id %}pending-row{% endif %}">
+                        <td style="color: var(--on-surface-variant); font-weight: 600;">#{{ usuario.id }}</td>
+
+                        <td>
+                            <div class="user-cell">
+                                <span class="name">{{ usuario.nombre_completo }}</span>
+                                <small class="email">{{ usuario.email }}</small>
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="badge-role area">{{ usuario.area_trabajo }}</span><br>
+                            <small class="user-cell username">@{{ usuario.username }}</small>
+                        </td>
+
+                        <td>
+                            {% if usuario.id == 1 %}
+                                <span class="badge-role supreme"><i data-lucide="shield-check"></i> Dueño (Intocable)</span>
+                            {% else %}
+                                {% if not usuario.rol_id %}
+                                    <span class="badge-role pending"><i data-lucide="alert-triangle"></i> Pendiente</span><br>
+                                {% endif %}
+                                <form action="{{ url_for('cambiar_rol', id=usuario.id) }}" method="POST" class="d-flex align-items-center gap-2" style="margin:4px 0 0;">
+                                    <select name="rol" class="edu-select-sm">
+                                        <option value="" disabled {% if not usuario.rol_id %}selected{% endif %}>-- Elegir Rol --</option>
+                                        {% for r in roles %}
+                                            <option value="{{ r.id }}" {% if usuario.rol_id == r.id %}selected{% endif %}>{{ r.nombre }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn-auth">
+                                        <i data-lucide="check"></i> Autorizar
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+
+                        <td style="text-align:right;">
+                            {% if usuario.id == 1 %}
+                            <button type="button" class="btn-icon-round shield" disabled title="Protegido">
+                                <i data-lucide="shield"></i>
+                            </button>
+                            {% else %}
+                            <div class="d-flex justify-content-end align-items-center gap-2">
+                                {% if usuario.id != session['usuario_id'] %}
+                                <button type="button" class="btn-icon-round danger" data-bs-toggle="modal" data-bs-target="#modalEliminarUsuario{{ usuario.id }}" title="Dar de baja">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                                {% else %}
+                                <button type="button" class="btn-icon-round shield" disabled title="No puedes borrarte">
+                                    <i data-lucide="shield"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+
+                            {% if usuario.id != session['usuario_id'] %}
+                            <div class="modal fade modal-edu" id="modalEliminarUsuario{{ usuario.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content">
+                                        <div class="modal-body text-center p-4">
+                                            <div class="icon-warning"><i data-lucide="alert-triangle"></i></div>
+                                            <h5 style="font-weight:800; letter-spacing:-0.02em;">¿Dar de baja?</h5>
+                                            <p style="color: var(--on-surface-variant); font-size: 0.85rem;">Vas a eliminar el acceso al profesor <strong>{{ usuario.nombre_completo }}</strong>. Esto no se puede deshacer.</p>
+                                            <form action="/eliminar_usuario/{{ usuario.id }}" method="POST" class="d-flex gap-2 mt-3">
+                                                <button type="button" class="btn-cancel-modal" data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn-danger-modal">Sí, eliminar</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

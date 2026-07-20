@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración - Kolegium{% endblock %}
+{% block header_title %}Configuraciones{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header .title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
+    .page-header .subtitle { color: var(--on-surface-variant); font-size: 0.85rem; }
+
+    .config-card {
+        background: #fff; border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04); height: 100%; overflow: hidden;
+    }
+
+    .config-card .card-top {
+        padding: 18px 24px; border-bottom: 1px solid #f2f4f6;
+        font-weight: 800; font-size: 0.9rem; letter-spacing: -0.02em;
+        display: flex; align-items: center; gap: 8px;
+    }
+
+    .config-card .card-top i { width: 18px; height: 18px; color: var(--primary); }
+    .config-card .card-inner { padding: 24px; }
+
+    .form-area { background: var(--surface); border-radius: 14px; padding: 16px; margin-bottom: 20px; }
+
+    .edu-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--on-surface-variant); margin-bottom: 6px; display: block; }
+
+    .edu-input {
+        width: 100%; padding: 0.7rem 0.9rem; border-radius: 10px;
+        border: none; background: #eceef0; font-size: 0.85rem;
+        font-family: 'Inter', sans-serif; color: var(--on-surface);
+        transition: all 0.2s; outline: none;
+    }
+
+    .edu-input:focus { background: #fff; box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
+
+    .btn-create {
+        width: 100%; padding: 10px; border: none; border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff; font-weight: 700; font-size: 0.85rem;
+        font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.25s;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+
+    .btn-create:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(70,72,212,0.3); }
+    .btn-create i { width: 16px; height: 16px; }
+
+    .list-zone { max-height: 400px; overflow-y: auto; border-radius: 12px; }
+    .list-zone::-webkit-scrollbar { width: 5px; }
+    .list-zone::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 3px; }
+
+    .list-item {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 14px 16px; border-bottom: 1px solid #f2f4f6; transition: background 0.2s;
+    }
+
+    .list-item:last-child { border-bottom: none; }
+    .list-item:hover { background: rgba(70,72,212,0.02); }
+
+    .list-item .name { font-weight: 700; font-size: 0.875rem; }
+    .list-item .sub { font-size: 0.75rem; color: var(--on-surface-variant); display: flex; align-items: center; gap: 4px; }
+    .list-item .sub i { width: 13px; height: 13px; }
+
+    .list-item .tema-name { font-weight: 600; font-size: 0.85rem; color: var(--on-surface-variant); display: flex; align-items: center; gap: 6px; }
+    .list-item .tema-name i { width: 14px; height: 14px; color: var(--primary); }
+
+    .btn-icon-round {
+        width: 30px; height: 30px; border-radius: 8px; border: none;
+        display: inline-flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.2s;
+    }
+
+    .btn-icon-round i { width: 13px; height: 13px; }
+    .btn-icon-round.edit { background: rgba(70,72,212,0.06); color: var(--primary); }
+    .btn-icon-round.edit:hover { background: rgba(70,72,212,0.12); }
+    .btn-icon-round.del { background: rgba(239,68,68,0.06); color: #ef4444; }
+    .btn-icon-round.del:hover { background: rgba(239,68,68,0.12); }
+
+    .input-add-group { display: flex; gap: 8px; }
+    .input-add-group .edu-input { flex: 1; }
+
+    .btn-add-sm {
+        padding: 0 16px; border: none; border-radius: 10px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff; font-weight: 700; font-size: 0.85rem;
+        cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;
+    }
+
+    .btn-add-sm:hover { box-shadow: 0 4px 12px rgba(70,72,212,0.25); }
+    .btn-add-sm i { width: 16px; height: 16px; }
+
+    .modal-edu .modal-content { border-radius: 16px; border: none; box-shadow: 0 20px 40px rgba(15,23,42,0.12); }
+    .modal-edu .icon-warning { width: 64px; height: 64px; border-radius: 50%; background: rgba(239,68,68,0.08); color: #ef4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .modal-edu .icon-warning i { width: 28px; height: 28px; }
+    .btn-cancel-modal { flex:1; padding:10px; border-radius:999px; border:1px solid #eceef0; background:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; font-family:'Inter',sans-serif; color:var(--on-surface); transition: all 0.2s; }
+    .btn-danger-link { flex:1; padding:10px; border-radius:999px; background:#ef4444; color:#fff; font-weight:700; font-size:0.85rem; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; transition: all 0.2s; }
+    .btn-danger-link:hover { background:#dc2626; color:#fff; }
+    .btn-save-sm { width: 100%; padding: 10px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--primary-container)); color: #fff; font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; }
+    .btn-save-sm:hover { box-shadow: 0 6px 16px rgba(70,72,212,0.3); }
+    .btn-save-sm i { width: 14px; height: 14px; }
+
+    .modal-form-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--on-surface-variant); margin-bottom: 6px; display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 1200px;">
+
+    <div class="page-header mb-4">
+        <h3 class="title">Ajustes del Sistema</h3>
+        <p class="subtitle mb-0">Define los grados y actualiza la matrícula cuando la tengas confirmada.</p>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-7 mb-4">
+            <div class="config-card">
+                <div class="card-top"><i data-lucide="graduation-cap"></i> Gestionar Grados y Secciones</div>
+                <div class="card-inner">
+                    <form action="/configuracion" method="POST" class="form-area">
+                        <div class="mb-3 row g-2">
+                            <div class="col-6">
+                                <label class="edu-label">Grado Referencial</label>
+                                <select name="grado_num" class="edu-input form-select" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="1er Grado">1er Grado</option>
+                                    <option value="2do Grado">2do Grado</option>
+                                    <option value="3er Grado">3er Grado</option>
+                                    <option value="4to Grado">4to Grado</option>
+                                    <option value="5to Grado">5to Grado</option>
+                                    <option value="6to Grado">6to Grado</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="edu-label">Sección</label>
+                                <select name="seccion_letra" class="edu-input form-select" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="Sección A">Sección A</option>
+                                    <option value="Sección B">Sección B</option>
+                                    <option value="Sección C">Sección C</option>
+                                    <option value="Sección Única">Sección Única</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="edu-label">Docente Titular Asignado</label>
+                            <select name="docente_id" class="edu-input form-select" required>
+                                <option value="">-- Seleccione un Docente --</option>
+                                {% for docente in docentes %}
+                                <option value="{{ docente.id }}">{{ docente.nombre_completo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="edu-label"><i data-lucide="user" style="width:11px;height:11px;color:var(--primary);vertical-align:-1px;"></i> Varones (Opcional)</label>
+                                <input type="number" name="m_varones" class="edu-input" value="0" min="0">
+                            </div>
+                            <div class="col-6">
+                                <label class="edu-label"><i data-lucide="user" style="width:11px;height:11px;color:#ef4444;vertical-align:-1px;"></i> Hembras (Opcional)</label>
+                                <input type="number" name="m_hembras" class="edu-input" value="0" min="0">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-create"><i data-lucide="plus"></i> Crear Sección</button>
+                    </form>
+
+                    <div class="list-zone">
+                        {% for grado in grados %}
+                        <div class="list-item">
+                            <div>
+                                <span class="name">{{ grado.nombre }}</span>
+                                <div class="sub mt-1 mb-1"><i data-lucide="user-check"></i> Titular: {% if grado.docente_info %} {{ grado.docente_info.nombre_completo }} {% else %} <span class="text-danger fw-bold ms-1">Sin Asignar</span> {% endif %}</div>
+                                <div class="sub"><i data-lucide="users"></i> Actual: {{ grado.total_varones + grado.total_hembras }} alumnos</div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn-icon-round edit" data-bs-toggle="modal" data-bs-target="#modalMatricula{{ grado.id }}" title="Editar Matrícula">
+                                    <i data-lucide="pencil"></i>
+                                </button>
+                                <button class="btn-icon-round del" onclick="confirmarEliminacion('/borrar_grado/{{ grado.id }}', 'el grado {{ grado.nombre }}')">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="modal fade modal-edu" id="modalMatricula{{ grado.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered modal-sm">
+                                <div class="modal-content">
+                                    <div class="modal-header border-0 pb-0 px-4 pt-4">
+                                        <h6 style="font-weight:800; font-size:0.95rem;">Actualizar: {{ grado.nombre }}</h6>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form action="/editar_grado/{{ grado.id }}" method="POST">
+                                        <div class="modal-body py-3 px-4">
+                                            <div class="mb-3 row g-2">
+                                                <div class="col-6">
+                                                    <label class="modal-form-label"><i data-lucide="book" style="width:10px;height:10px;color:var(--primary);vertical-align:-1px;"></i> Grado</label>
+                                                    <select name="grado_num" class="edu-input form-select" required>
+                                                        <option value="1er Grado" {% if "1er Grado" in grado.nombre %}selected{% endif %}>1er Grado</option>
+                                                        <option value="2do Grado" {% if "2do Grado" in grado.nombre %}selected{% endif %}>2do Grado</option>
+                                                        <option value="3er Grado" {% if "3er Grado" in grado.nombre %}selected{% endif %}>3er Grado</option>
+                                                        <option value="4to Grado" {% if "4to Grado" in grado.nombre %}selected{% endif %}>4to Grado</option>
+                                                        <option value="5to Grado" {% if "5to Grado" in grado.nombre %}selected{% endif %}>5to Grado</option>
+                                                        <option value="6to Grado" {% if "6to Grado" in grado.nombre %}selected{% endif %}>6to Grado</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="modal-form-label"><i data-lucide="hash" style="width:10px;height:10px;color:var(--primary);vertical-align:-1px;"></i> Sección</label>
+                                                    <select name="seccion_letra" class="edu-input form-select" required>
+                                                        <option value="Sección A" {% if "Sección A" in grado.nombre %}selected{% endif %}>Sección A</option>
+                                                        <option value="Sección B" {% if "Sección B" in grado.nombre %}selected{% endif %}>Sección B</option>
+                                                        <option value="Sección C" {% if "Sección C" in grado.nombre %}selected{% endif %}>Sección C</option>
+                                                        <option value="Sección Única" {% if "Sección Única" in grado.nombre %}selected{% endif %}>Sección Única</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="modal-form-label"><i data-lucide="user-check" style="width:10px;height:10px;color:var(--primary);vertical-align:-1px;"></i> Docente Titular</label>
+                                                <select name="docente_id" class="edu-input form-select" required>
+                                                    <option value="">-- Cambiar Docente --</option>
+                                                    {% for docente in docentes %}
+                                                    <option value="{{ docente.id }}" {% if docente.id == grado.usuario_id %}selected{% endif %}>{{ docente.nombre_completo }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <label class="modal-form-label"><i data-lucide="user" style="width:10px;height:10px;color:var(--primary);vertical-align:-1px;"></i> Varones</label>
+                                                    <input type="number" name="m_varones" class="edu-input" value="{{ grado.total_varones }}" min="0">
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="modal-form-label"><i data-lucide="user" style="width:10px;height:10px;color:#ef4444;vertical-align:-1px;"></i> Hembras</label>
+                                                    <input type="number" name="m_hembras" class="edu-input" value="{{ grado.total_hembras }}" min="0">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                                            <button type="submit" class="btn-save-sm"><i data-lucide="save"></i> Guardar Cambios</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5 mb-4">
+            <div class="config-card">
+                <div class="card-top"><i data-lucide="bookmark"></i> Temas de Planificación</div>
+                <div class="card-inner">
+                    <form action="/configuracion" method="POST" class="mb-4">
+                        <div class="input-add-group">
+                            <input type="text" name="nuevo_tema" class="edu-input" placeholder="Ej. Liderazgo..." required>
+                            <button type="submit" class="btn-add-sm"><i data-lucide="plus"></i> Agregar</button>
+                        </div>
+                    </form>
+
+                    <div class="list-zone">
+                        {% for tema in temas %}
+                        <div class="list-item">
+                            <span class="tema-name"><i data-lucide="bookmark"></i> {{ tema.nombre }}</span>
+                            <button type="button" class="btn-icon-round del" onclick="confirmarEliminacion('/borrar_tema/{{ tema.id }}', 'el tema {{ tema.nombre }}')">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-edu" id="modalConfirmarEliminar" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="icon-warning"><i data-lucide="alert-triangle"></i></div>
+                <h5 style="font-weight:800;">¿Estás seguro?</h5>
+                <p style="color:var(--on-surface-variant);font-size:0.85rem;">Vas a eliminar <strong id="nombreElemento"></strong>. Esto no se puede deshacer.</p>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn-cancel-modal" data-bs-dismiss="modal">No</button>
+                    <a href="#" id="botonConfirmarBorrar" class="btn-danger-link">Sí, borrar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function confirmarEliminacion(url, nombre) {
+        document.getElementById('nombreElemento').innerText = nombre;
+        document.getElementById('botonConfirmarBorrar').href = url;
+        var myModal = new bootstrap.Modal(document.getElementById('modalConfirmarEliminar'));
+        myModal.show();
+    }
+</script>
+{% endblock %}

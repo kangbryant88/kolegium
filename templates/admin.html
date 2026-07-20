@@ -1,0 +1,495 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Administración - Kolegium{% endblock %}
+{% block header_title %}Panel de Administración{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header .title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
+    .page-header .subtitle { color: var(--on-surface-variant); font-size: 0.85rem; }
+
+    .table-card {
+        background: var(--surface-container-lowest);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+        overflow: hidden;
+    }
+
+    .edu-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .edu-table thead th {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--on-surface-variant);
+        padding: 14px 20px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--surface-container-high);
+    }
+
+    .edu-table tbody td {
+        padding: 16px 20px;
+        vertical-align: middle;
+        font-size: 0.875rem;
+        border-bottom: 1px solid #f2f4f6;
+        color: var(--on-surface);
+    }
+
+    .edu-table tbody tr:last-child td { border-bottom: none; }
+    .edu-table tbody tr:hover { background: rgba(70,72,212,0.02); }
+    .edu-table tbody tr.pending-row { background: rgba(245, 158, 11, 0.1); }
+
+    .user-cell .name { font-weight: 700; color: var(--on-surface); display: block; font-size: 0.875rem; }
+    .user-cell .email { color: var(--on-surface-variant); font-size: 0.75rem; }
+    .user-cell .area { font-size: 0.7rem; font-weight: 600; }
+    .user-cell .username { font-size: 0.75rem; color: var(--on-surface-variant); }
+
+    .badge-role {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    .badge-role.supreme { background: #0f172a; color: #fff; }
+    .badge-role.supreme i { width: 12px; height: 12px; }
+    .badge-role.pending { background: rgba(245,158,11,0.12); color: #d97706; }
+    .badge-role.pending i { width: 12px; height: 12px; }
+    .badge-role.area { background: rgba(70,72,212,0.08); color: var(--primary); }
+
+    .edu-select-sm {
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: none;
+        background: #eceef0;
+        font-size: 0.8rem;
+        font-family: 'Inter', sans-serif;
+        color: var(--on-surface);
+        outline: none;
+        width: 180px;
+        transition: all 0.2s;
+    }
+
+    .edu-select-sm:focus { background: #fff; box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
+
+    .btn-auth {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-auth:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(70,72,212,0.3); }
+    .btn-auth i { width: 14px; height: 14px; }
+
+    .btn-icon-round {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-icon-round i { width: 14px; height: 14px; }
+    .btn-icon-round.danger { background: rgba(239,68,68,0.06); color: #ef4444; }
+    .btn-icon-round.danger:hover { background: rgba(239,68,68,0.12); }
+    .btn-icon-round.shield { background: var(--surface); color: var(--on-surface-variant); cursor: default; }
+
+    .modal-edu .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 20px 40px rgba(15,23,42,0.12);
+    }
+
+    .modal-edu .icon-warning {
+        width: 64px; height: 64px;
+        border-radius: 50%;
+        background: rgba(239,68,68,0.08);
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+    }
+
+    .modal-edu .icon-warning i { width: 28px; height: 28px; }
+
+    .btn-cancel-modal {
+        flex: 1;
+        padding: 10px;
+        border-radius: 999px;
+        border: 1px solid #eceef0;
+        background: var(--surface);
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Inter', sans-serif;
+        color: var(--on-surface);
+    }
+
+    .btn-cancel-modal:hover { background: var(--surface); }
+
+    .btn-danger-modal {
+        flex: 1;
+        padding: 10px;
+        border-radius: 999px;
+        border: none;
+        background: #ef4444;
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .btn-danger-modal:hover { background: #dc2626; transform: translateY(-1px); }
+
+    .nav-pills .nav-link {
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--on-surface-variant);
+        transition: all 0.2s;
+    }
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(70,72,212,0.25);
+    }
+    .nav-pills .nav-link:not(.active):hover {
+        background: rgba(70,72,212,0.06);
+        color: var(--primary);
+    }
+
+    /* Ajustes específicos para Modo Oscuro en Admin */
+    html[data-bs-theme="dark"] .edu-select-sm {
+        background-color: #1a1a1a !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+    
+    html[data-bs-theme="dark"] .edu-select-sm option {
+        background-color: #1a1a1a !important;
+        color: #ffffff !important;
+    }
+
+    html[data-bs-theme="dark"] .badge-role.area {
+        color: #a78bfa !important; /* Morado/Azul claro brillante */
+        background: rgba(139, 92, 246, 0.15) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 1200px;">
+
+    <div class="page-header mb-4">
+        <h3 class="title">Control de Accesos y Roles</h3>
+        <p class="subtitle">Gestiona los permisos o da de baja a los profesores del plantel.</p>
+    </div>
+
+{% set ns = namespace(g=0, d=0, e=0, def=0, p=0) %}
+{% for usuario in usuarios %}
+    {% set area = (usuario.area_trabajo or '')|string|lower %}
+    {% if not usuario.rol_id or not usuario.area_trabajo %}
+        {% set ns.p = ns.p + 1 %}
+    {% elif 'directivo' in area or 'supremo' in area %}
+        {% set ns.g = ns.g + 1 %}
+    {% elif 'docente' in area and 'especialista' not in area %}
+        {% set ns.d = ns.d + 1 %}
+    {% elif 'especialista' in area %}
+        {% set ns.e = ns.e + 1 %}
+    {% elif 'defensor' in area %}
+        {% set ns.def = ns.def + 1 %}
+    {% else %}
+        {% set ns.p = ns.p + 1 %}
+    {% endif %}
+{% endfor %}
+
+    <ul class="nav nav-pills mb-4" id="rolesTab" role="tablist" style="gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px;">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-gestion" type="button" role="tab">Gestión <span class="badge ms-1" style="background: rgba(255,255,255,0.2);">{{ ns.g }}</span></button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-docentes" type="button" role="tab">Docentes <span class="badge ms-1" style="background: rgba(255,255,255,0.2);">{{ ns.d }}</span></button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-especialistas" type="button" role="tab">Especialistas <span class="badge ms-1" style="background: rgba(255,255,255,0.2);">{{ ns.e }}</span></button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-defensoria" type="button" role="tab">Defensoría <span class="badge ms-1" style="background: rgba(255,255,255,0.2);">{{ ns.def }}</span></button>
+      </li>
+      {% if ns.p > 0 %}
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-pendientes" type="button" role="tab">Pendientes <span class="badge ms-1" style="background: rgba(245,158,11,0.3);">{{ ns.p }}</span></button>
+      </li>
+      {% endif %}
+      
+      {% set pendientes_cambio = usuarios | selectattr('cargo_solicitado') | list %}
+      {% if pendientes_cambio | length > 0 %}
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-solicitudes" type="button" role="tab">Solicitudes de Cambio <span class="badge ms-1" style="background: rgba(239,68,68,0.3);">{{ pendientes_cambio | length }}</span></button>
+      </li>
+      {% endif %}
+    </ul>
+
+{% macro render_user_row(usuario, roles, session_uid) %}
+    <tr class="{% if not usuario.rol_id %}pending-row{% endif %}">
+        <td style="color: var(--on-surface-variant); font-weight: 600;">#{{ usuario.id }}</td>
+        <td>
+            <div class="user-cell">
+                <span class="name">{{ usuario.nombre_completo }}</span>
+                <small class="email">{{ usuario.email }}</small>
+            </div>
+        </td>
+        <td>
+            <span class="badge-role area">{{ usuario.area_trabajo }}</span><br>
+            <small class="user-cell username">@{{ usuario.username }}</small>
+        </td>
+        <td>
+            {% if usuario.id == 1 %}
+                <span class="badge-role supreme"><i data-lucide="shield-check"></i> Dueño (Intocable)</span>
+            {% else %}
+                {% if not usuario.rol_id %}
+                    <span class="badge-role pending"><i data-lucide="alert-triangle"></i> Pendiente</span><br>
+                {% endif %}
+                <form action="{{ url_for('cambiar_rol', id=usuario.id) }}" method="POST" class="d-flex align-items-center gap-2" style="margin:4px 0 0;">
+                    <select name="rol" class="edu-select-sm">
+                        <option value="" disabled {% if not usuario.rol_id %}selected{% endif %}>-- Elegir Rol --</option>
+                        {% for r in roles %}
+                            <option value="{{ r.id }}" {% if usuario.rol_id == r.id %}selected{% endif %}>{{ r.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn-auth">
+                        <i data-lucide="check"></i> Autorizar
+                    </button>
+                </form>
+            {% endif %}
+        </td>
+        <td style="text-align:right;">
+            {% if usuario.id == 1 %}
+            <button type="button" class="btn-icon-round shield" disabled title="Protegido">
+                <i data-lucide="shield"></i>
+            </button>
+            {% else %}
+            <div class="d-flex justify-content-end align-items-center gap-2">
+                {% if usuario.id != session_uid %}
+                <button type="button" class="btn-icon-round danger" data-bs-toggle="modal" data-bs-target="#modalEliminarUsuario{{ usuario.id }}" title="Dar de baja">
+                    <i data-lucide="trash-2"></i>
+                </button>
+                {% else %}
+                <button type="button" class="btn-icon-round shield" disabled title="No puedes borrarte">
+                    <i data-lucide="shield"></i>
+                </button>
+                {% endif %}
+            </div>
+
+            {% if usuario.id != session_uid %}
+            <div class="modal fade modal-edu text-start" id="modalEliminarUsuario{{ usuario.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-body text-center p-4">
+                            <div class="icon-warning"><i data-lucide="alert-triangle"></i></div>
+                            <h5 style="font-weight:800; letter-spacing:-0.02em;">¿Dar de baja?</h5>
+                            <p style="color: var(--on-surface-variant); font-size: 0.85rem; margin-top:8px;">Vas a eliminar el acceso al profesor <strong>{{ usuario.nombre_completo }}</strong>. Esto no se puede deshacer.</p>
+                            <form action="/eliminar_usuario/{{ usuario.id }}" method="POST" class="d-flex gap-2 mt-3">
+                                <button type="button" class="btn-cancel-modal" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn-danger-modal">Sí, eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endif %}
+        </td>
+    </tr>
+{% endmacro %}
+
+    <div class="tab-content" id="rolesTabContent">
+        
+        <!-- Tab 1: GESTIÓN -->
+        <div class="tab-pane fade show active" id="tab-gestion" role="tabpanel" tabindex="0">
+            <div class="table-card">
+                <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="edu-table">
+                        <thead>
+                            <tr><th>ID</th><th>Nombre Completo</th><th>Usuario (Login)</th><th>Rol Actual</th><th style="text-align:right;">Acciones</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios %}
+                                {% set area = (usuario.area_trabajo or '')|string|lower %}
+                                {% if usuario.rol_id and usuario.area_trabajo %}
+                                    {% if 'directivo' in area or 'supremo' in area %}
+                                        {{ render_user_row(usuario, roles, session['usuario_id']) }}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if ns.g == 0 %}<tr><td colspan="5" class="text-center py-5 text-muted"><i data-lucide="users" style="width:32px;height:32px;opacity:0.3;margin-bottom:8px;"></i><br>No hay personal de gestión encontrado.</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: DOCENTES -->
+        <div class="tab-pane fade" id="tab-docentes" role="tabpanel" tabindex="0">
+            <div class="table-card">
+                <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="edu-table">
+                        <thead>
+                            <tr><th>ID</th><th>Nombre Completo</th><th>Usuario (Login)</th><th>Rol Actual</th><th style="text-align:right;">Acciones</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios %}
+                                {% set area = (usuario.area_trabajo or '')|string|lower %}
+                                {% if usuario.rol_id and usuario.area_trabajo %}
+                                    {% if 'docente' in area and 'especialista' not in area %}
+                                        {{ render_user_row(usuario, roles, session['usuario_id']) }}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if ns.d == 0 %}<tr><td colspan="5" class="text-center py-5 text-muted"><i data-lucide="users" style="width:32px;height:32px;opacity:0.3;margin-bottom:8px;"></i><br>No hay docentes de aula registrados.</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: ESPECIALISTAS -->
+        <div class="tab-pane fade" id="tab-especialistas" role="tabpanel" tabindex="0">
+            <div class="table-card">
+                <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="edu-table">
+                        <thead>
+                            <tr><th>ID</th><th>Nombre Completo</th><th>Usuario (Login)</th><th>Rol Actual</th><th style="text-align:right;">Acciones</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios %}
+                                {% set area = (usuario.area_trabajo or '')|string|lower %}
+                                {% if usuario.rol_id and usuario.area_trabajo %}
+                                    {% if 'especialista' in area %}
+                                        {{ render_user_row(usuario, roles, session['usuario_id']) }}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if ns.e == 0 %}<tr><td colspan="5" class="text-center py-5 text-muted"><i data-lucide="users" style="width:32px;height:32px;opacity:0.3;margin-bottom:8px;"></i><br>No hay especialistas registrados.</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: DEFENSORÍA -->
+        <div class="tab-pane fade" id="tab-defensoria" role="tabpanel" tabindex="0">
+            <div class="table-card">
+                <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="edu-table">
+                        <thead>
+                            <tr><th>ID</th><th>Nombre Completo</th><th>Usuario (Login)</th><th>Rol Actual</th><th style="text-align:right;">Acciones</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios %}
+                                {% set area = (usuario.area_trabajo or '')|string|lower %}
+                                {% if usuario.rol_id and usuario.area_trabajo %}
+                                    {% if 'defensor' in area %}
+                                        {{ render_user_row(usuario, roles, session['usuario_id']) }}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if ns.def == 0 %}<tr><td colspan="5" class="text-center py-5 text-muted"><i data-lucide="users" style="width:32px;height:32px;opacity:0.3;margin-bottom:8px;"></i><br>No hay personal de defensoría registrado.</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: PENDIENTES -->
+        {% if ns.p > 0 %}
+        <div class="tab-pane fade" id="tab-pendientes" role="tabpanel" tabindex="0">
+            <div class="table-card">
+                <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="edu-table">
+                        <thead>
+                            <tr><th>ID</th><th>Nombre Completo</th><th>Usuario (Login)</th><th>Rol Actual</th><th style="text-align:right;">Acciones</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios %}
+                                {% set area = (usuario.area_trabajo or '')|string|lower %}
+                                {% if not usuario.rol_id or not usuario.area_trabajo or not ('directivo' in area or 'supremo' in area or ('docente' in area and 'especialista' not in area) or 'especialista' in area or 'defensor' in area) %}
+                                    {{ render_user_row(usuario, roles, session['usuario_id']) }}
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Tab 6: SOLICITUDES DE CAMBIO -->
+        {% if pendientes_cambio | length > 0 %}
+        <div class="tab-pane fade" id="tab-solicitudes" role="tabpanel" tabindex="0">
+            <div class="table-card">
+                <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="edu-table">
+                        <thead>
+                            <tr><th>ID</th><th>Nombre Completo</th><th>Cargo Actual</th><th>Cargo Solicitado</th><th style="text-align:right;">Acciones</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in pendientes_cambio %}
+                            <tr>
+                                <td style="color: var(--on-surface-variant); font-weight: 600;">#{{ usuario.id }}</td>
+                                <td>
+                                    <div class="user-cell">
+                                        <span class="name">{{ usuario.nombre_completo }}</span>
+                                        <small class="email">{{ usuario.email }}</small>
+                                    </div>
+                                </td>
+                                <td><span class="badge-role area">{{ usuario.area_trabajo }}</span></td>
+                                <td><span class="badge-role pending"><i data-lucide="alert-triangle"></i> {{ usuario.cargo_solicitado }}</span></td>
+                                <td style="text-align:right;">
+                                    <div class="d-flex justify-content-end align-items-center gap-2">
+                                        <form action="{{ url_for('aprobar_cambio', id=usuario.id) }}" method="POST" style="margin:0;">
+                                            <button type="submit" class="btn-auth" style="background: linear-gradient(135deg, #10b981, #059669);">
+                                                <i data-lucide="check"></i> Aprobar
+                                            </button>
+                                        </form>
+                                        <form action="{{ url_for('rechazar_cambio', id=usuario.id) }}" method="POST" style="margin:0;">
+                                            <button type="submit" class="btn-icon-round danger" title="Rechazar">
+                                                <i data-lucide="x"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+</div>
+{% endblock %}

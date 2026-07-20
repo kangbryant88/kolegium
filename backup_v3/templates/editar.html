@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Registro - EduPlanner OS{% endblock %}
+{% block header_title %}Editar Registro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header .title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
+    .page-header .subtitle { color: var(--on-surface-variant); font-size: 0.85rem; }
+
+    .edit-card {
+        background: #fff; border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04); overflow: hidden;
+    }
+
+    .edit-card .card-top {
+        padding: 18px 24px; border-bottom: 1px solid #f2f4f6;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .edit-card .card-top .label {
+        font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1px; color: var(--primary);
+    }
+
+    .id-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 4px 12px; border-radius: 999px; font-size: 0.7rem; font-weight: 700;
+        background: rgba(70,72,212,0.08); color: var(--primary);
+    }
+
+    .id-badge i { width: 12px; height: 12px; }
+
+    .edit-card .card-inner { padding: 28px 24px; }
+
+    .edu-label {
+        font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1px; color: var(--on-surface-variant); margin-bottom: 6px; display: block;
+    }
+
+    .input-icon-group {
+        display: flex; border-radius: 10px; overflow: hidden;
+    }
+
+    .input-icon-group .icon {
+        padding: 0 12px; background: #eceef0; display: flex; align-items: center;
+    }
+
+    .input-icon-group .icon i { width: 15px; height: 15px; color: var(--on-surface-variant); }
+
+    .edu-input, .edu-select {
+        width: 100%; padding: 0.7rem 0.9rem; border-radius: 10px;
+        border: none; background: #eceef0; font-size: 0.85rem;
+        font-family: 'Inter', sans-serif; color: var(--on-surface);
+        transition: all 0.2s; outline: none;
+    }
+
+    .edu-input:focus, .edu-select:focus { background: #fff; box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
+
+    .input-icon-group .edu-input,
+    .input-icon-group .edu-select { border-radius: 0; }
+
+    .btn-cancel {
+        padding: 10px 24px; border-radius: 999px; border: 1px solid #eceef0;
+        background: #fff; color: var(--on-surface); font-weight: 700;
+        font-size: 0.85rem; text-decoration: none;
+        display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
+    }
+
+    .btn-cancel:hover { background: var(--surface); color: var(--on-surface); }
+    .btn-cancel i { width: 14px; height: 14px; }
+
+    .btn-save {
+        padding: 10px 32px; border-radius: 999px; border: none;
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff; font-weight: 700; font-size: 0.85rem;
+        cursor: pointer; transition: all 0.25s; font-family: 'Inter', sans-serif;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+
+    .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(70,72,212,0.3); }
+    .btn-save i { width: 16px; height: 16px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 700px;">
+
+    <div class="page-header mb-4">
+        <h3 class="title">Modificar Registro</h3>
+        <p class="subtitle mb-0">Actualiza los detalles de la actividad seleccionada.</p>
+    </div>
+
+    <div class="edit-card">
+        <div class="card-top">
+            <span class="label">Formulario de Edición</span>
+            <span class="id-badge"><i data-lucide="info"></i> ID #{{ registro.id }}</span>
+        </div>
+
+        <div class="card-inner">
+            <form action="/editar/{{ registro.id }}" method="POST">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="edu-label">Hora de la Clase</label>
+                        <div class="input-icon-group">
+                            <div class="icon"><i data-lucide="clock"></i></div>
+                            <input type="time" name="hora" class="edu-input" value="{{ registro.fecha.strftime('%H:%M') }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="edu-label">Grado / Nivel</label>
+                        <div class="input-icon-group">
+                            <div class="icon"><i data-lucide="graduation-cap"></i></div>
+                            <select name="grado" class="edu-select" required>
+                                <option value="" disabled>Selecciona...</option>
+                                {% for grado in grados %}
+                                    <option value="{{ grado.nombre }}" {% if registro.grado == grado.nombre %}selected{% endif %}>
+                                        {{ grado.nombre }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="edu-label">Actividad / Tema Registrado</label>
+                        <div class="input-icon-group">
+                            <div class="icon"><i data-lucide="book-open"></i></div>
+                            <input type="text" name="actividad" class="edu-input" value="{{ registro.actividad }}" placeholder="Ej: Lógica de programación" required>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="edu-label">Estado de la Clase</label>
+                        <div class="input-icon-group">
+                            <div class="icon"><i data-lucide="check-circle"></i></div>
+                            <select name="estado" class="edu-select" required>
+                                <option value="Completado" {% if registro.estado == 'Completado' %}selected{% endif %}>✅ Completado</option>
+                                <option value="Pendiente" {% if registro.estado == 'Pendiente' %}selected{% endif %}>⏳ Pendiente</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 d-flex flex-column flex-md-row justify-content-end gap-3">
+                    <a href="/planificador" class="btn-cancel order-2 order-md-1">
+                        <i data-lucide="x"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn-save order-1 order-md-2">
+                        <i data-lucide="save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+{% block title %}Gestión de Personal - Kolegium{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold text-dark mb-0">Gestión de Personal</h1>
+    <p class="text-muted mb-0">Administración de expedientes y autogestión MPPE</p>
+</div>
+
+<!-- HR Dashboard -->
+<div class="row g-4 mb-5 justify-content-center">
+    <!-- Fila 1 -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 h-100">
+            <div class="card-body p-4 text-center">
+                <h5 class="fw-bold mb-3 text-dark"><i data-lucide="credit-card" class="text-primary me-2" style="width: 18px; height: 18px;"></i> Carga de RIF</h5>
+                <div style="position: relative; height: 200px; width: 100%;">
+                    <canvas id="chartRif"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 h-100">
+            <div class="card-body p-4 text-center">
+                <h5 class="fw-bold mb-3 text-dark"><i data-lucide="file-text" class="text-success me-2" style="width: 18px; height: 18px;"></i> Carga de Síntesis Curricular</h5>
+                <div style="position: relative; height: 200px; width: 100%;">
+                    <canvas id="chartCv"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 h-100">
+            <div class="card-body p-4 text-center">
+                <h5 class="fw-bold mb-3 text-dark"><i data-lucide="award" class="text-warning me-2" style="width: 18px; height: 18px;"></i> Constancias</h5>
+                <div style="position: relative; height: 200px; width: 100%;">
+                    <canvas id="chartConstancia"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Fila 2 -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 h-100">
+            <div class="card-body p-4 text-center">
+                <h5 class="fw-bold mb-3 text-dark"><i data-lucide="file-text" class="text-info me-2" style="width: 18px; height: 18px;"></i> Carga de Voucher</h5>
+                <div style="position: relative; height: 200px; width: 100%;">
+                    <canvas id="chartVoucher"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 h-100">
+            <div class="card-body p-4 text-center">
+                <h5 class="fw-bold mb-3 text-dark"><i data-lucide="contact-2" class="text-secondary me-2" style="width: 18px; height: 18px;"></i> Carga de Cédula</h5>
+                <div style="position: relative; height: 200px; width: 100%;">
+                    <canvas id="chartCedula"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ul class="nav nav-pills flex-nowrap overflow-x-auto pb-2 mb-4" id="personalTab" role="tablist" style="white-space: nowrap; -webkit-overflow-scrolling: touch;">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-directivos" type="button" role="tab">Directivos</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-docentes" type="button" role="tab">Docentes de Aula</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-especialistas" type="button" role="tab">Especialistas</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-defensoria" type="button" role="tab">Defensoría</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-obreros" type="button" role="tab">Obreros</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-vigilancia" type="button" role="tab">Vigilancia</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-cocina" type="button" role="tab">Cocina</button>
+    </li>
+</ul>
+
+{% macro render_tarjeta(trabajador) %}
+    <div class="col-12">
+        <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4 d-flex align-items-center gap-3">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 50px; height: 50px; font-size: 1.25rem;">
+                    {{ trabajador.nombre_completo[0]|upper }}
+                </div>
+                <div>
+                    <h3 class="h5 fw-bold mb-1">{{ trabajador.nombre_completo }}</h3>
+                    <div class="d-flex align-items-center text-muted small">
+                        <i data-lucide="briefcase" class="me-1" style="width: 14px; height: 14px;"></i> {{ trabajador.area_trabajo }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body p-4">
+                <div class="row">
+                    <!-- Portal Autogestión MPPE -->
+                    <div class="col-md-6 col-lg-5">
+                        <div class="card border border-primary border-opacity-25 bg-primary bg-opacity-10 h-100 rounded-4">
+                            <div class="card-body p-4">
+                                <h4 class="h6 fw-bold text-primary mb-3 d-flex align-items-center">
+                                    <i data-lucide="building" class="me-2" style="width: 18px; height: 18px;"></i> Portal Autogestión MPPE
+                                </h4>
+                                <div class="alert alert-info border-0 bg-info bg-opacity-10 text-info-emphasis p-3 mb-3" style="font-size: 0.85rem;">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <i data-lucide="info" class="mt-1 flex-shrink-0" style="width: 16px; height: 16px;"></i>
+                                        <div>
+                                            <strong>¿No conoces tu clave?</strong> Busca en tu bandeja de entrada o en la carpeta de Spam un correo de <em>no-responde@mppe.gob.ve</em> con el asunto "clave y usuario sistema autogestion ME". Si la cambiaste y la olvidaste, deberás gestionar el reseteo directamente en el departamento de Recursos Humanos de la Zona Educativa.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p class="small text-dark mb-4">
+                                    <strong>Correo Asociado:</strong> <br>
+                                    {{ trabajador.email }}
+                                </p>
+                                
+                                <form action="{{ url_for('actualizar_credenciales_mppe', id=trabajador.id) }}" method="POST" class="mb-4">
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold text-muted">Correo MPPE</label>
+                                        <input type="text" name="correo_mppe" class="form-control form-control-sm bg-white" value="{{ trabajador.usuario_autogestion or '' }}" placeholder="Ej: micorreo@gmail.com">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold text-muted">Clave de Autogestión</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="password" name="clave_mppe" id="clave_mppe_{{ trabajador.id }}" class="form-control bg-white" value="{{ trabajador.clave_autogestion or '' }}" placeholder="••••••••">
+                                            <button class="btn btn-outline-secondary d-flex align-items-center bg-white px-3" type="button" onclick="togglePassword({{ trabajador.id }})">
+                                                <svg id="eye_{{ trabajador.id }}" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                <svg id="eyeSlash_{{ trabajador.id }}" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted d-none"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold">
+                                        <i data-lucide="save" class="me-1" style="width: 14px; height: 14px;"></i> Actualizar Credenciales
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Expediente Digital del Trabajador -->
+                    <div class="col-md-6 col-lg-7 mt-4 mt-md-0">
+                        <div class="card border border-success border-opacity-25 bg-success bg-opacity-10 h-100 rounded-4">
+                            <div class="card-body p-4">
+                                <h4 class="h6 fw-bold text-success mb-3 d-flex align-items-center">
+                                    <i data-lucide="folder-open" class="me-2" style="width: 18px; height: 18px;"></i> Expediente Digital
+                                </h4>
+                                <div class="d-flex flex-column gap-2 mt-3">
+                                    {% set docs = [
+                                        ('Voucher de Pago', trabajador.voucher_path, 'file-text'),
+                                        ('Constancia de Trabajo', trabajador.constancia_path, 'award'),
+                                        ('Síntesis Curricular', trabajador.curriculum_path, 'file-text'),
+                                        ('RIF Actualizado', trabajador.rif_path, 'credit-card'),
+                                        ('Cédula de Identidad', trabajador.cedula_path, 'contact-2'),
+                                        ('Foto de Perfil', trabajador.foto_perfil_path, 'camera')
+                                    ] %}
+                                    {% for nombre, path, icono in docs %}
+                                        <div class="d-flex align-items-center justify-content-between p-2 rounded-3 bg-white border shadow-sm">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <i data-lucide="{{ icono }}" class="{% if path %}text-success{% else %}text-muted{% endif %}" style="width: 16px; height: 16px;"></i>
+                                                <span class="small fw-semibold {% if path %}text-dark{% else %}text-muted{% endif %}">{{ nombre }}</span>
+                                            </div>
+                                            {% if path %}
+                                                <a href="{{ url_for('ver_documento_personal', filename=path) }}" target="_blank" class="btn btn-sm btn-outline-success d-flex align-items-center py-1 px-2" title="Ver Documento">
+                                                    <i data-lucide="eye" style="width: 14px; height: 14px;"></i> Ver Archivo
+                                                </a>
+                                            {% else %}
+                                                <span class="badge bg-light text-secondary border">Faltante</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+<div class="tab-content" id="personalTabContent">
+    <div class="tab-pane fade show active" id="tab-directivos" role="tabpanel">
+        <div class="row g-4">
+            {% for t in personal %}{% if 'directivo' in (t.area_trabajo or '')|lower or 'supremo' in (t.area_trabajo or '')|lower %}{{ render_tarjeta(t) }}{% endif %}{% endfor %}
+        </div>
+    </div>
+    <div class="tab-pane fade" id="tab-docentes" role="tabpanel">
+        <div class="row g-4">
+            {% for t in personal %}{% if 'docente' in (t.area_trabajo or '')|lower and 'especialista' not in (t.area_trabajo or '')|lower %}{{ render_tarjeta(t) }}{% endif %}{% endfor %}
+        </div>
+    </div>
+    <div class="tab-pane fade" id="tab-especialistas" role="tabpanel">
+        <div class="row g-4">
+            {% for t in personal %}{% if 'especialista' in (t.area_trabajo or '')|lower %}{{ render_tarjeta(t) }}{% endif %}{% endfor %}
+        </div>
+    </div>
+    <div class="tab-pane fade" id="tab-defensoria" role="tabpanel">
+        <div class="row g-4">
+            {% for t in personal %}{% if 'defensor' in (t.area_trabajo or '')|lower %}{{ render_tarjeta(t) }}{% endif %}{% endfor %}
+        </div>
+    </div>
+    <div class="tab-pane fade" id="tab-obreros" role="tabpanel">
+        <div class="row g-4">
+            {% for t in personal %}{% if 'obrero' in (t.area_trabajo or '')|lower %}{{ render_tarjeta(t) }}{% endif %}{% endfor %}
+        </div>
+    </div>
+    <div class="tab-pane fade" id="tab-vigilancia" role="tabpanel">
+        <div class="row g-4">
+            {% for t in personal %}{% if 'vigilancia' in (t.area_trabajo or '')|lower %}{{ render_tarjeta(t) }}{% endif %}{% endfor %}
+        </div>
+    </div>
+    <div class="tab-pane fade" id="tab-cocina" role="tabpanel">
+        <div class="row g-4">
+            {% for t in personal %}{% if 'cocina' in (t.area_trabajo or '')|lower %}{{ render_tarjeta(t) }}{% endif %}{% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal MPPE En Desarrollo -->
+<div class="modal fade" id="modalMppeEnDesarrollo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 bg-warning bg-opacity-10 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4 pb-5 bg-warning bg-opacity-10">
+                <div class="bg-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm text-warning" style="width: 64px; height: 64px;">
+                    <i data-lucide="construction" style="width: 32px; height: 32px;"></i>
+                </div>
+                <h4 class="fw-bold mb-3">Módulo en Desarrollo</h4>
+                <p class="text-muted mb-0">La conexión automatizada con el sistema de Autogestión del MPPE está en desarrollo. Próximamente disponible.</p>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4 bg-warning bg-opacity-10">
+                <button type="button" class="btn btn-warning w-100 fw-bold" data-bs-dismiss="modal">Entendido</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassword(id) {
+    const input = document.getElementById(`clave_mppe_${id}`);
+    const eye = document.getElementById(`eye_${id}`);
+    const eyeSlash = document.getElementById(`eyeSlash_${id}`);
+    
+    if (input.type === "password") {
+        input.type = "text";
+        eye.classList.add('d-none');
+        eyeSlash.classList.remove('d-none');
+    } else {
+        input.type = "password";
+        eyeSlash.classList.add('d-none');
+        eye.classList.remove('d-none');
+    }
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const metrics = {{ metrics | tojson | safe }};
+    
+    const chartConfig = (dataObj) => {
+        return {
+            type: 'doughnut',
+            data: {
+                labels: ['Directivos/Admin', 'Docentes', 'Operativos', 'Faltante'],
+                datasets: [{
+                    data: [dataObj.directivos, dataObj.docentes, dataObj.operativos, dataObj.faltantes],
+                    backgroundColor: [
+                        '#8b5cf6', // primary
+                        '#3b82f6', // blue
+                        '#10b981', // emerald
+                        '#f1f5f9'  // slate-100
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        };
+    };
+
+    new Chart(document.getElementById('chartRif'), chartConfig(metrics.rif));
+    new Chart(document.getElementById('chartCv'), chartConfig(metrics.cv));
+    new Chart(document.getElementById('chartConstancia'), chartConfig(metrics.constancia));
+    new Chart(document.getElementById('chartVoucher'), chartConfig(metrics.voucher));
+    new Chart(document.getElementById('chartCedula'), chartConfig(metrics.cedula));
+});
+</script>
+
+{% endblock %}

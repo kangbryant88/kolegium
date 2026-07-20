@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Historial General - Kolegium{% endblock %}
+{% block header_title %}Historial General de Asistencia{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header .title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
+    .page-header .subtitle { color: var(--on-surface-variant); font-size: 0.85rem; }
+
+    .form-card {
+        background: #fff; border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04); padding: 24px;
+    }
+
+    .form-card h5 {
+        font-weight: 700; font-size: 0.95rem; color: var(--primary);
+        display: flex; align-items: center; gap: 6px; margin-bottom: 20px;
+    }
+    .form-card h5 i { width: 18px; height: 18px; }
+
+    .edu-label {
+        font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1px; color: var(--on-surface-variant); margin-bottom: 6px; display: block;
+    }
+
+    .edu-input {
+        width: 100%; padding: 0.7rem 0.9rem; border-radius: 10px;
+        border: none; background: #eceef0; font-size: 0.85rem;
+        font-family: 'Inter', sans-serif; color: var(--on-surface);
+        transition: all 0.2s; outline: none;
+    }
+    .edu-input:focus { background: #fff; box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
+
+    .btn-submit-attendance {
+        width: 100%; padding: 14px; border: none; border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff; font-weight: 700; font-size: 0.95rem;
+        font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.25s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-submit-attendance:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(70,72,212,0.3); }
+    .btn-submit-attendance i { width: 18px; height: 18px; }
+
+    .consolidado-card {
+        background: #fff; border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04); padding: 24px; height: 100%;
+    }
+    .consolidado-card h5 {
+        font-weight: 700; font-size: 0.95rem;
+        display: flex; align-items: center; gap: 6px; margin-bottom: 16px;
+    }
+    .consolidado-card h5 i { width: 18px; height: 18px; color: var(--primary); }
+
+    .table-custom { width: 100%; font-size: 0.85rem; border-collapse: separate; border-spacing: 0; }
+    .table-custom th {
+        background: rgba(15, 23, 42, 0.02); color: var(--on-surface-variant); font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1px; font-size: 0.7rem; padding: 12px 16px;
+        border-bottom: 2px solid var(--outline-variant);
+    }
+    .table-custom td {
+        padding: 14px 16px; vertical-align: middle; border-bottom: 1px solid var(--surface-container-high);
+        color: var(--on-surface); font-weight: 500;
+    }
+    .table-custom tbody tr:hover { background: var(--surface-container-lowest); }
+
+    .empty-state {
+        text-align: center; padding: 2.5rem; background: #fff; border-radius: 16px;
+        color: var(--on-surface-variant); opacity: 0.6;
+    }
+    .empty-state i { width: 36px; height: 36px; margin-bottom: 8px; }
+
+    .summary-box {
+        background: rgba(70,72,212,0.06); padding: 16px; border-radius: 12px;
+        display: flex; justify-content: space-around; margin-bottom: 20px;
+    }
+    .summary-stat { text-align: center; }
+    .summary-stat span { display: block; font-size: 0.7rem; font-weight: 700; color: var(--on-surface-variant); text-transform: uppercase; letter-spacing: 1px; }
+    .summary-stat .val { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 1200px;">
+    <div class="page-header mb-4">
+        <h3 class="title">Historial General de Asistencia</h3>
+        <p class="subtitle mb-0">Consulte los asistentes a nivel global por fecha</p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="form-card">
+                <h5><i data-lucide="calendar-search"></i> Buscar por Fecha</h5>
+                <form action="/historial_global" method="GET">
+                    <div class="mb-4">
+                        <label class="edu-label">SELECCIONAR FECHA</label>
+                        <input type="date" name="fecha" class="edu-input" value="{{ fecha_busqueda }}" required>
+                    </div>
+                    <button type="submit" class="btn-submit-attendance">
+                        <i data-lucide="search"></i> Buscar Registros
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-8 mb-4">
+            <div class="consolidado-card">
+                <h5><i data-lucide="clipboard-list"></i> Resultados del {{ fecha_busqueda }}</h5>
+
+                <div class="summary-box">
+                    <div class="summary-stat">
+                        <span>Estudiantes Presentes</span>
+                        <div class="val">{{ t_estudiantes }}</div>
+                    </div>
+                    <div class="summary-stat">
+                        <span>Personal Presente</span>
+                        <div class="val">{{ t_personal }}</div>
+                    </div>
+                </div>
+
+                {% if regs_estudiantes or regs_personal %}
+                <div style="height: 500px; overflow-y: auto;">
+                    {% if regs_estudiantes %}
+                    <h6 class="mt-3 mb-2 fw-bold text-primary" style="font-size:0.95rem;">Estudiantes</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Grado/Sección</th>
+                                    <th class="text-center">Matrícula</th>
+                                    <th class="text-center">Asistentes</th>
+                                    <th class="text-end">Porcentaje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in regs_estudiantes %}
+                                <tr>
+                                    <td>{{ r.grado_seccion }}</td>
+                                    <td class="text-center">{{ r.matricula_total }}</td>
+                                    <td class="text-center">{{ r.asistentes }}</td>
+                                    <td class="text-end fw-bold {% if r.porcentaje >= 80 %}text-success{% elif r.porcentaje >= 50 %}text-warning{% else %}text-danger{% endif %}">{{ r.porcentaje }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+
+                    {% if regs_personal %}
+                    <h6 class="mt-3 mb-2 fw-bold text-primary" style="font-size:0.95rem;">Personal</h6>
+                    <div class="table-responsive">
+                        <table class="table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th class="text-center">Matrícula</th>
+                                    <th class="text-center">Asistentes</th>
+                                    <th class="text-end">Porcentaje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in regs_personal %}
+                                <tr>
+                                    <td>{{ r.categoria }}</td>
+                                    <td class="text-center">{{ r.matricula_base }}</td>
+                                    <td class="text-center">{{ r.asistentes }}</td>
+                                    <td class="text-end fw-bold {% if r.porcentaje >= 80 %}text-success{% elif r.porcentaje >= 50 %}text-warning{% else %}text-danger{% endif %}">{{ r.porcentaje }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i data-lucide="calendar-x"></i>
+                        <h5 style="font-weight:700;">No hay datos para esta fecha</h5>
+                        <p class="mb-0">Pruebe seleccionando un día laborable diferente.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

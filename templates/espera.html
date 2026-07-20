@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kolegium | Cuenta en Revisión</title>
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --bg-color: #050505;
+            --text-color: #ffffff;
+            --card-bg: #121212;
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(120% 100% at top right, rgba(88, 28, 135, 0.15) 0%, var(--bg-color) 60%);
+            background-attachment: fixed;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .status-card {
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            padding: 3.5rem 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pulse-icon {
+            width: 88px;
+            height: 88px;
+            background: rgba(139, 92, 246, 0.1);
+            color: #a78bfa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.75rem;
+            animation: pulse-ring 2.5s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+            position: relative;
+        }
+
+        .pulse-icon i {
+            font-size: 2.5rem;
+            z-index: 2;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.3); }
+            70% { transform: scale(1); box-shadow: 0 0 0 25px rgba(139, 92, 246, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+        }
+
+        .status-card h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.75rem;
+        }
+
+        .text-gradient {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        .status-card p { 
+            color: #a1a1aa; 
+            font-size: 0.95rem; 
+            line-height: 1.6; 
+            margin-bottom: 0;
+        }
+
+        .info-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            margin: 2rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #d4d4d8;
+        }
+
+        .info-box i { 
+            font-size: 1.25rem; 
+            color: #8b5cf6; 
+            flex-shrink: 0; 
+            margin-top: 2px; 
+        }
+
+        .btn-logout-wait {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            font-weight: 700;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout-wait:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            transform: translateY(-2px);
+        }
+
+        .btn-logout-wait i { 
+            font-size: 1.2rem; 
+        }
+
+        .brand-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 2.5rem;
+            padding: 8px 16px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #a1a1aa;
+        }
+
+        .brand-tag i { 
+            font-size: 1rem; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="status-card">
+        <div class="pulse-icon">
+            <i class="ph-duotone ph-user-gear"></i>
+        </div>
+
+        <h2>Cuenta en Revisión</h2>
+
+        <p>
+            Hola, <strong style="color: white;">{{ session['nombre_completo'] }}</strong>. Tu registro se ha completado con éxito, pero tu acceso todavía no ha sido autorizado.
+        </p>
+
+        <div class="info-box">
+            <i class="ph-duotone ph-info"></i>
+            <span>Estamos esperando que la <strong style="color: white;">Dirección del Plantel</strong> te asigne un rol oficial para habilitar tus módulos.</span>
+        </div>
+
+        <p style="font-size: 0.85rem; margin-bottom: 2rem;">
+            Recibirás acceso automático una vez que los administradores aprueben tu perfil.
+        </p>
+
+        <a href="/logout" class="btn-logout-wait">
+            <i class="ph-bold ph-sign-out"></i>
+            Cerrar Sesión por ahora
+        </a>
+
+        <div>
+            <span class="brand-tag">
+                <i class="ph-bold ph-rocket"></i>
+                Kolegium
+            </span>
+        </div>
+    </div>
+
+</body>
+</html>
