@@ -1,0 +1,30 @@
+# === Kolegium - Archivos Ignorados ===
+
+# Variables de entorno (CREDENCIALES SENSIBLES)
+.env
+
+# Base de datos local
+*.db
+
+# Entorno virtual
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Uploads del usuario
+uploads/
+
+# Backups y archivos comprimidos
+*.zip
+backup_v*/
+
+# IDE
+.vscode/
+.idea/

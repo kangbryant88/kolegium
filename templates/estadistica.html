@@ -10,7 +10,8 @@
             <p class="text-muted mb-0">Monitor de Matrícula y Admisiones</p>
         </div>
         <div class="d-grid d-md-block">
-            <button type="button" class="btn btn-primary px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalRegistro">
+            <button type="button" class="btn btn-primary px-4 py-2 fw-semibold shadow-sm" data-bs-toggle="modal"
+                data-bs-target="#modalRegistro">
                 <i data-lucide="user-plus" class="me-2" style="width:18px;height:18px;vertical-align:text-bottom;"></i>
                 Registrar Nuevo Estudiante
             </button>
@@ -21,7 +22,8 @@
 <div class="row g-4 mb-4">
     <!-- Últimos Ingresos (Tarjeta Verde) -->
     <div class="col-12 col-md-6">
-        <div class="card border-0 shadow-sm h-100 rounded-4" style="background: linear-gradient(145deg, #10b981, #059669); color: white;">
+        <div class="card border-0 shadow-sm h-100 rounded-4"
+            style="background: linear-gradient(145deg, #10b981, #059669); color: white;">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="fw-bold mb-0">Últimos Ingresos (Activos)</h5>
@@ -30,16 +32,19 @@
                     </div>
                 </div>
                 {% if ultimos_ingresos %}
-                    <ul class="list-unstyled mb-0">
+                <ul class="list-unstyled mb-0">
                     {% for est in ultimos_ingresos %}
-                        <li class="mb-2 d-flex align-items-center">
-                            <i data-lucide="check-circle" class="me-2" style="width: 16px; height: 16px;"></i>
-                            <span class="opacity-90">{{ est.nombre_completo }} <small class="ms-1">({{ est.cedula_escolar }})</small></span>
-                        </li>
+                    <li class="mb-2 d-flex align-items-center">
+                        <i data-lucide="check-circle" class="me-2" style="width: 16px; height: 16px;"></i>
+                        <span class="opacity-90">{{ est.nombre_completo }} <small class="ms-1">({{ est.cedula_escolar
+                                }})</small></span>
+                    </li>
                     {% endfor %}
-                    </ul>
+                </ul>
                 {% else %}
-                    <p class="mb-0 opacity-75"><i data-lucide="info" class="me-2" style="width: 16px; height: 16px; margin-top:-2px;"></i> No hay ingresos registrados recientemente.</p>
+                <p class="mb-0 opacity-75"><i data-lucide="info" class="me-2"
+                        style="width: 16px; height: 16px; margin-top:-2px;"></i> No hay ingresos registrados
+                    recientemente.</p>
                 {% endif %}
             </div>
         </div>
@@ -47,7 +52,8 @@
 
     <!-- Últimos Egresos (Tarjeta Roja) -->
     <div class="col-12 col-md-6">
-        <div class="card border-0 shadow-sm h-100 rounded-4" style="background: linear-gradient(145deg, #ef4444, #dc2626); color: white;">
+        <div class="card border-0 shadow-sm h-100 rounded-4"
+            style="background: linear-gradient(145deg, #ef4444, #dc2626); color: white;">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="fw-bold mb-0">Últimos Egresos</h5>
@@ -56,16 +62,19 @@
                     </div>
                 </div>
                 {% if ultimos_egresos %}
-                    <ul class="list-unstyled mb-0">
+                <ul class="list-unstyled mb-0">
                     {% for est in ultimos_egresos %}
-                        <li class="mb-2 d-flex align-items-center">
-                            <i data-lucide="x-circle" class="me-2" style="width: 16px; height: 16px;"></i>
-                            <span class="opacity-90">{{ est.nombre_completo }} <small class="ms-1">({{ est.cedula_escolar }})</small></span>
-                        </li>
+                    <li class="mb-2 d-flex align-items-center">
+                        <i data-lucide="x-circle" class="me-2" style="width: 16px; height: 16px;"></i>
+                        <span class="opacity-90">{{ est.nombre_completo }} <small class="ms-1">({{ est.cedula_escolar
+                                }})</small></span>
+                    </li>
                     {% endfor %}
-                    </ul>
+                </ul>
                 {% else %}
-                    <p class="mb-0 opacity-75"><i data-lucide="info" class="me-2" style="width: 16px; height: 16px; margin-top:-2px;"></i> No hay egresos registrados recientemente.</p>
+                <p class="mb-0 opacity-75"><i data-lucide="info" class="me-2"
+                        style="width: 16px; height: 16px; margin-top:-2px;"></i> No hay egresos registrados
+                    recientemente.</p>
                 {% endif %}
             </div>
         </div>
@@ -76,82 +85,119 @@
     <!-- Tabla de Matrícula General -->
     <div class="col-12 col-xl-7">
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
-    <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold text-dark">Matrícula General <span class="badge bg-primary text-white ms-2 rounded-pill">{{ total_estudiantes }} Estudiantes</span></h5>
-    </div>
-    <div class="card-body p-0 pt-3">
-        <!-- Pestañas (Tabs) -->
-        <ul class="nav nav-pills flex-nowrap overflow-x-auto pb-2 mb-3 px-4 gap-2" id="gradosTab" role="tablist" style="white-space: nowrap; -webkit-overflow-scrolling: touch;">
-            {% for grado_id, grupo_estudiantes in estudiantes|groupby('grado_id') %}
-                {% set ns = namespace(grado_nombre='No Asignado') %}
-                {% if grado_id %}
+            <div
+                class="card-header bg-white border-bottom-0 pt-4 pb-0 px-3 px-md-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-dark">Matrícula General <span
+                        class="badge bg-primary text-white ms-2 rounded-pill">{{ total_estudiantes }} Estudiantes</span>
+                </h5>
+            </div>
+            <div class="card-body p-0 pt-4 pb-4 d-flex flex-column" style="max-height: 450px; overflow-y: auto;">
+                <!-- Botones Modales -->
+                <div class="row g-3 px-4 mx-0 justify-content-center">
+                    {% for grado_id, grupo_estudiantes in estudiantes|groupby('grado_id') %}
+                    {% set ns = namespace(grado_nombre='No Asignado') %}
+                    {% if grado_id %}
                     {% for g in grados %}
-                        {% if g.id == grado_id %}
-                            {% set ns.grado_nombre = g.nombre %}
-                        {% endif %}
+                    {% if g.id == grado_id %}
+                    {% set ns.grado_nombre = g.nombre %}
+                    {% endif %}
                     {% endfor %}
-                {% endif %}
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-semibold px-4 py-2 rounded-pill border {% if loop.first %}active{% endif %}" id="tab-grado-{{ loop.index }}" data-bs-toggle="pill" data-bs-target="#pane-grado-{{ loop.index }}" type="button" role="tab" aria-controls="pane-grado-{{ loop.index }}" aria-selected="{{ 'true' if loop.first else 'false' }}">
-                        {{ ns.grado_nombre }}
-                    </button>
-                </li>
-            {% else %}
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-semibold px-4 py-2 rounded-pill border active" id="tab-vacio" data-bs-toggle="pill" data-bs-target="#pane-vacio" type="button" role="tab" aria-controls="pane-vacio" aria-selected="true">
-                        General
-                    </button>
-                </li>
-            {% endfor %}
-        </ul>
+                    {% endif %}
+                    <div class="col-12 col-sm-6 col-md-4 col-xl-3">
+                        <button
+                            class="btn bg-white w-100 text-center fw-semibold px-3 py-3 rounded-4 shadow-sm border border-secondary border-opacity-25 d-flex flex-column align-items-center justify-content-center h-100"
+                            data-bs-toggle="modal" data-bs-target="#modal-grado-{{ loop.index }}"
+                            style="transition: all 0.2s ease;">
+                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 mb-2">
+                                <i data-lucide="users" style="width:24px;height:24px;"></i>
+                            </div>
+                            <span class="text-dark">{{ ns.grado_nombre }}</span>
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="col-12 col-sm-6 col-md-4 col-xl-3">
+                        <button
+                            class="btn bg-white w-100 text-center fw-semibold px-3 py-3 rounded-4 shadow-sm border border-secondary border-opacity-25 d-flex flex-column align-items-center justify-content-center h-100"
+                            data-bs-toggle="modal" data-bs-target="#modal-vacio">
+                            <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 mb-2">
+                                <i data-lucide="users" style="width:24px;height:24px;"></i>
+                            </div>
+                            <span class="text-dark">General</span>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div> <!-- Cierre de col-12 col-xl-7 -->
 
-        <!-- Contenido de las Pestañas (Tab Panes) -->
-        <div class="tab-content" id="gradosTabContent">
-            {% for grado_id, grupo_estudiantes in estudiantes|groupby('grado_id') %}
-                {% set ns = namespace(grado_nombre='No Asignado') %}
-                {% if grado_id %}
-                    {% for g in grados %}
-                        {% if g.id == grado_id %}
-                            {% set ns.grado_nombre = g.nombre %}
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-                <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="pane-grado-{{ loop.index }}" role="tabpanel" aria-labelledby="tab-grado-{{ loop.index }}" tabindex="0">
-                    <div class="table-responsive border-0" style="max-height: 60vh; overflow-y: auto;">
+    <!-- Modales de Grados -->
+    {% for grado_id, grupo_estudiantes in estudiantes|groupby('grado_id') %}
+    {% set ns = namespace(grado_nombre='No Asignado') %}
+    {% if grado_id %}
+    {% for g in grados %}
+    {% if g.id == grado_id %}
+    {% set ns.grado_nombre = g.nombre %}
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    <div class="modal fade" id="modal-grado-{{ loop.index }}" tabindex="-1"
+        aria-labelledby="modal-grado-label-{{ loop.index }}" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-dark" id="modal-grado-label-{{ loop.index }}">
+                        {{ ns.grado_nombre }} <span class="badge bg-primary text-white ms-2 rounded-pill">{{
+                            grupo_estudiantes|length }} Estudiantes</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive border-0">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light sticky-top" style="z-index: 1;">
                                 <tr>
                                     <th class="ps-4 text-nowrap" style="background-color: #f8f9fa;">Cédula Escolar</th>
-                                    <th class="text-nowrap" style="background-color: #f8f9fa;">Nombre del Estudiante</th>
+                                    <th style="background-color: #f8f9fa; min-width: 200px;">Nombre del Estudiante</th>
                                     <th class="text-nowrap" style="background-color: #f8f9fa;">Estatus</th>
-                                    <th class="text-end pe-4 text-nowrap" style="background-color: #f8f9fa;">Acciones</th>
+                                    <th class="text-end pe-4 text-nowrap" style="background-color: #f8f9fa;">Acciones
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for est in grupo_estudiantes %}
                                 <tr>
                                     <td class="ps-4 fw-medium text-nowrap">{{ est.cedula_escolar }}</td>
-                                    <td>
+                                    <td class="text-wrap">
                                         <div class="d-flex align-items-center">
-                                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold flex-shrink-0" style="width:36px;height:36px;font-size:0.85rem;">
+                                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold flex-shrink-0"
+                                                style="width:36px;height:36px;font-size:0.85rem;">
                                                 {{ est.nombre_completo[0]|upper }}
                                             </div>
-                                            <div>
-                                                <div class="fw-semibold text-dark">{{ est.nombre_completo }}</div>
-                                                <div class="text-muted small">C.I. Rep: {{ est.representante_info.cedula if est.representante_info else 'N/A' }}</div>
+                                            <div style="min-width: 0;">
+                                                <div class="fw-semibold text-dark text-truncate"
+                                                    style="max-width: 250px;" title="{{ est.nombre_completo }}">{{
+                                                    est.nombre_completo }}</div>
+                                                <div class="text-muted small text-truncate" style="max-width: 250px;">
+                                                    C.I. Rep: {{ est.representante_info.cedula if est.representante_info
+                                                    else 'N/A' }}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="text-nowrap">
                                         {% if est.estatus == 'Activo' %}
-                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 fw-semibold">Activo</span>
+                                        <span
+                                            class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 fw-semibold">Activo</span>
                                         {% else %}
-                                        <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 fw-semibold">Egreso</span>
+                                        <span
+                                            class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 fw-semibold">Egreso</span>
                                         {% endif %}
                                     </td>
                                     <td class="text-end pe-4 text-nowrap">
-                                        <a href="{{ url_for('perfil_estudiante', id=est.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                                            <i data-lucide="eye" class="me-1" style="width:14px;height:14px;"></i> Detalles
+                                        <a href="{{ url_for('perfil_estudiante', id=est.id) }}"
+                                            class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                            <i data-lucide="eye" class="me-1" style="width:14px;height:14px;"></i>
+                                            Detalles
                                         </a>
                                     </td>
                                 </tr>
@@ -160,16 +206,28 @@
                         </table>
                     </div>
                 </div>
-            {% else %}
-                <div class="tab-pane fade show active" id="pane-vacio" role="tabpanel" aria-labelledby="tab-vacio" tabindex="0">
-                    <div class="table-responsive border-0" style="max-height: 60vh; overflow-y: auto;">
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="modal fade" id="modal-vacio" tabindex="-1" aria-labelledby="modal-vacio-label" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+                    <h5 class="modal-title fw-bold text-dark" id="modal-vacio-label">General</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive border-0">
                         <table class="table table-hover align-middle mb-0">
                             <tbody>
                                 <tr>
                                     <td colspan="4" class="text-center py-5">
-                                        <div class="d-flex flex-column align-items-center justify-content-center text-muted">
+                                        <div
+                                            class="d-flex flex-column align-items-center justify-content-center text-muted">
                                             <div class="bg-light rounded-circle p-3 mb-3">
-                                                <i data-lucide="users" style="width:32px;height:32px;color:#9ca3af;"></i>
+                                                <i data-lucide="users"
+                                                    style="width:32px;height:32px;color:#9ca3af;"></i>
                                             </div>
                                             <h6>No hay estudiantes registrados</h6>
                                             <p class="mb-0 small">Aún no se ha ingresado matrícula en el sistema.</p>
@@ -180,94 +238,99 @@
                         </table>
                     </div>
                 </div>
-            {% endfor %}
+            </div>
         </div>
     </div>
-</div>
-    </div> <!-- Cierre de col-12 col-xl-7 -->
+    {% endfor %}
+
 
     <!-- Visor de Aulas Digital -->
     <div class="col-12 col-xl-5">
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
-    <div class="card-header bg-white border-bottom pt-4 pb-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-        <div>
-            <h5 class="mb-0 fw-bold text-dark">Visor de Aulas Digital</h5>
-            <p class="text-muted mb-0 small">Directorio Nominal por Salón</p>
-        </div>
-        <select id="selectorAulas" class="form-select w-100 w-md-auto fw-semibold border-0 bg-light mt-3 mt-md-0" onchange="filtrarAula()">
-            <option value="">-- Seleccionar Aula --</option>
-            {% for g in grados %}
-            <option value="{{ g.id }}">{{ g.nombre }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    
-    <div class="card-body p-4 bg-light" id="panelAulaVacio">
-        <div class="text-center py-5 text-muted">
-            <i data-lucide="monitor" style="width:48px;height:48px;color:#cbd5e1;margin-bottom:12px;"></i>
-            <h5 class="fw-bold">Directorio Vacío</h5>
-            <p class="mb-0">Seleccione un aula en el menú superior para cargar la lista nominal.</p>
-        </div>
-    </div>
+            <div
+                class="card-header bg-white border-bottom pt-4 pb-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <h5 class="mb-0 fw-bold text-dark">Visor de Aulas Digital</h5>
+                    <p class="text-muted mb-0 small">Directorio Nominal por Salón</p>
+                </div>
+                <select id="selectorAulas"
+                    class="form-select w-100 w-md-auto fw-semibold border-0 bg-light mt-3 mt-md-0"
+                    onchange="filtrarAula()">
+                    <option value="">-- Seleccionar Aula --</option>
+                    {% for g in grados %}
+                    <option value="{{ g.id }}">{{ g.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-    <div class="card-body p-4 d-none" id="panelAulaLleno">
-        <!-- Resumen -->
-        <div class="row g-3 mb-4 text-center">
-            <div class="col-12 col-sm-4">
-                <div class="border border-secondary border-opacity-10 rounded-4 p-3 bg-white shadow-sm h-100">
-                    <h6 class="text-muted fw-semibold mb-1" style="font-size:0.8rem;">Estudiantes</h6>
-                    <h3 class="mb-0 fw-bold text-dark" id="countTotal">0</h3>
+            <div class="card-body p-4 bg-light" id="panelAulaVacio" style="max-height: 450px; overflow-y: auto;">
+                <div class="text-center py-5 text-muted">
+                    <i data-lucide="monitor" style="width:48px;height:48px;color:#cbd5e1;margin-bottom:12px;"></i>
+                    <h5 class="fw-bold">Directorio Vacío</h5>
+                    <p class="mb-0">Seleccione un aula en el menú superior para cargar la lista nominal.</p>
                 </div>
             </div>
-            <div class="col-12 col-sm-4">
-                <div class="border border-danger border-opacity-25 rounded-4 p-3 bg-white shadow-sm h-100">
-                    <h6 class="text-muted fw-semibold mb-1" style="font-size:0.8rem;">Niñas</h6>
-                    <h3 class="mb-0 fw-bold text-danger" id="countNinas">0</h3>
-                </div>
-            </div>
-            <div class="col-12 col-sm-4">
-                <div class="border border-primary border-opacity-25 rounded-4 p-3 bg-white shadow-sm h-100">
-                    <h6 class="text-muted fw-semibold mb-1" style="font-size:0.8rem;">Varones</h6>
-                    <h3 class="mb-0 fw-bold text-primary" id="countVarones">0</h3>
-                </div>
-            </div>
-        </div>
 
-        <!-- Listas -->
-        <div class="row g-4 border-top pt-2">
-            <!-- Niñas -->
-            <div class="col-12 col-md-6">
-                <div class="card border border-danger border-opacity-25 shadow-sm rounded-4 h-100 overflow-hidden">
-                    <div class="card-header bg-danger bg-opacity-10 py-3 border-0">
-                        <h6 class="mb-0 fw-bold text-danger d-flex align-items-center">
-                            <i data-lucide="user" class="me-2" style="width:18px;"></i> Niñas
-                        </h6>
+            <div class="card-body p-4 d-none" id="panelAulaLleno" style="max-height: 450px; overflow-y: auto;">
+                <!-- Resumen -->
+                <div class="row g-3 mb-4 text-center">
+                    <div class="col-12 col-sm-4">
+                        <div class="border border-secondary border-opacity-10 rounded-4 p-3 bg-white shadow-sm h-100">
+                            <h6 class="text-muted fw-semibold mb-1" style="font-size:0.8rem;">Estudiantes</h6>
+                            <h3 class="mb-0 fw-bold text-dark" id="countTotal">0</h3>
+                        </div>
                     </div>
-                    <div class="card-body p-0">
-                        <ul class="list-group list-group-flush" id="listaNinas">
-                            <!-- JS inyecta -->
-                        </ul>
+                    <div class="col-12 col-sm-4">
+                        <div class="border border-danger border-opacity-25 rounded-4 p-3 bg-white shadow-sm h-100">
+                            <h6 class="text-muted fw-semibold mb-1" style="font-size:0.8rem;">Niñas</h6>
+                            <h3 class="mb-0 fw-bold text-danger" id="countNinas">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <div class="border border-primary border-opacity-25 rounded-4 p-3 bg-white shadow-sm h-100">
+                            <h6 class="text-muted fw-semibold mb-1" style="font-size:0.8rem;">Varones</h6>
+                            <h3 class="mb-0 fw-bold text-primary" id="countVarones">0</h3>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <!-- Varones -->
-            <div class="col-12 col-md-6">
-                <div class="card border border-primary border-opacity-25 shadow-sm rounded-4 h-100 overflow-hidden">
-                    <div class="card-header bg-primary bg-opacity-10 py-3 border-0">
-                        <h6 class="mb-0 fw-bold text-primary d-flex align-items-center">
-                            <i data-lucide="user" class="me-2" style="width:18px;"></i> Varones
-                        </h6>
+
+                <!-- Listas -->
+                <div class="row g-4 border-top pt-2">
+                    <!-- Niñas -->
+                    <div class="col-12 col-md-6">
+                        <div
+                            class="card border border-danger border-opacity-25 shadow-sm rounded-4 h-100 overflow-hidden">
+                            <div class="card-header bg-danger bg-opacity-10 py-3 border-0">
+                                <h6 class="mb-0 fw-bold text-danger d-flex align-items-center">
+                                    <i data-lucide="user" class="me-2" style="width:18px;"></i> Niñas
+                                </h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush" id="listaNinas">
+                                    <!-- JS inyecta -->
+                                </ul>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body p-0">
-                        <ul class="list-group list-group-flush" id="listaVarones">
-                            <!-- JS inyecta -->
-                        </ul>
+                    <!-- Varones -->
+                    <div class="col-12 col-md-6">
+                        <div
+                            class="card border border-primary border-opacity-25 shadow-sm rounded-4 h-100 overflow-hidden">
+                            <div class="card-header bg-primary bg-opacity-10 py-3 border-0">
+                                <h6 class="mb-0 fw-bold text-primary d-flex align-items-center">
+                                    <i data-lucide="user" class="me-2" style="width:18px;"></i> Varones
+                                </h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush" id="listaVarones">
+                                    <!-- JS inyecta -->
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
     </div> <!-- Cierre de col-12 col-xl-5 -->
 </div> <!-- Cierre de row g-4 mb-4 -->
 
@@ -275,247 +338,276 @@
 <div class="modal fade" id="modalRegistro" tabindex="-1" aria-labelledby="modalRegistroLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-fullscreen-lg-down">
         <form action="/registrar_estudiante" method="POST" class="modal-content border-0 rounded-4 shadow-lg">
-            
+
             <!-- Encabezado del Modal -->
-                <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
-                    <div class="d-flex align-items-center">
-                        <div class="bg-primary text-white p-2 rounded-3 me-3">
-                            <i data-lucide="user-plus" style="width:24px;height:24px;"></i>
-                        </div>
-                        <div>
-                            <h5 class="modal-title fw-bold text-dark" id="modalRegistroLabel">Ficha de Admisión</h5>
-                            <p class="mb-0 text-muted small">Complete todos los requerimientos para el registro de la Cédula Escolar</p>
-                        </div>
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white p-2 rounded-3 me-3">
+                        <i data-lucide="user-plus" style="width:24px;height:24px;"></i>
                     </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-
-                <!-- Cuerpo del Modal -->
-                <div class="modal-body px-4 py-4" style="max-height: 70vh; overflow-y: auto;">
-                    
-                    <h6 class="fw-bold text-primary mb-3 text-uppercase" style="font-size:0.8rem;letter-spacing:1px;"><i data-lucide="id-card" class="me-1" style="width:16px;"></i> Identidad y Legal (Generador de Cédula Escolar)</h6>
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-5">
-                            <label class="form-label fw-semibold text-dark">Nombre Completo del Estudiante</label>
-                            <input type="text" class="form-control" name="nombre_estudiante" required placeholder="Ej. Juan Pérez">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold text-dark">Fecha Nacimiento</label>
-                            <input type="date" class="form-control" name="fecha_nacimiento" required>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold text-dark">Nro Parto</label>
-                            <input type="number" class="form-control" name="nro_parto" required min="1" value="1">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold text-dark">Género</label>
-                            <select class="form-select" name="genero">
-                                <option value="Masculino">Masculino</option>
-                                <option value="Femenino">Femenino</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-12">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold text-dark">Lugar Nacimiento</label>
-                                    <input type="text" class="form-control" name="lugar_nacimiento" placeholder="Estado, Ciudad, Hospital">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label fw-semibold text-dark">Nro de Acta</label>
-                                    <input type="text" class="form-control" name="num_acta" placeholder="Ej. 1290">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label fw-semibold text-dark">Nro de Oficio</label>
-                                    <input type="text" class="form-control" name="num_oficio" placeholder="Ej. 04052">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-12">
-                            <div class="row g-3 mt-1">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold text-dark">Plantel de Procedencia</label>
-                                    <input type="text" class="form-control" name="plantel_procedencia" placeholder="Nombre de la Institución Anterior">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold text-dark">Correo Electrónico (Estudiante)</label>
-                                    <input type="email" class="form-control" name="email_estudiante" placeholder="estudiante@ejemplo.com">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h6 class="fw-bold text-primary mb-3 text-uppercase" style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i data-lucide="users" class="me-1" style="width:16px;"></i> Referencia Familiar y Procedencia</h6>
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-dark">Cédula Madre/Representante</label>
-                            <input type="text" class="form-control" name="cedula_representante" required placeholder="Ej. 12345678">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-dark">Nombre Representante</label>
-                            <input type="text" class="form-control" name="nombre_representante" required placeholder="Ej. María Pérez">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-dark">Parentesco</label>
-                            <select class="form-select" name="parentesco">
-                                <option value="Madre">Madre</option>
-                                <option value="Padre">Padre</option>
-                                <option value="Abuelo/a">Abuelo/a</option>
-                                <option value="Tío/a">Tío/a</option>
-                                <option value="Hermano/a Mayor">Hermano/a Mayor</option>
-                                <option value="Otro Tutor Legal">Otro Tutor Legal</option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold text-dark">Teléfono</label>
-                            <input type="text" class="form-control" name="telefono_representante" placeholder="04XX-XXXXXXX">
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label fw-semibold text-dark">Correo del Representante</label>
-                            <input type="email" class="form-control" name="email_representante" placeholder="correo@ejemplo.com">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-dark">Dirección de Habitación</label>
-                            <input type="text" class="form-control" name="direccion_habitacion" placeholder="Ej. Urb. Los Mangos, Calle 4, Casa Nro 12">
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold text-dark">Dirección Completa (Adicional)</label>
-                            <textarea class="form-control" name="direccion_completa" rows="2" placeholder="Describa punto de referencia y otros detalles"></textarea>
-                        </div>
-                        
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-dark">Grado a Asignar</label>
-                            <select class="form-select" name="grado_id">
-                                <option value="">-- Seleccione (Opcional) --</option>
-                                {% for g in grados %}
-                                <option value="{{ g.id }}">{{ g.nombre }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold text-dark">Literal (A-D)</label>
-                            <select class="form-select" name="literal_escolar">
-                                <option value="">N/A</option>
-                                <option value="A">A</option>
-                                <option value="B">B</option>
-                                <option value="C">C</option>
-                                <option value="D">D</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold text-dark">Procedencia / Institución</label>
-                            <input type="text" class="form-control" name="procedencia" placeholder="(Nuevo Ingreso / Nro. Plantel)">
-                        </div>
-                    </div>
-
-                    <h6 class="fw-bold text-primary mb-3 text-uppercase" style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i data-lucide="activity" class="me-1" style="width:16px;"></i> Referencia Médica y Física</h6>
-                    <div class="row g-3 mb-2">
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold text-dark">Medida Talla</label>
-                            <div class="input-group">
-                                <input type="number" step="0.01" class="form-control" name="talla" placeholder="110">
-                                <span class="input-group-text bg-light text-muted">cm</span>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold text-dark">Medida Peso</label>
-                            <div class="input-group">
-                                <input type="number" step="0.01" class="form-control" name="peso" placeholder="25">
-                                <span class="input-group-text bg-light text-muted">kg</span>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold text-dark">Talla Calzado</label>
-                            <input type="text" class="form-control" name="calzado" placeholder="Ej. 28">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold text-dark">Talla de Camisa/Franela</label>
-                            <input type="text" class="form-control" name="talla_camisa" placeholder="Ej. 10 o S">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold text-dark">Talla de Pantalón/Falda</label>
-                            <input type="text" class="form-control" name="talla_pantalon" placeholder="Ej. 12 o M">
-                        </div>
-                        <div class="col-md-2 mt-3">
-                            <label class="form-label fw-semibold text-dark">Grupo Sanguíneo</label>
-                            <select class="form-select" name="tipaje">
-                                <option value="O+">O+</option>
-                                <option value="O-">O-</option>
-                                <option value="A+">A+</option>
-                                <option value="A-">A-</option>
-                                <option value="B+">B+</option>
-                                <option value="B-">B-</option>
-                                <option value="AB+">AB+</option>
-                                <option value="AB-">AB-</option>
-                                <option value="No Sabe">No Sabe</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label fw-semibold text-dark">Lateralidad</label>
-                            <select class="form-select" name="lateralidad">
-                                <option value="Diestro">Diestro</option>
-                                <option value="Zurdo">Zurdo</option>
-                                <option value="Ambidextro">Ambidextro</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold text-dark">Alergias</label>
-                            <input type="text" class="form-control" name="alergias" placeholder="Alimentos, Medicamentos, Ninguna...">
-                        </div>
-
-                        <div class="col-md-4 mt-3">
-                            <label class="form-label fw-semibold text-dark">Esquema de Vacunación</label>
-                            <select class="form-select" name="vacunacion_completa">
-                                <option value="Si">Sí, Esquema Completo</option>
-                                <option value="Parcial">No, Incompleto</option>
-                                <option value="No">Sin Vacunación</option>
-                            </select>
-                        </div>
-                        
-                        <div class="col-md-8 mt-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="form-check form-switch me-3">
-                                    <input class="form-check-input mt-1" type="checkbox" role="switch" id="switchNeuro" name="neurodivergencia">
-                                    <label class="form-check-label fw-semibold" for="switchNeuro">Estudiante Neurodivergente / N.E.E</label>
-                                </div>
-                            </div>
-                            <input type="text" class="form-control bg-light" name="neuro_detalle" id="inputNeuroDetalle" placeholder="Si aplica, indique diagnóstico (TEA, TDAH, Dislexia, Condición Motora...)" disabled>
-                        </div>
-                    </div>
-                    
-                    <h6 class="fw-bold text-primary mb-3 text-uppercase" style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i data-lucide="file-check-2" class="me-1" style="width:16px;"></i> Estatus Histórico</h6>
-                    <div class="row pt-2 g-3">
-                        <div class="col-md-6 mb-2">
-                            <div class="form-check form-switch pt-1 text-muted">
-                                <input class="form-check-input" type="checkbox" name="nuevo_ingreso" id="checkNuevoIngreso" checked>
-                                <label class="form-check-label fw-semibold text-dark" for="checkNuevoIngreso">
-                                    Estudiante de Nuevo Ingreso
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-2">
-                            <div class="form-check form-switch pt-1 text-muted">
-                                <input class="form-check-input" type="checkbox" name="es_repetidor" id="checkRepetidor">
-                                <label class="form-check-label fw-semibold text-dark" for="checkRepetidor">
-                                    Estudiante Repitiente
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                </div> <!-- End Modal Body -->
-
-                <!-- Pie del Modal -->
-                <div class="modal-footer px-4 py-3 bg-light rounded-bottom-4 border-top-0">
-                    <div class="w-100 d-flex justify-content-end gap-2 mb-5 pb-5 mb-md-0 pb-md-0" style="margin-bottom: 80px;">
-                        <button type="button" class="btn btn-outline-secondary fw-semibold rounded-pill px-4 m-0" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary fw-semibold rounded-pill px-4 shadow-sm m-0" style="background: linear-gradient(135deg, var(--primary), var(--primary-container)); border:none;">
-                            Guardar Registro
-                        </button>
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark" id="modalRegistroLabel">Ficha de Admisión</h5>
+                        <p class="mb-0 text-muted small">Complete todos los requerimientos para el registro de la Cédula
+                            Escolar</p>
                     </div>
                 </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Cuerpo del Modal -->
+            <div class="modal-body px-4 py-4" style="max-height: 70vh; overflow-y: auto;">
+
+                <h6 class="fw-bold text-primary mb-3 text-uppercase" style="font-size:0.8rem;letter-spacing:1px;"><i
+                        data-lucide="id-card" class="me-1" style="width:16px;"></i> Identidad y Legal (Generador de
+                    Cédula Escolar)</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold text-dark">Nombre Completo del Estudiante</label>
+                        <input type="text" class="form-control" name="nombre_estudiante" required
+                            placeholder="Ej. Juan Pérez">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold text-dark">Fecha Nacimiento</label>
+                        <input type="date" class="form-control" name="fecha_nacimiento" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-dark">Nro Parto</label>
+                        <input type="number" class="form-control" name="nro_parto" required min="1" value="1">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-dark">Género</label>
+                        <select class="form-select" name="genero">
+                            <option value="Masculino">Masculino</option>
+                            <option value="Femenino">Femenino</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-dark">Lugar Nacimiento</label>
+                                <input type="text" class="form-control" name="lugar_nacimiento"
+                                    placeholder="Estado, Ciudad, Hospital">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold text-dark">Nro de Acta</label>
+                                <input type="text" class="form-control" name="num_acta" placeholder="Ej. 1290">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold text-dark">Nro de Oficio</label>
+                                <input type="text" class="form-control" name="num_oficio" placeholder="Ej. 04052">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-dark">Plantel de Procedencia</label>
+                                <input type="text" class="form-control" name="plantel_procedencia"
+                                    placeholder="Nombre de la Institución Anterior">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-dark">Correo Electrónico (Estudiante)</label>
+                                <input type="email" class="form-control" name="email_estudiante"
+                                    placeholder="estudiante@ejemplo.com">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-primary mb-3 text-uppercase"
+                    style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i
+                        data-lucide="users" class="me-1" style="width:16px;"></i> Referencia Familiar y Procedencia</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-dark">Cédula Madre/Representante</label>
+                        <input type="text" class="form-control" name="cedula_representante" required
+                            placeholder="Ej. 12345678">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-dark">Nombre Representante</label>
+                        <input type="text" class="form-control" name="nombre_representante" required
+                            placeholder="Ej. María Pérez">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-dark">Parentesco</label>
+                        <select class="form-select" name="parentesco">
+                            <option value="Madre">Madre</option>
+                            <option value="Padre">Padre</option>
+                            <option value="Abuelo/a">Abuelo/a</option>
+                            <option value="Tío/a">Tío/a</option>
+                            <option value="Hermano/a Mayor">Hermano/a Mayor</option>
+                            <option value="Otro Tutor Legal">Otro Tutor Legal</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold text-dark">Teléfono</label>
+                        <input type="text" class="form-control" name="telefono_representante"
+                            placeholder="04XX-XXXXXXX">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold text-dark">Correo del Representante</label>
+                        <input type="email" class="form-control" name="email_representante"
+                            placeholder="correo@ejemplo.com">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-dark">Dirección de Habitación</label>
+                        <input type="text" class="form-control" name="direccion_habitacion"
+                            placeholder="Ej. Urb. Los Mangos, Calle 4, Casa Nro 12">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold text-dark">Dirección Completa (Adicional)</label>
+                        <textarea class="form-control" name="direccion_completa" rows="2"
+                            placeholder="Describa punto de referencia y otros detalles"></textarea>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-dark">Grado a Asignar</label>
+                        <select class="form-select" name="grado_id">
+                            <option value="">-- Seleccione (Opcional) --</option>
+                            {% for g in grados %}
+                            <option value="{{ g.id }}">{{ g.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-dark">Literal (A-D)</label>
+                        <select class="form-select" name="literal_escolar">
+                            <option value="">N/A</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-dark">Procedencia / Institución</label>
+                        <input type="text" class="form-control" name="procedencia"
+                            placeholder="(Nuevo Ingreso / Nro. Plantel)">
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-primary mb-3 text-uppercase"
+                    style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i
+                        data-lucide="activity" class="me-1" style="width:16px;"></i> Referencia Médica y Física</h6>
+                <div class="row g-3 mb-2">
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-dark">Medida Talla</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" class="form-control" name="talla" placeholder="110">
+                            <span class="input-group-text bg-light text-muted">cm</span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-dark">Medida Peso</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" class="form-control" name="peso" placeholder="25">
+                            <span class="input-group-text bg-light text-muted">kg</span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-dark">Talla Calzado</label>
+                        <input type="text" class="form-control" name="calzado" placeholder="Ej. 28">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold text-dark">Talla de Camisa/Franela</label>
+                        <input type="text" class="form-control" name="talla_camisa" placeholder="Ej. 10 o S">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold text-dark">Talla de Pantalón/Falda</label>
+                        <input type="text" class="form-control" name="talla_pantalon" placeholder="Ej. 12 o M">
+                    </div>
+                    <div class="col-md-2 mt-3">
+                        <label class="form-label fw-semibold text-dark">Grupo Sanguíneo</label>
+                        <select class="form-select" name="tipaje">
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="No Sabe">No Sabe</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-dark">Lateralidad</label>
+                        <select class="form-select" name="lateralidad">
+                            <option value="Diestro">Diestro</option>
+                            <option value="Zurdo">Zurdo</option>
+                            <option value="Ambidextro">Ambidextro</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-dark">Alergias</label>
+                        <input type="text" class="form-control" name="alergias"
+                            placeholder="Alimentos, Medicamentos, Ninguna...">
+                    </div>
+
+                    <div class="col-md-4 mt-3">
+                        <label class="form-label fw-semibold text-dark">Esquema de Vacunación</label>
+                        <select class="form-select" name="vacunacion_completa">
+                            <option value="Si">Sí, Esquema Completo</option>
+                            <option value="Parcial">No, Incompleto</option>
+                            <option value="No">Sin Vacunación</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-8 mt-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="form-check form-switch me-3">
+                                <input class="form-check-input mt-1" type="checkbox" role="switch" id="switchNeuro"
+                                    name="neurodivergencia">
+                                <label class="form-check-label fw-semibold" for="switchNeuro">Estudiante Neurodivergente
+                                    / N.E.E</label>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control bg-light" name="neuro_detalle" id="inputNeuroDetalle"
+                            placeholder="Si aplica, indique diagnóstico (TEA, TDAH, Dislexia, Condición Motora...)"
+                            disabled>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-primary mb-3 text-uppercase"
+                    style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i
+                        data-lucide="file-check-2" class="me-1" style="width:16px;"></i> Estatus Histórico</h6>
+                <div class="row pt-2 g-3">
+                    <div class="col-md-6 mb-2">
+                        <div class="form-check form-switch pt-1 text-muted">
+                            <input class="form-check-input" type="checkbox" name="nuevo_ingreso" id="checkNuevoIngreso"
+                                checked>
+                            <label class="form-check-label fw-semibold text-dark" for="checkNuevoIngreso">
+                                Estudiante de Nuevo Ingreso
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <div class="form-check form-switch pt-1 text-muted">
+                            <input class="form-check-input" type="checkbox" name="es_repetidor" id="checkRepetidor">
+                            <label class="form-check-label fw-semibold text-dark" for="checkRepetidor">
+                                Estudiante Repitiente
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+            </div> <!-- End Modal Body -->
+
+            <!-- Pie del Modal -->
+            <div class="modal-footer px-4 py-3 bg-light rounded-bottom-4 border-top-0">
+                <div class="w-100 d-flex justify-content-end gap-2 mb-5 pb-5 mb-md-0 pb-md-0"
+                    style="margin-bottom: 80px;">
+                    <button type="button" class="btn btn-outline-secondary fw-semibold rounded-pill px-4 m-0"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary fw-semibold rounded-pill px-4 shadow-sm m-0"
+                        style="background: linear-gradient(135deg, var(--primary), var(--primary-container)); border:none;">
+                        Guardar Registro
+                    </button>
+                </div>
+            </div>
 
         </form>
     </div>
@@ -525,56 +617,56 @@
     // Datos inyectados desde Jinja2
     const appDataEstudiantes = [
         {% for est in estudiantes %}
-        {
-            nombre: "{{ est.nombre_completo|e }}",
+    {
+        nombre: "{{ est.nombre_completo|e }}",
             genero: "{{ est.genero|e }}",
-            grado_id: "{{ est.grado_id or '' }}"
-        }{% if not loop.last %},{% endif %}
-        {% endfor %}
+                grado_id: "{{ est.grado_id or '' }}"
+    } {% if not loop.last %}, {% endif %}
+    {% endfor %}
     ];
 
     function filtrarAula() {
         const gradoId = document.getElementById('selectorAulas').value;
         const panelVacio = document.getElementById('panelAulaVacio');
         const panelLleno = document.getElementById('panelAulaLleno');
-        
+
         if (!gradoId) {
             panelVacio.classList.remove('d-none');
             panelLleno.classList.add('d-none');
             return;
         }
-        
+
         panelVacio.classList.add('d-none');
         panelLleno.classList.remove('d-none');
-        
+
         const estudiantesAula = appDataEstudiantes.filter(e => e.grado_id === gradoId);
         // Filtrar niñas y niños. Asumimos Femenino y Masculino
         const ninas = estudiantesAula.filter(e => e.genero === 'Femenino');
         const varones = estudiantesAula.filter(e => e.genero === 'Masculino');
-        
+
         // Orden alfabético
-        ninas.sort((a,b) => a.nombre.localeCompare(b.nombre));
-        varones.sort((a,b) => a.nombre.localeCompare(b.nombre));
+        ninas.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        varones.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
         document.getElementById('countTotal').innerText = estudiantesAula.length;
         document.getElementById('countNinas').innerText = ninas.length;
         document.getElementById('countVarones').innerText = varones.length;
-        
+
         const listaNinas = document.getElementById('listaNinas');
         const listaVarones = document.getElementById('listaVarones');
-        
-        if(ninas.length > 0) {
-            listaNinas.innerHTML = ninas.map((n, i) => `<li class="list-group-item px-4 py-2 text-dark border-bottom text-truncate" style="font-size:0.9rem;" title="${n.nombre}"><span class="text-muted me-2" style="font-size:0.8rem;">${i+1}.</span> ${n.nombre}</li>`).join('');
+
+        if (ninas.length > 0) {
+            listaNinas.innerHTML = ninas.map((n, i) => `<li class="list-group-item px-4 py-2 text-dark border-bottom text-truncate" style="font-size:0.9rem;" title="${n.nombre}"><span class="text-muted me-2" style="font-size:0.8rem;">${i + 1}.</span> ${n.nombre}</li>`).join('');
         } else {
             listaNinas.innerHTML = '<li class="list-group-item text-muted text-center py-4 border-0">No hay niñas registradas</li>';
         }
-        
-        if(varones.length > 0) {
-            listaVarones.innerHTML = varones.map((v, i) => `<li class="list-group-item px-4 py-2 text-dark border-bottom text-truncate" style="font-size:0.9rem;" title="${v.nombre}"><span class="text-muted me-2" style="font-size:0.8rem;">${i+1}.</span> ${v.nombre}</li>`).join('');
+
+        if (varones.length > 0) {
+            listaVarones.innerHTML = varones.map((v, i) => `<li class="list-group-item px-4 py-2 text-dark border-bottom text-truncate" style="font-size:0.9rem;" title="${v.nombre}"><span class="text-muted me-2" style="font-size:0.8rem;">${i + 1}.</span> ${v.nombre}</li>`).join('');
         } else {
             listaVarones.innerHTML = '<li class="list-group-item text-muted text-center py-4 border-0">No hay varones registrados</li>';
         }
-        
+
         // Re-render icons if any
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
@@ -585,15 +677,15 @@
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
-    
+
     // Toggle Neurodivergencia Input
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         const switchNeuro = document.getElementById('switchNeuro');
         const inputNeuro = document.getElementById('inputNeuroDetalle');
-        
-        if(switchNeuro && inputNeuro) {
-            switchNeuro.addEventListener('change', function() {
-                if(this.checked) {
+
+        if (switchNeuro && inputNeuro) {
+            switchNeuro.addEventListener('change', function () {
+                if (this.checked) {
                     inputNeuro.disabled = false;
                     inputNeuro.classList.remove('bg-light');
                     inputNeuro.focus();

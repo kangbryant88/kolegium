@@ -13,11 +13,16 @@ from fpdf import FPDF
 from flask_mail import Mail, Message
 import secrets
 import urllib.parse
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde .env antes de cualquier configuración
+load_dotenv()
+
 # Configuración de rutas para evitar errores en el servidor
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-app.secret_key = 'clave_super_secreta_robo_enterprise'
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-fallback-key-cambiar-en-produccion')
 
 # Forzamos la ruta al archivo que está dentro de mysite
 db_path = os.path.join(basedir, 'roboclass.db')
@@ -30,11 +35,11 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # Imprimimos en el log para estar 100% seguros
 print(f"--- CONECTADO A: {db_path} ---")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'eepdanieloleary9@gmail.com'
-app.config['MAIL_PASSWORD'] = 'trvdonsdzkmqtihu'
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USER')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASS')
 
 mail = Mail(app)
 db = SQLAlchemy(app)
