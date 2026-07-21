@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, make_response
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, make_response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import OperationalError
 from flask_migrate import Migrate
@@ -945,6 +945,30 @@ def estadistica_global():
                            ultimos_ingresos=ultimos_ingresos,
                            ultimos_egresos=ultimos_egresos,
                            grados=Grado.query.all() or [])
+
+@app.route('/api/estudiantes/<int:grado_id>')
+def api_estudiantes_por_grado(grado_id):
+    """API ligera: devuelve estudiantes de un grado en JSON para el modal dinámico."""
+    if not session.get('logeado'):
+        return jsonify({'error': 'No autorizado'}), 401
+
+    grado = Grado.query.get_or_404(grado_id)
+    estudiantes = Estudiante.query.filter_by(grado_id=grado_id).order_by(Estudiante.nombre_completo.asc()).all()
+    
+    resultado = {
+        'grado_nombre': grado.nombre,
+        'total': len(estudiantes),
+        'estudiantes': [{
+            'id': est.id,
+            'cedula_escolar': est.cedula_escolar,
+            'nombre_completo': est.nombre_completo,
+            'inicial': est.nombre_completo[0].upper() if est.nombre_completo else '?',
+            'genero': est.genero or 'No especificado',
+            'estatus': est.estatus or 'Activo',
+            'cedula_rep': est.representante_info.cedula if est.representante_info else 'N/A'
+        } for est in estudiantes]
+    }
+    return jsonify(resultado)
 
 @app.route('/registrar_estudiante', methods=['POST'])
 def registrar_estudiante():

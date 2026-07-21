@@ -92,38 +92,28 @@
                 </h5>
             </div>
             <div class="card-body p-0 pt-4 pb-4 d-flex flex-column" style="max-height: 450px; overflow-y: auto;">
-                <!-- Botones Modales -->
+                <!-- Botones de Grados (dinámicos) -->
                 <div class="row g-3 px-4 mx-0 justify-content-center">
-                    {% for grado_id, grupo_estudiantes in estudiantes|groupby('grado_id') %}
-                    {% set ns = namespace(grado_nombre='No Asignado') %}
-                    {% if grado_id %}
                     {% for g in grados %}
-                    {% if g.id == grado_id %}
-                    {% set ns.grado_nombre = g.nombre %}
-                    {% endif %}
-                    {% endfor %}
-                    {% endif %}
                     <div class="col-12 col-sm-6 col-md-4 col-xl-3">
                         <button
-                            class="btn bg-white w-100 text-center fw-semibold px-3 py-3 rounded-4 shadow-sm border border-secondary border-opacity-25 d-flex flex-column align-items-center justify-content-center h-100"
-                            data-bs-toggle="modal" data-bs-target="#modal-grado-{{ loop.index }}"
+                            class="btn bg-white w-100 text-center fw-semibold px-3 py-3 rounded-4 shadow-sm border border-secondary border-opacity-25 d-flex flex-column align-items-center justify-content-center h-100 btn-grado"
+                            data-bs-toggle="modal" data-bs-target="#modalEstudiantes"
+                            data-grado-id="{{ g.id }}" data-grado-nombre="{{ g.nombre }}"
                             style="transition: all 0.2s ease;">
                             <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 mb-2">
                                 <i data-lucide="users" style="width:24px;height:24px;"></i>
                             </div>
-                            <span class="text-dark">{{ ns.grado_nombre }}</span>
+                            <span class="text-dark">{{ g.nombre }}</span>
                         </button>
                     </div>
                     {% else %}
-                    <div class="col-12 col-sm-6 col-md-4 col-xl-3">
-                        <button
-                            class="btn bg-white w-100 text-center fw-semibold px-3 py-3 rounded-4 shadow-sm border border-secondary border-opacity-25 d-flex flex-column align-items-center justify-content-center h-100"
-                            data-bs-toggle="modal" data-bs-target="#modal-vacio">
-                            <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 mb-2">
-                                <i data-lucide="users" style="width:24px;height:24px;"></i>
-                            </div>
-                            <span class="text-dark">General</span>
-                        </button>
+                    <div class="col-12">
+                        <div class="text-center py-5 text-muted">
+                            <i data-lucide="users" style="width:32px;height:32px;opacity:0.3;margin-bottom:8px;"></i>
+                            <h6>No hay grados configurados</h6>
+                            <p class="mb-0 small">Configura los grados y secciones desde el panel de Configuración.</p>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -131,117 +121,67 @@
         </div>
     </div> <!-- Cierre de col-12 col-xl-7 -->
 
-    <!-- Modales de Grados -->
-    {% for grado_id, grupo_estudiantes in estudiantes|groupby('grado_id') %}
-    {% set ns = namespace(grado_nombre='No Asignado') %}
-    {% if grado_id %}
-    {% for g in grados %}
-    {% if g.id == grado_id %}
-    {% set ns.grado_nombre = g.nombre %}
-    {% endif %}
-    {% endfor %}
-    {% endif %}
-    <div class="modal fade" id="modal-grado-{{ loop.index }}" tabindex="-1"
-        aria-labelledby="modal-grado-label-{{ loop.index }}" aria-hidden="true">
+    <!-- Modal Único Dinámico de Estudiantes -->
+    <div class="modal fade" id="modalEstudiantes" tabindex="-1" aria-labelledby="modalEstudiantesLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 rounded-4 shadow-lg">
                 <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
-                    <h5 class="modal-title fw-bold text-dark" id="modal-grado-label-{{ loop.index }}">
-                        {{ ns.grado_nombre }} <span class="badge bg-primary text-white ms-2 rounded-pill">{{
-                            grupo_estudiantes|length }} Estudiantes</span>
+                    <h5 class="modal-title fw-bold text-dark" id="modalEstudiantesLabel">
+                        <span id="modal-grado-nombre">Cargando...</span>
+                        <span class="badge bg-primary text-white ms-2 rounded-pill" id="modal-grado-count">0 Estudiantes</span>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-0">
-                    <div class="table-responsive border-0">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light sticky-top" style="z-index: 1;">
-                                <tr>
-                                    <th class="ps-4 text-nowrap" style="background-color: #f8f9fa;">Cédula Escolar</th>
-                                    <th style="background-color: #f8f9fa; min-width: 200px;">Nombre del Estudiante</th>
-                                    <th class="text-nowrap" style="background-color: #f8f9fa;">Estatus</th>
-                                    <th class="text-end pe-4 text-nowrap" style="background-color: #f8f9fa;">Acciones
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for est in grupo_estudiantes %}
-                                <tr>
-                                    <td class="ps-4 fw-medium text-nowrap">{{ est.cedula_escolar }}</td>
-                                    <td class="text-wrap">
-                                        <div class="d-flex align-items-center">
-                                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold flex-shrink-0"
-                                                style="width:36px;height:36px;font-size:0.85rem;">
-                                                {{ est.nombre_completo[0]|upper }}
-                                            </div>
-                                            <div style="min-width: 0;">
-                                                <div class="fw-semibold text-dark text-truncate"
-                                                    style="max-width: 250px;" title="{{ est.nombre_completo }}">{{
-                                                    est.nombre_completo }}</div>
-                                                <div class="text-muted small text-truncate" style="max-width: 250px;">
-                                                    C.I. Rep: {{ est.representante_info.cedula if est.representante_info
-                                                    else 'N/A' }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="text-nowrap">
-                                        {% if est.estatus == 'Activo' %}
-                                        <span
-                                            class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 fw-semibold">Activo</span>
-                                        {% else %}
-                                        <span
-                                            class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 fw-semibold">Egreso</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-end pe-4 text-nowrap">
-                                        <a href="{{ url_for('perfil_estudiante', id=est.id) }}"
-                                            class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                                            <i data-lucide="eye" class="me-1" style="width:14px;height:14px;"></i>
-                                            Detalles
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    <!-- Spinner de Carga -->
+                    <div id="modal-loading" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem;">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="text-muted mt-3 mb-0 fw-semibold">Cargando estudiantes...</p>
+                    </div>
+                    <!-- Estado Vacío -->
+                    <div id="modal-empty" class="d-none text-center py-5">
+                        <div class="d-flex flex-column align-items-center justify-content-center text-muted">
+                            <div class="bg-light rounded-circle p-3 mb-3">
+                                <i data-lucide="users" style="width:32px;height:32px;color:#9ca3af;"></i>
+                            </div>
+                            <h6>No hay estudiantes en este grado</h6>
+                            <p class="mb-0 small">Aún no se ha ingresado matrícula para esta sección.</p>
+                        </div>
+                    </div>
+                    <!-- Tabla de Resultados -->
+                    <div id="modal-table-wrapper" class="d-none">
+                        <div class="table-responsive border-0">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light sticky-top" style="z-index: 1;">
+                                    <tr>
+                                        <th class="ps-4 text-nowrap" style="background-color: #f8f9fa;">Cédula Escolar</th>
+                                        <th style="background-color: #f8f9fa; min-width: 200px;">Nombre del Estudiante</th>
+                                        <th class="text-nowrap" style="background-color: #f8f9fa;">Estatus</th>
+                                        <th class="text-end pe-4 text-nowrap" style="background-color: #f8f9fa;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabla-estudiantes-body">
+                                    <!-- JS inyecta filas aquí -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Estado de Error -->
+                    <div id="modal-error" class="d-none text-center py-5">
+                        <div class="d-flex flex-column align-items-center justify-content-center text-danger">
+                            <div class="bg-danger bg-opacity-10 rounded-circle p-3 mb-3">
+                                <i data-lucide="alert-triangle" style="width:32px;height:32px;"></i>
+                            </div>
+                            <h6>Error al cargar datos</h6>
+                            <p class="mb-0 small text-muted">Intenta cerrar el modal y volver a abrirlo.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    {% else %}
-    <div class="modal fade" id="modal-vacio" tabindex="-1" aria-labelledby="modal-vacio-label" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content border-0 rounded-4 shadow-lg">
-                <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
-                    <h5 class="modal-title fw-bold text-dark" id="modal-vacio-label">General</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <div class="table-responsive border-0">
-                        <table class="table table-hover align-middle mb-0">
-                            <tbody>
-                                <tr>
-                                    <td colspan="4" class="text-center py-5">
-                                        <div
-                                            class="d-flex flex-column align-items-center justify-content-center text-muted">
-                                            <div class="bg-light rounded-circle p-3 mb-3">
-                                                <i data-lucide="users"
-                                                    style="width:32px;height:32px;color:#9ca3af;"></i>
-                                            </div>
-                                            <h6>No hay estudiantes registrados</h6>
-                                            <p class="mb-0 small">Aún no se ha ingresado matrícula en el sistema.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endfor %}
 
 
     <!-- Visor de Aulas Digital -->
@@ -614,72 +554,154 @@
 </div>
 
 <script>
-    // Datos inyectados desde Jinja2
-    const appDataEstudiantes = [
-        {% for est in estudiantes %}
-    {
-        nombre: "{{ est.nombre_completo|e }}",
-            genero: "{{ est.genero|e }}",
-                grado_id: "{{ est.grado_id or '' }}"
-    } {% if not loop.last %}, {% endif %}
-    {% endfor %}
-    ];
+    // ============================================
+    // MODAL DINÁMICO DE ESTUDIANTES (Fetch API)
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalEl = document.getElementById('modalEstudiantes');
+        if (!modalEl) return;
 
-    function filtrarAula() {
-        const gradoId = document.getElementById('selectorAulas').value;
-        const panelVacio = document.getElementById('panelAulaVacio');
-        const panelLleno = document.getElementById('panelAulaLleno');
+        modalEl.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            const gradoId = btn.getAttribute('data-grado-id');
+            const gradoNombre = btn.getAttribute('data-grado-nombre') || 'Cargando...';
 
-        if (!gradoId) {
-            panelVacio.classList.remove('d-none');
-            panelLleno.classList.add('d-none');
-            return;
-        }
+            // Referencias del DOM
+            const elNombre = document.getElementById('modal-grado-nombre');
+            const elCount = document.getElementById('modal-grado-count');
+            const elLoading = document.getElementById('modal-loading');
+            const elEmpty = document.getElementById('modal-empty');
+            const elTable = document.getElementById('modal-table-wrapper');
+            const elError = document.getElementById('modal-error');
+            const elBody = document.getElementById('tabla-estudiantes-body');
 
-        panelVacio.classList.add('d-none');
-        panelLleno.classList.remove('d-none');
+            // Estado: Cargando
+            elNombre.textContent = gradoNombre;
+            elCount.textContent = '...';
+            elLoading.classList.remove('d-none');
+            elEmpty.classList.add('d-none');
+            elTable.classList.add('d-none');
+            elError.classList.add('d-none');
+            elBody.innerHTML = '';
 
-        const estudiantesAula = appDataEstudiantes.filter(e => e.grado_id === gradoId);
-        // Filtrar niñas y niños. Asumimos Femenino y Masculino
-        const ninas = estudiantesAula.filter(e => e.genero === 'Femenino');
-        const varones = estudiantesAula.filter(e => e.genero === 'Masculino');
+            fetch(`/api/estudiantes/${gradoId}`)
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return res.json();
+                })
+                .then(data => {
+                    elLoading.classList.add('d-none');
+                    elNombre.textContent = data.grado_nombre;
+                    elCount.textContent = `${data.total} Estudiante${data.total !== 1 ? 's' : ''}`;
 
-        // Orden alfabético
-        ninas.sort((a, b) => a.nombre.localeCompare(b.nombre));
-        varones.sort((a, b) => a.nombre.localeCompare(b.nombre));
+                    if (data.estudiantes.length === 0) {
+                        elEmpty.classList.remove('d-none');
+                        return;
+                    }
 
-        document.getElementById('countTotal').innerText = estudiantesAula.length;
-        document.getElementById('countNinas').innerText = ninas.length;
-        document.getElementById('countVarones').innerText = varones.length;
+                    // Construir filas dinámicamente
+                    const fragment = document.createDocumentFragment();
+                    data.estudiantes.forEach(est => {
+                        const tr = document.createElement('tr');
+                        const badgeClass = est.estatus === 'Activo'
+                            ? 'bg-success bg-opacity-10 text-success'
+                            : 'bg-danger bg-opacity-10 text-danger';
+                        
+                        tr.innerHTML = `
+                            <td class="ps-4 fw-medium text-nowrap">${est.cedula_escolar}</td>
+                            <td class="text-wrap">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold flex-shrink-0"
+                                        style="width:36px;height:36px;font-size:0.85rem;">
+                                        ${est.inicial}
+                                    </div>
+                                    <div style="min-width: 0;">
+                                        <div class="fw-semibold text-dark text-truncate" style="max-width: 250px;" title="${est.nombre_completo}">${est.nombre_completo}</div>
+                                        <div class="text-muted small text-truncate" style="max-width: 250px;">C.I. Rep: ${est.cedula_rep}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-nowrap">
+                                <span class="badge ${badgeClass} rounded-pill px-3 py-2 fw-semibold">${est.estatus}</span>
+                            </td>
+                            <td class="text-end pe-4 text-nowrap">
+                                <a href="/perfil_estudiante/${est.id}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                    <i data-lucide="eye" class="me-1" style="width:14px;height:14px;"></i>
+                                    Detalles
+                                </a>
+                            </td>
+                        `;
+                        fragment.appendChild(tr);
+                    });
 
-        const listaNinas = document.getElementById('listaNinas');
-        const listaVarones = document.getElementById('listaVarones');
+                    elBody.appendChild(fragment);
+                    elTable.classList.remove('d-none');
 
-        if (ninas.length > 0) {
-            listaNinas.innerHTML = ninas.map((n, i) => `<li class="list-group-item px-4 py-2 text-dark border-bottom text-truncate" style="font-size:0.9rem;" title="${n.nombre}"><span class="text-muted me-2" style="font-size:0.8rem;">${i + 1}.</span> ${n.nombre}</li>`).join('');
-        } else {
-            listaNinas.innerHTML = '<li class="list-group-item text-muted text-center py-4 border-0">No hay niñas registradas</li>';
-        }
+                    // Re-render Lucide icons en las filas nuevas
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                })
+                .catch(err => {
+                    console.error('Error cargando estudiantes:', err);
+                    elLoading.classList.add('d-none');
+                    elError.classList.remove('d-none');
+                });
+        });
 
-        if (varones.length > 0) {
-            listaVarones.innerHTML = varones.map((v, i) => `<li class="list-group-item px-4 py-2 text-dark border-bottom text-truncate" style="font-size:0.9rem;" title="${v.nombre}"><span class="text-muted me-2" style="font-size:0.8rem;">${i + 1}.</span> ${v.nombre}</li>`).join('');
-        } else {
-            listaVarones.innerHTML = '<li class="list-group-item text-muted text-center py-4 border-0">No hay varones registrados</li>';
-        }
+        // ============================================
+        // VISOR DE AULAS DIGITAL (Fetch API)
+        // ============================================
+        window.filtrarAula = function () {
+            const gradoId = document.getElementById('selectorAulas').value;
+            const panelVacio = document.getElementById('panelAulaVacio');
+            const panelLleno = document.getElementById('panelAulaLleno');
 
-        // Re-render icons if any
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-    }
+            if (!gradoId) {
+                panelVacio.classList.remove('d-none');
+                panelLleno.classList.add('d-none');
+                return;
+            }
 
-    // Lucide Icons Render
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
+            panelVacio.classList.add('d-none');
+            panelLleno.classList.remove('d-none');
 
-    // Toggle Neurodivergencia Input
-    document.addEventListener("DOMContentLoaded", function () {
+            fetch(`/api/estudiantes/${gradoId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const ninas = data.estudiantes.filter(e => e.genero === 'Femenino');
+                    const varones = data.estudiantes.filter(e => e.genero === 'Masculino');
+
+                    ninas.sort((a, b) => a.nombre_completo.localeCompare(b.nombre_completo));
+                    varones.sort((a, b) => a.nombre_completo.localeCompare(b.nombre_completo));
+
+                    document.getElementById('countTotal').innerText = data.estudiantes.length;
+                    document.getElementById('countNinas').innerText = ninas.length;
+                    document.getElementById('countVarones').innerText = varones.length;
+
+                    const listaNinas = document.getElementById('listaNinas');
+                    const listaVarones = document.getElementById('listaVarones');
+
+                    if (ninas.length > 0) {
+                        listaNinas.innerHTML = ninas.map((n, i) => `<li class="list-group-item px-4 py-2 text-dark border-bottom text-truncate" style="font-size:0.9rem;" title="${n.nombre_completo}"><span class="text-muted me-2" style="font-size:0.8rem;">${i + 1}.</span> ${n.nombre_completo}</li>`).join('');
+                    } else {
+                        listaNinas.innerHTML = '<li class="list-group-item text-muted text-center py-4 border-0">No hay niñas registradas</li>';
+                    }
+
+                    if (varones.length > 0) {
+                        listaVarones.innerHTML = varones.map((v, i) => `<li class="list-group-item px-4 py-2 text-dark border-bottom text-truncate" style="font-size:0.9rem;" title="${v.nombre_completo}"><span class="text-muted me-2" style="font-size:0.8rem;">${i + 1}.</span> ${v.nombre_completo}</li>`).join('');
+                    } else {
+                        listaVarones.innerHTML = '<li class="list-group-item text-muted text-center py-4 border-0">No hay varones registrados</li>';
+                    }
+
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                })
+                .catch(err => {
+                    console.error('Error cargando aula:', err);
+                });
+        };
+
+        // ============================================
+        // TOGGLE NEURODIVERGENCIA
+        // ============================================
         const switchNeuro = document.getElementById('switchNeuro');
         const inputNeuro = document.getElementById('inputNeuroDetalle');
 
@@ -696,6 +718,9 @@
                 }
             });
         }
+
+        // Lucide Icons Render
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     });
 </script>
 
