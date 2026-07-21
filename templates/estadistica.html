@@ -72,8 +72,10 @@
     </div>
 </div>
 
-<!-- Tabla de Matrícula General -->
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+<div class="row g-4 mb-4">
+    <!-- Tabla de Matrícula General -->
+    <div class="col-12 col-xl-7">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
     <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
         <h5 class="mb-0 fw-bold text-dark">Matrícula General <span class="badge bg-primary text-white ms-2 rounded-pill">{{ total_estudiantes }} Estudiantes</span></h5>
     </div>
@@ -130,7 +132,7 @@
                                 <tr>
                                     <td class="ps-4 fw-medium text-nowrap">{{ est.cedula_escolar }}</td>
                                     <td>
-                                        <div class="d-flex align-items-center" style="min-width: 250px;">
+                                        <div class="d-flex align-items-center">
                                             <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold flex-shrink-0" style="width:36px;height:36px;font-size:0.85rem;">
                                                 {{ est.nombre_completo[0]|upper }}
                                             </div>
@@ -182,9 +184,11 @@
         </div>
     </div>
 </div>
+    </div> <!-- Cierre de col-12 col-xl-7 -->
 
-<!-- Visor de Aulas Digital -->
-<div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 mt-4">
+    <!-- Visor de Aulas Digital -->
+    <div class="col-12 col-xl-5">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
     <div class="card-header bg-white border-bottom pt-4 pb-3 px-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
         <div>
             <h5 class="mb-0 fw-bold text-dark">Visor de Aulas Digital</h5>
@@ -264,6 +268,8 @@
         </div>
     </div>
 </div>
+    </div> <!-- Cierre de col-12 col-xl-5 -->
+</div> <!-- Cierre de row g-4 mb-4 -->
 
 <!-- Modal Registro Nuevo Estudiante -->
 <div class="modal fade" id="modalRegistro" tabindex="-1" aria-labelledby="modalRegistroLabel" aria-hidden="true">
