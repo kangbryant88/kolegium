@@ -768,57 +768,112 @@ def ver_expediente(token):
 
 @academico_bp.route('/nuevo_ingreso_rapido', methods=['POST'])
 def nuevo_ingreso_rapido():
-    if not session.get('logeado'): return redirect(url_for('auth.login'))
-    
-    cedula_escolar = request.form.get('cedula_escolar')
-    nombre_completo = request.form.get('nombre_completo')
-    fecha_nacimiento_str = request.form.get('fecha_nacimiento')
-    grado_id = request.form.get('grado_id')
-    
-    rep_cedula = request.form.get('rep_cedula')
-    rep_nombre = request.form.get('rep_nombre')
-    rep_telefono = request.form.get('rep_telefono')
-    
-    try:
-        from datetime import datetime
-        fecha_nac = datetime.strptime(fecha_nacimiento_str, '%Y-%m-%d').date()
-    except:
-        flash("Fecha de nacimiento inválida.", "danger")
-        return redirect(url_for('academico.mi_aula'))
-        
-    representante = Representante.query.filter_by(cedula=rep_cedula).first()
-    if not representante:
-        representante = Representante(
-            cedula=rep_cedula,
-            nombre_completo=rep_nombre,
-            telefono=rep_telefono
-        )
-        db.session.add(representante)
-        db.session.flush() 
-        
-    estudiante_existente = Estudiante.query.filter_by(cedula_escolar=cedula_escolar).first()
-    if estudiante_existente:
-        flash('La solicitud no fue enviada: Este estudiante ya se encuentra registrado en el sistema.', 'warning')
+    if not session.get('logeado'):
+        return redirect(url_for('auth.login'))
+
+    # ── 1. Datos del Representante ──
+    cedula_rep = request.form.get('cedula_representante')
+    if not cedula_rep:
+        flash("Debe indicar la cédula del representante.", "danger")
         return redirect(request.referrer or url_for('academico.mi_aula'))
 
+    representante = Representante.query.filter_by(cedula=cedula_rep).first()
+    if not representante:
+        representante = Representante(
+            cedula=cedula_rep,
+            nombre_completo=request.form.get('nombre_representante', ''),
+            telefono=request.form.get('telefono_representante'),
+            email=request.form.get('email_representante'),
+            email_representante=request.form.get('email_representante'),
+            parentesco=request.form.get('parentesco'),
+            direccion_habitacion=request.form.get('direccion_habitacion'),
+            direccion_completa=request.form.get('direccion_completa')
+        )
+        db.session.add(representante)
+        db.session.flush()
+    else:
+        # Actualizar datos del representante si vienen nuevos valores
+        if request.form.get('nombre_representante'):
+            representante.nombre_completo = request.form.get('nombre_representante')
+        if request.form.get('telefono_representante'):
+            representante.telefono = request.form.get('telefono_representante')
+        if request.form.get('email_representante'):
+            representante.email = request.form.get('email_representante')
+            representante.email_representante = request.form.get('email_representante')
+        if request.form.get('parentesco'):
+            representante.parentesco = request.form.get('parentesco')
+        if request.form.get('direccion_habitacion'):
+            representante.direccion_habitacion = request.form.get('direccion_habitacion')
+        if request.form.get('direccion_completa'):
+            representante.direccion_completa = request.form.get('direccion_completa')
+        db.session.flush()
+
+    # ── 2. Generar Cédula Escolar ──
+    fecha_nacimiento_str = request.form.get('fecha_nacimiento')
+    try:
+        fecha_nac = datetime.strptime(fecha_nacimiento_str, '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        flash("Fecha de nacimiento inválida.", "danger")
+        return redirect(request.referrer or url_for('academico.mi_aula'))
+
+    nro_parto = request.form.get('nro_parto', '1')
+    anio_nino = fecha_nac.year
+    cedula_escolar_gen = generar_cedula_escolar(nro_parto, anio_nino, cedula_rep)
+
+    # ── 3. Verificar duplicados ──
+    estudiante_existente = Estudiante.query.filter_by(cedula_escolar=cedula_escolar_gen).first()
+    if estudiante_existente:
+        grado_nombre = estudiante_existente.grado.nombre if estudiante_existente.grado else "el sistema"
+        flash(f'La solicitud no fue enviada: Este estudiante ya se encuentra registrado en {grado_nombre}.', 'warning')
+        return redirect(request.referrer or url_for('academico.mi_aula'))
+
+    # ── 4. Captura exhaustiva de datos del estudiante ──
+    talla_val = request.form.get('talla')
+    peso_val = request.form.get('peso')
+
     nuevo_estudiante = Estudiante(
-        cedula_escolar=cedula_escolar,
-        nombre_completo=nombre_completo,
+        # Identidad y Legal
+        cedula_escolar=cedula_escolar_gen,
+        nombre_completo=request.form.get('nombre_estudiante', ''),
         fecha_nacimiento=fecha_nac,
-        grado_id=grado_id,
-        representante_id=representante.id,
-        nuevo_ingreso=True,
-        estatus='Activo'
+        lugar_nacimiento=request.form.get('lugar_nacimiento'),
+        genero=request.form.get('genero'),
+        num_acta=request.form.get('num_acta'),
+        num_oficio=request.form.get('num_oficio'),
+        # Salud y Antropometría
+        talla=float(talla_val) if talla_val else None,
+        peso=float(peso_val) if peso_val else None,
+        calzado=request.form.get('calzado'),
+        talla_camisa=request.form.get('talla_camisa'),
+        talla_pantalon=request.form.get('talla_pantalon'),
+        tipaje=request.form.get('tipaje'),
+        vacunacion_completa=request.form.get('vacunacion_completa'),
+        alergias=request.form.get('alergias'),
+        neurodivergencia=True if request.form.get('neurodivergencia') == 'on' else False,
+        neuro_detalle=request.form.get('neuro_detalle'),
+        lateralidad=request.form.get('lateralidad'),
+        # Procedencia y Estado Académico
+        literal=request.form.get('literal_escolar'),
+        literal_escolar=request.form.get('literal_escolar'),
+        procedencia=request.form.get('plantel_procedencia'),
+        plantel_procedencia=request.form.get('plantel_procedencia'),
+        email_estudiante=request.form.get('email_estudiante'),
+        es_repetidor=True if request.form.get('es_repetidor') == 'on' else False,
+        nuevo_ingreso=True if request.form.get('nuevo_ingreso') == 'on' else True,
+        estatus='Activo',
+        # Relaciones
+        grado_id=request.form.get('grado_id'),
+        representante_id=representante.id
     )
-    
+
     try:
         db.session.add(nuevo_estudiante)
         db.session.commit()
-        flash(f"Estudiante {nombre_completo} registrado exitosamente.", "success")
+        flash(f"Estudiante {nuevo_estudiante.nombre_completo} registrado exitosamente.", "success")
     except Exception as e:
         db.session.rollback()
         flash('Ocurrió un error inesperado al guardar el estudiante. Inténtalo de nuevo.', 'danger')
-    
+
     return redirect(request.referrer or url_for('academico.mi_aula'))
 
 @academico_bp.route('/actualizar_estudiante_rapido/<int:id>', methods=['POST'])
