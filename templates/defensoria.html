@@ -1366,10 +1366,10 @@
                                             {% set found_varones = namespace(value=false) %}
                                             {% for est in estudiantes if est.grado_id == grado.id and est.genero == 'Masculino' %}
                                             {% set found_varones.value = true %}
-                                            <button type="button" class="btn text-start text-truncate w-100 p-2 rounded student-select-btn mb-2 border-secondary text-body" style="background: var(--surface-container-high);" onclick="seleccionarEstudiante({{ est.id }}, '{{ est.nombre_completo|e }}')">
+                                            <button type="button" class="btn text-start w-100 p-2 rounded student-select-btn mb-2 border-secondary text-body" style="background: var(--surface-container-high);" onclick="seleccionarEstudiante({{ est.id }}, '{{ est.nombre_completo|e }}')">
                                                 <div class="d-flex align-items-center gap-2">
-                                                    <div class="avatar-circle bg-primary bg-opacity-10 text-primary" style="width: 32px; height: 32px; font-size: 0.8rem; flex-shrink: 0;">{{ est.nombre_completo[0] }}</div>
-                                                    <span style="font-size: 0.9rem; font-weight: 500;">{{ est.nombre_completo }}</span>
+                                                    <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary" style="width: 32px; height: 32px; font-size: 0.8rem; flex-shrink: 0;">{{ est.nombre_completo[0] }}</div>
+                                                    <span class="text-truncate" style="font-size: 0.9rem; font-weight: 500;">{{ est.nombre_completo }}</span>
                                                 </div>
                                             </button>
                                             {% endfor %}
@@ -1386,10 +1386,10 @@
                                             {% set found_hembras = namespace(value=false) %}
                                             {% for est in estudiantes if est.grado_id == grado.id and est.genero == 'Femenino' %}
                                             {% set found_hembras.value = true %}
-                                            <button type="button" class="btn text-start text-truncate w-100 p-2 rounded student-select-btn mb-2 border-secondary text-body" style="background: var(--surface-container-high);" onclick="seleccionarEstudiante({{ est.id }}, '{{ est.nombre_completo|e }}')">
+                                            <button type="button" class="btn text-start w-100 p-2 rounded student-select-btn mb-2 border-secondary text-body" style="background: var(--surface-container-high);" onclick="seleccionarEstudiante({{ est.id }}, '{{ est.nombre_completo|e }}')">
                                                 <div class="d-flex align-items-center gap-2">
-                                                    <div class="avatar-circle bg-danger bg-opacity-10 text-danger" style="width: 32px; height: 32px; font-size: 0.8rem; flex-shrink: 0;">{{ est.nombre_completo[0] }}</div>
-                                                    <span style="font-size: 0.9rem; font-weight: 500;">{{ est.nombre_completo }}</span>
+                                                    <div class="rounded-circle d-flex align-items-center justify-content-center bg-danger bg-opacity-10 text-danger" style="width: 32px; height: 32px; font-size: 0.8rem; flex-shrink: 0;">{{ est.nombre_completo[0] }}</div>
+                                                    <span class="text-truncate" style="font-size: 0.9rem; font-weight: 500;">{{ est.nombre_completo }}</span>
                                                 </div>
                                             </button>
                                             {% endfor %}
