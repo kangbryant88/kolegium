@@ -227,73 +227,84 @@
             {% if 'admin' in mis_permisos %}
                 <div class="pe-2 custom-scrollbar" style="max-height: 65vh; overflow-y: auto; overflow-x: hidden;">
                     <div class="row g-4 justify-content-center w-100 m-0">
-                    {% for reg in registros %}
-                    {% set ns = namespace(grado=none) %}
-                    {% for g in grados %}
-                        {% if g.nombre == reg.grado_seccion %}
-                            {% set ns.grado = g %}
-                        {% endif %}
-                    {% endfor %}
-                    <div class="col-12">
-                        <div class="card border-secondary border-opacity-25 text-body shadow-sm" style="background: var(--surface); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 15px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
-                            <div class="card-body p-4">
-                                <div class="row align-items-center text-center text-md-start">
-                                    <!-- Datos del Aula -->
-                                    <div class="col-12 col-md-3 mb-3 mb-md-0">
-                                        <h4 class="card-title fw-bold mb-1">{{ reg.grado_seccion }}</h4>
-                                        <div class="d-flex flex-column gap-1">
-                                            <span class="text-muted small">
-                                                <i data-lucide="calendar" style="width:14px;height:14px;margin-right:2px;vertical-align:-1px;"></i> {{ reg.fecha.strftime('%d/%m/%Y') }}
-                                            </span>
-                                            <span class="text-muted small">
-                                                <i data-lucide="user" style="width:14px;height:14px;margin-right:2px;vertical-align:-1px;"></i> {{ ns.grado.docente.nombre if ns.grado and ns.grado.docente else 'Sin Docente' }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Matrícula y Desglose -->
-                                    <div class="col-12 col-md-4 mb-3 mb-md-0 d-flex flex-column flex-md-row align-items-center gap-3">
-                                        <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill shadow-sm">
-                                            <i data-lucide="users" style="width:16px;height:16px;margin-right:4px;"></i> {{ reg.matricula_total }} Total
-                                        </span>
-                                        <div class="d-flex gap-3">
-                                            <div class="text-center">
-                                                <small class="d-block text-body-secondary" style="font-size:0.7rem; letter-spacing:0.5px;">VARONES</small>
-                                                <span class="text-body fw-bold"><i data-lucide="user" style="width:12px;height:12px;color:var(--primary);"></i> {{ reg.varones }}</span>
-                                            </div>
-                                            <div class="text-center">
-                                                <small class="d-block text-body-secondary" style="font-size:0.7rem; letter-spacing:0.5px;">HEMBRAS</small>
-                                                <span class="text-body fw-bold"><i data-lucide="user" style="width:12px;height:12px;color:#ef4444;"></i> {{ reg.hembras }}</span>
+                    {% for fecha_grp, registros_dia in registros|groupby('fecha')|reverse %}
+                        <!-- Encabezado de Fecha -->
+                        <div class="col-12 mt-4 mb-1">
+                            <h5 class="fw-bold text-body d-flex align-items-center" style="border-left: 4px solid var(--primary); padding-left: 12px; margin-bottom: 0;">
+                                <i data-lucide="calendar-days" class="me-2 text-primary" style="width: 20px; height: 20px;"></i>
+                                {{ fecha_grp.strftime('%A, %d de %B de %Y').capitalize() if fecha_grp else 'Fecha Desconocida' }}
+                            </h5>
+                        </div>
+                        
+                        <!-- Registros de la Fecha -->
+                        {% for reg in registros_dia %}
+                        {% set ns = namespace(grado=none) %}
+                        {% for g in grados %}
+                            {% if g.nombre == reg.grado_seccion %}
+                                {% set ns.grado = g %}
+                            {% endif %}
+                        {% endfor %}
+                        <div class="col-12">
+                            <div class="card border-secondary border-opacity-25 text-body shadow-sm" style="background: var(--surface); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 15px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                                <div class="card-body p-4">
+                                    <div class="row align-items-center text-center text-md-start">
+                                        <!-- Datos del Aula -->
+                                        <div class="col-12 col-md-3 mb-3 mb-md-0">
+                                            <h4 class="card-title fw-bold mb-1">{{ reg.grado_seccion }}</h4>
+                                            <div class="d-flex flex-column gap-1">
+                                                <span class="text-muted small">
+                                                    <i data-lucide="calendar" style="width:14px;height:14px;margin-right:2px;vertical-align:-1px;"></i> {{ reg.fecha.strftime('%d/%m/%Y') }}
+                                                </span>
+                                                <span class="text-muted small">
+                                                    <i data-lucide="user" style="width:14px;height:14px;margin-right:2px;vertical-align:-1px;"></i> {{ ns.grado.docente.nombre if ns.grado and ns.grado.docente else 'Sin Docente' }}
+                                                </span>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <!-- Índice de Asistencia -->
-                                    <div class="col-12 col-md-2 mb-3 mb-md-0">
-                                        <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
-                                            <span class="text-body-secondary">Asistencia</span>
-                                            <span class="text-body fw-bold">{{ reg.porcentaje }}%</span>
+                                        
+                                        <!-- Matrícula y Desglose -->
+                                        <div class="col-12 col-md-4 mb-3 mb-md-0 d-flex flex-column flex-md-row align-items-center gap-3">
+                                            <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill shadow-sm">
+                                                <i data-lucide="users" style="width:16px;height:16px;margin-right:4px;"></i> {{ reg.matricula_total }} Total
+                                            </span>
+                                            <div class="d-flex gap-3">
+                                                <div class="text-center">
+                                                    <small class="d-block text-body-secondary" style="font-size:0.7rem; letter-spacing:0.5px;">VARONES</small>
+                                                    <span class="text-body fw-bold"><i data-lucide="user" style="width:12px;height:12px;color:var(--primary);"></i> {{ reg.varones }}</span>
+                                                </div>
+                                                <div class="text-center">
+                                                    <small class="d-block text-body-secondary" style="font-size:0.7rem; letter-spacing:0.5px;">HEMBRAS</small>
+                                                    <span class="text-body fw-bold"><i data-lucide="user" style="width:12px;height:12px;color:#ef4444;"></i> {{ reg.hembras }}</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.1);">
-                                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ reg.porcentaje }}%" aria-valuenow="{{ reg.porcentaje }}" aria-valuemin="0" aria-valuemax="100"></div>
-                                        </div>
-                                    </div>
 
-                                    <!-- Botones -->
-                                    <div class="col-12 col-md-3 mt-3 mt-md-0 d-flex flex-column gap-2 justify-content-center">
-                                        {% if ns.grado %}
-                                        <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#modalDetalleAula{{ ns.grado.id }}" style="font-size: 0.85rem;">
-                                            Ver Detalle Completo <i data-lucide="arrow-right" class="ms-1" style="width:14px;height:14px;vertical-align:-2px;"></i>
-                                        </button>
-                                        {% endif %}
-                                        <button class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#modalEliminarAsistencia{{ reg.id }}" style="font-size: 0.85rem;">
-                                            Eliminar Registro <i data-lucide="trash-2" class="ms-1" style="width:14px;height:14px;vertical-align:-2px;"></i>
-                                        </button>
+                                        <!-- Índice de Asistencia -->
+                                        <div class="col-12 col-md-2 mb-3 mb-md-0">
+                                            <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                                                <span class="text-body-secondary">Asistencia</span>
+                                                <span class="text-body fw-bold">{{ reg.porcentaje }}%</span>
+                                            </div>
+                                            <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ reg.porcentaje }}%" aria-valuenow="{{ reg.porcentaje }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Botones -->
+                                        <div class="col-12 col-md-3 mt-3 mt-md-0 d-flex flex-column gap-2 justify-content-center">
+                                            {% if ns.grado %}
+                                            <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#modalDetalleAula{{ ns.grado.id }}" style="font-size: 0.85rem;">
+                                                Ver Detalle Completo <i data-lucide="arrow-right" class="ms-1" style="width:14px;height:14px;vertical-align:-2px;"></i>
+                                            </button>
+                                            {% endif %}
+                                            <button class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#modalEliminarAsistencia{{ reg.id }}" style="font-size: 0.85rem;">
+                                                Eliminar Registro <i data-lucide="trash-2" class="ms-1" style="width:14px;height:14px;vertical-align:-2px;"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                        {% endfor %}
                     {% else %}
                         <div class="col-12 text-center py-5">
                             <i data-lucide="inbox" style="width:48px;height:48px;color:var(--text-muted);margin-bottom:12px;"></i>
