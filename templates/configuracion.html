@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends"base.html" %}
 
 {% block title %}Configuración - Kolegium{% endblock %}
 {% block header_title %}Configuraciones{% endblock %}
@@ -9,12 +9,12 @@
     .page-header .subtitle { color: var(--on-surface-variant); font-size: 0.85rem; }
 
     .config-card {
-        background: #fff; border-radius: 16px;
+        background: var(--surface); border-radius: 16px;
         box-shadow: 0 1px 3px rgba(15,23,42,0.04); height: 100%; overflow: hidden;
     }
 
     .config-card .card-top {
-        padding: 18px 24px; border-bottom: 1px solid #f2f4f6;
+        padding: 18px 24px; border-bottom: 1px solid var(--border-color);
         font-weight: 800; font-size: 0.9rem; letter-spacing: -0.02em;
         display: flex; align-items: center; gap: 8px;
     }
@@ -28,12 +28,12 @@
 
     .edu-input {
         width: 100%; padding: 0.7rem 0.9rem; border-radius: 10px;
-        border: none; background: #eceef0; font-size: 0.85rem;
+        border: none; background: var(--surface-container-high); font-size: 0.85rem;
         font-family: 'Inter', sans-serif; color: var(--on-surface);
         transition: all 0.2s; outline: none;
     }
 
-    .edu-input:focus { background: #fff; box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
+    .edu-input:focus { background: var(--surface); box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
 
     .btn-create {
         width: 100%; padding: 10px; border: none; border-radius: 12px;
@@ -52,7 +52,7 @@
 
     .list-item {
         display: flex; justify-content: space-between; align-items: center;
-        padding: 14px 16px; border-bottom: 1px solid #f2f4f6; transition: background 0.2s;
+        padding: 14px 16px; border-bottom: 1px solid var(--border-color); transition: background 0.2s;
     }
 
     .list-item:last-child { border-bottom: none; }
@@ -93,7 +93,7 @@
     .modal-edu .modal-content { border-radius: 16px; border: none; box-shadow: 0 20px 40px rgba(15,23,42,0.12); }
     .modal-edu .icon-warning { width: 64px; height: 64px; border-radius: 50%; background: rgba(239,68,68,0.08); color: #ef4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
     .modal-edu .icon-warning i { width: 28px; height: 28px; }
-    .btn-cancel-modal { flex:1; padding:10px; border-radius:999px; border:1px solid #eceef0; background:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; font-family:'Inter',sans-serif; color:var(--on-surface); transition: all 0.2s; }
+    .btn-cancel-modal { flex:1; padding:10px; border-radius:999px; border:1px solid var(--surface-container-high); background: var(--surface); font-weight:700; font-size:0.85rem; cursor:pointer; font-family:'Inter',sans-serif; color:var(--on-surface); transition: all 0.2s; }
     .btn-danger-link { flex:1; padding:10px; border-radius:999px; background:#ef4444; color:#fff; font-weight:700; font-size:0.85rem; text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center; transition: all 0.2s; }
     .btn-danger-link:hover { background:#dc2626; color:#fff; }
     .btn-save-sm { width: 100%; padding: 10px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--primary-container)); color: #fff; font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.2s; }
@@ -105,7 +105,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="mx-auto" style="max-width: 1200px;">
+<div class="mx-auto" style="max-width: 1200px; min-height: 100vh; padding-bottom: 2rem;">
 
     <div class="page-header mb-4">
         <h3 class="title">Ajustes del Sistema</h3>
@@ -195,21 +195,21 @@
                                                 <div class="col-6">
                                                     <label class="modal-form-label"><i data-lucide="book" style="width:10px;height:10px;color:var(--primary);vertical-align:-1px;"></i> Grado</label>
                                                     <select name="grado_num" class="edu-input form-select" required>
-                                                        <option value="1er Grado" {% if "1er Grado" in grado.nombre %}selected{% endif %}>1er Grado</option>
-                                                        <option value="2do Grado" {% if "2do Grado" in grado.nombre %}selected{% endif %}>2do Grado</option>
-                                                        <option value="3er Grado" {% if "3er Grado" in grado.nombre %}selected{% endif %}>3er Grado</option>
-                                                        <option value="4to Grado" {% if "4to Grado" in grado.nombre %}selected{% endif %}>4to Grado</option>
-                                                        <option value="5to Grado" {% if "5to Grado" in grado.nombre %}selected{% endif %}>5to Grado</option>
-                                                        <option value="6to Grado" {% if "6to Grado" in grado.nombre %}selected{% endif %}>6to Grado</option>
+                                                        <option value="1er Grado" {% if"1er Grado" in grado.nombre %}selected{% endif %}>1er Grado</option>
+                                                        <option value="2do Grado" {% if"2do Grado" in grado.nombre %}selected{% endif %}>2do Grado</option>
+                                                        <option value="3er Grado" {% if"3er Grado" in grado.nombre %}selected{% endif %}>3er Grado</option>
+                                                        <option value="4to Grado" {% if"4to Grado" in grado.nombre %}selected{% endif %}>4to Grado</option>
+                                                        <option value="5to Grado" {% if"5to Grado" in grado.nombre %}selected{% endif %}>5to Grado</option>
+                                                        <option value="6to Grado" {% if"6to Grado" in grado.nombre %}selected{% endif %}>6to Grado</option>
                                                     </select>
                                                 </div>
                                                 <div class="col-6">
                                                     <label class="modal-form-label"><i data-lucide="hash" style="width:10px;height:10px;color:var(--primary);vertical-align:-1px;"></i> Sección</label>
                                                     <select name="seccion_letra" class="edu-input form-select" required>
-                                                        <option value="Sección A" {% if "Sección A" in grado.nombre %}selected{% endif %}>Sección A</option>
-                                                        <option value="Sección B" {% if "Sección B" in grado.nombre %}selected{% endif %}>Sección B</option>
-                                                        <option value="Sección C" {% if "Sección C" in grado.nombre %}selected{% endif %}>Sección C</option>
-                                                        <option value="Sección Única" {% if "Sección Única" in grado.nombre %}selected{% endif %}>Sección Única</option>
+                                                        <option value="Sección A" {% if"Sección A" in grado.nombre %}selected{% endif %}>Sección A</option>
+                                                        <option value="Sección B" {% if"Sección B" in grado.nombre %}selected{% endif %}>Sección B</option>
+                                                        <option value="Sección C" {% if"Sección C" in grado.nombre %}selected{% endif %}>Sección C</option>
+                                                        <option value="Sección Única" {% if"Sección Única" in grado.nombre %}selected{% endif %}>Sección Única</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -269,21 +269,62 @@
                     </div>
                 </div>
             </div>
+            
+        </div>
+    </div>
+    
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="config-card mb-4" style="border: 1px solid rgba(239, 68, 68, 0.2);">
+                <div class="card-top" style="color: #ef4444;"><i data-lucide="chevrons-up" style="color: #ef4444;"></i> Transición de Ciclo Escolar</div>
+                <div class="card-inner text-center">
+                    <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 20px;">
+                        Promueve a todos los alumnos regulares al siguiente grado y egresa a la cohorte de 6to Grado de forma automática.
+                    </p>
+                    <button type="button" class="btn-create" style="background: linear-gradient(135deg, #ef4444, #dc2626);" data-bs-toggle="modal" data-bs-target="#modalPromocion">
+                        <i data-lucide="alert-circle"></i> Ejecutar Promoción Masiva
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade modal-edu" id="modalConfirmarEliminar" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
+<div class="modal fade modal-edu" id="modalPromocion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-body text-center p-4">
-                <div class="icon-warning"><i data-lucide="alert-triangle"></i></div>
-                <h5 style="font-weight:800;">¿Estás seguro?</h5>
-                <p style="color:var(--on-surface-variant);font-size:0.85rem;">Vas a eliminar <strong id="nombreElemento"></strong>. Esto no se puede deshacer.</p>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn-cancel-modal" data-bs-dismiss="modal">No</button>
-                    <a href="#" id="botonConfirmarBorrar" class="btn-danger-link">Sí, borrar</a>
+                <div class="icon-warning" style="width: 80px; height: 80px;"><i data-lucide="alert-octagon" style="width: 40px; height: 40px;"></i></div>
+                <h4 style="font-weight:800; color: #ef4444;">¡Acción Irreversible!</h4>
+                <p style="color:var(--on-surface-variant);font-size:0.95rem; margin-top: 15px;">
+                    Estás a punto de promover a <strong>toda la matrícula escolar</strong> al siguiente grado lógico. Los alumnos de 6to Grado cambiarán su estado a Egresados.
+                </p>
+                <div class="alert alert-warning text-start mt-3" style="font-size: 0.85rem; border-radius: 12px;">
+                    <strong>Importante:</strong> Asegúrate de haber creado previamente todas las secciones del nuevo ciclo (del 2do al 6to) en el panel de configuración. Si un grado destino no existe, la operación se abortará de forma segura.
                 </div>
+                <form action="/configuracion/promover_ano" method="POST" class="d-flex gap-2 mt-4">
+                    <button type="button" class="btn-cancel-modal" data-bs-dismiss="modal">Cancelar Operación</button>
+                    <button type="submit" class="btn-danger-link" style="border:none;">Sí, Promover Matrícula</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+            <div class="modal-body p-4 text-start">
+                <h5 style="font-weight:800; color:#ef4444; display:flex; align-items:center; gap:6px;">
+                    <i data-lucide="alert-triangle" style="width:20px;height:20px;"></i> Confirmar eliminación
+                </h5>
+                <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
+                    ¿Estás seguro de que deseas borrar <strong id="nombreElemento"></strong>?<br>Esta acción no se puede deshacer.
+                </p>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                <button type="button" class="btn-cancel-modal" data-bs-dismiss="modal">Cancelar</button>
+                <a href="#" id="botonConfirmarBorrar" class="btn-danger-link">Sí, borrar</a>
             </div>
         </div>
     </div>

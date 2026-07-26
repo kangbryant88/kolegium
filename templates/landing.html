@@ -269,10 +269,7 @@
                 Kolegium
             </a>
             <div class="d-flex align-items-center gap-3">
-                <button class="btn btn-link nav-link text-body p-0" id="theme-toggle">
-                    <i class="ph ph-sun fs-4"></i>
-                </button>
-                <a href="{{ url_for('login') }}" class="btn btn-gradient rounded-pill px-4 py-2 fw-semibold">Iniciar Sesión</a>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-gradient rounded-pill px-4 py-2 fw-semibold">Iniciar Sesión</a>
             </div>
         </div>
     </nav>
@@ -292,7 +289,7 @@
                         El sistema de gestión escolar definitivo. Diseñado para ofrecer una experiencia limpia, rápida y enfocada en lo que realmente importa: la educación.
                     </p>
                     <div class="d-flex flex-wrap gap-3 hero-buttons">
-                        <a href="{{ url_for('login') }}" class="btn btn-gradient rounded-pill px-5 py-3 fw-semibold text-center">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-gradient rounded-pill px-5 py-3 fw-semibold text-center">
                             Solicitar Demo / Iniciar<br>Sesión
                         </a>
                         <a href="#caracteristicas" class="btn btn-outline-custom rounded-pill px-5 py-3 fw-semibold d-flex align-items-center justify-content-center">
@@ -391,37 +388,6 @@
     </section>
 
     <!-- SCRIPT TEMA CLARO/OSCURO -->
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const toggleBtn = document.getElementById('theme-toggle');
-        const htmlElement = document.documentElement;
-        const icon = toggleBtn ? toggleBtn.querySelector('i') : null;
-
-        function updateIcon(theme) {
-          if (!icon) return;
-          if (theme === 'dark') {
-            icon.classList.remove('ph-moon');
-            icon.classList.add('ph-sun');
-          } else {
-            icon.classList.remove('ph-sun');
-            icon.classList.add('ph-moon');
-          }
-        }
-
-        const savedTheme = localStorage.getItem('kolegium-theme') || 'dark';
-        htmlElement.setAttribute('data-bs-theme', savedTheme);
-        updateIcon(savedTheme);
-
-        if (toggleBtn) {
-          toggleBtn.addEventListener('click', () => {
-            const currentTheme = htmlElement.getAttribute('data-bs-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            htmlElement.setAttribute('data-bs-theme', newTheme);
-            localStorage.setItem('kolegium-theme', newTheme);
-            updateIcon(newTheme);
-          });
-        }
-      });
-    </script>
+    <!-- Theme JS removed: Landing page is locked in Dark Mode -->
 </body>
 </html>

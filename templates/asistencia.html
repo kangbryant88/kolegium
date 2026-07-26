@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends"base.html" %}
 
 {% block title %}Asistencia - Kolegium{% endblock %}
 {% block header_title %}Control de Asistencia{% endblock %}
@@ -9,7 +9,7 @@
     .page-header .subtitle { color: var(--on-surface-variant); font-size: 0.85rem; }
 
     .form-card {
-        background: #fff; border-radius: 16px;
+        background: var(--surface); border-radius: 16px;
         box-shadow: 0 1px 3px rgba(15,23,42,0.04); padding: 24px;
     }
 
@@ -27,12 +27,12 @@
 
     .edu-input, .edu-select {
         width: 100%; padding: 0.7rem 0.9rem; border-radius: 10px;
-        border: none; background: #eceef0; font-size: 0.85rem;
+        border: none; background: var(--surface-container-high); font-size: 0.85rem;
         font-family: 'Inter', sans-serif; color: var(--on-surface);
         transition: all 0.2s; outline: none;
     }
 
-    .edu-input:focus, .edu-select:focus { background: #fff; box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
+    .edu-input:focus, .edu-select:focus { background: var(--surface); box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
 
     .info-box {
         background: rgba(70,72,212,0.04); border-radius: 12px; padding: 12px 16px;
@@ -46,7 +46,7 @@
     .info-badges { display: flex; gap: 8px; }
 
     .info-badge {
-        flex: 1; padding: 6px; border-radius: 8px; background: #fff;
+        flex: 1; padding: 6px; border-radius: 8px; background: var(--surface);
         font-size: 0.75rem; font-weight: 600; text-align: center;
         display: flex; align-items: center; justify-content: center; gap: 4px;
     }
@@ -65,7 +65,7 @@
     .btn-submit-attendance i { width: 18px; height: 18px; }
 
     .consolidado-card {
-        background: #fff; border-radius: 16px;
+        background: var(--surface); border-radius: 16px;
         box-shadow: 0 1px 3px rgba(15,23,42,0.04); padding: 24px; height: 100%;
     }
 
@@ -102,7 +102,7 @@
     .reg-card .date i { width: 12px; height: 12px; }
 
     .reg-detail {
-        margin-top: 12px; padding: 10px 14px; background: #fff; border-radius: 10px;
+        margin-top: 12px; padding: 10px 14px; background: var(--surface); border-radius: 10px;
         display: flex; justify-content: space-between; align-items: center;
         font-size: 0.8rem;
     }
@@ -122,7 +122,7 @@
     .btn-del-reg i { width: 14px; height: 14px; }
 
     .empty-state {
-        text-align: center; padding: 2.5rem; background: #fff; border-radius: 16px;
+        text-align: center; padding: 2.5rem; background: var(--surface); border-radius: 16px;
         color: var(--on-surface-variant); opacity: 0.6;
     }
 
@@ -135,139 +135,365 @@
 {% endblock %}
 
 {% block content %}
-<div class="mx-auto" style="max-width: 1200px;">
+<div class="mx-auto w-100" style="max-width: 1200px;">
 
     <div class="page-header mb-4">
         <h3 class="title">Carga de Asistencia</h3>
         <p class="subtitle mb-0">Registre la asistencia diaria de su sección</p>
     </div>
 
-    <div class="row {% if 'asistencia_global' not in mis_permisos %}justify-content-center{% endif %}">
+    <div class="row w-100 m-0 mb-4">
+        <div class="col-12 d-flex justify-content-center">
+            <ul class="nav nav-pills gap-2" id="asistenciaTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active rounded-pill px-4 fw-semibold" id="registro-tab" data-bs-toggle="pill" data-bs-target="#registro" type="button" role="tab">Registro Diario</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-4 fw-semibold" id="consolidado-tab" data-bs-toggle="pill" data-bs-target="#consolidado" type="button" role="tab">Consolidado Estudiantil</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-4 fw-semibold" id="personal-tab" data-bs-toggle="pill" data-bs-target="#personal" type="button" role="tab">Asistencia de Personal</button>
+                </li>
+            </ul>
+        </div>
+    </div>
 
-        <div class="{% if 'asistencia_global' in mis_permisos %}col-lg-4{% else %}col-lg-6{% endif %} mb-4">
-            <div class="form-card">
-                <h5><i data-lucide="clipboard-check"></i> Registro Diario</h5>
-                <form action="/asistencia" method="POST">
-                    <div class="mb-3">
-                        <label class="edu-label">FECHA DE HOY</label>
-                        <input type="date" name="fecha" class="edu-input" value="{{ hoy }}" required>
+    <div class="tab-content border border-secondary border-opacity-25 shadow-sm" id="asistenciaTabsContent" style="background: var(--surface); border-radius: 1rem; padding: 2rem;">
+        
+        <!-- Pestaña 1: Registro Diario -->
+        <div class="tab-pane fade show active" id="registro" role="tabpanel" tabindex="0">
+            <form action="{{ url_for('academico.asistencia') }}" method="POST" id="formRegistroAsistencia">
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label class="edu-label text-body mb-2" style="font-size:0.75rem; font-weight:700; letter-spacing:1px;">FECHA DE HOY</label>
+                        <input type="date" name="fecha" class="form-control form-control-lg bg-body text-body border-secondary" value="{{ hoy }}" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="edu-label">SELECCIONAR GRADO</label>
-                        <select name="grado_id" class="edu-select" id="selectorGrado" required>
-                            <option value="" disabled selected>Elija su salón...</option>
-                            {% for grado in grados %}
-                                <option value="{{ grado.id }}" data-v="{{ grado.total_varones }}" data-h="{{ grado.total_hembras }}">
-                                    {{ grado.nombre }}
-                                </option>
-                            {% endfor %}
-                        </select>
+                    <div class="col-md-6">
+                        <label class="edu-label text-body mb-2" style="font-size:0.75rem; font-weight:700; letter-spacing:1px;">SELECCIONAR AULA</label>
+                        <input type="hidden" name="grado_id" id="hiddenGradoId" required>
+                        <button type="button" class="btn btn-outline-primary btn-lg w-100" data-bs-toggle="modal" data-bs-target="#modalAulasAsistencia" id="btnSeleccionarAula" style="text-align: left; position: relative;">
+                            <span><i data-lucide="book-open" class="me-2" style="width: 18px; height: 18px;"></i> Seleccionar Aula a Cargar</span>
+                            <i data-lucide="chevron-down" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px;"></i>
+                        </button>
                     </div>
+                </div>
 
-                    <div id="infoMatricula" class="info-box d-none mb-3">
-                        <div class="info-row">
-                            <span class="label">Matrícula Registrada:</span>
-                            <span class="val" id="txtTotal">0 Alumnos</span>
+                <div id="resumenAula" class="d-none border border-secondary rounded p-3 mb-4 text-body" style="background: var(--surface-container-high);">
+                    <div class="row text-center align-items-center">
+                        <div class="col-4 border-end border-secondary">
+                            <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; font-weight: 700; letter-spacing: 1px;">Docente Asignado</small>
+                            <strong id="txtDocenteAsignado" class="d-block mt-1">---</strong>
                         </div>
-                        <div class="info-badges">
-                            <span class="info-badge"><i data-lucide="user" style="color:#ef4444;"></i> <span id="txtH">0</span> Niñas</span>
-                            <span class="info-badge"><i data-lucide="user" style="color:var(--primary);"></i> <span id="txtV">0</span> Niños</span>
+                        <div class="col-4 border-end border-secondary">
+                            <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; font-weight: 700; letter-spacing: 1px;">Matrícula Varones</small>
+                            <strong id="txtMatriculaVarones" class="d-block mt-1" style="color: var(--primary); font-size: 1.1rem;">0</strong>
                         </div>
-                    </div>
-
-                    <div class="row mb-4 g-2">
-                        <div class="col-6">
-                            <label class="edu-label"><i data-lucide="user" style="width:11px;height:11px;color:#ef4444;vertical-align:-1px;"></i> NIÑAS</label>
-                            <input type="number" name="hembras" class="edu-input" placeholder="0" min="0" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="edu-label"><i data-lucide="user" style="width:11px;height:11px;color:var(--primary);vertical-align:-1px;"></i> VARONES</label>
-                            <input type="number" name="varones" class="edu-input" placeholder="0" min="0" required>
+                        <div class="col-4">
+                            <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; font-weight: 700; letter-spacing: 1px;">Matrícula Hembras</small>
+                            <strong id="txtMatriculaHembras" class="d-block mt-1" style="color: #ef4444; font-size: 1.1rem;">0</strong>
                         </div>
                     </div>
+                </div>
 
-                    <button type="submit" class="btn-submit-attendance">
-                        <i data-lucide="cloud-upload"></i> Guardar Registro
-                    </button>
-                </form>
-            </div>
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <div class="card border-secondary h-100" style="background: var(--surface-container-high);">
+                            <div class="card-body text-center py-4">
+                                <i data-lucide="user" style="width:36px;height:36px;color:var(--primary);margin-bottom:12px;"></i>
+                                <h5 class="text-body mb-3" style="font-weight: 700;">Varones</h5>
+                                <input type="number" name="varones" class="form-control form-control-lg bg-body-tertiary text-body text-center border-secondary mx-auto fw-bold" style="max-width: 150px; font-size: 1.5rem;" placeholder="0" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-secondary h-100" style="background: var(--surface-container-high);">
+                            <div class="card-body text-center py-4">
+                                <i data-lucide="user" style="width:36px;height:36px;color:#ef4444;margin-bottom:12px;"></i>
+                                <h5 class="text-body mb-3" style="font-weight: 700;">Hembras</h5>
+                                <input type="number" name="hembras" class="form-control form-control-lg bg-body-tertiary text-body text-center border-secondary mx-auto fw-bold" style="max-width: 150px; font-size: 1.5rem;" placeholder="0" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100 mt-2 py-3" style="font-weight: 700; letter-spacing: 0.5px;">
+                    <i data-lucide="save" class="me-2"></i> Guardar Registro
+                </button>
+            </form>
         </div>
 
-        {% if 'asistencia_global' in mis_permisos or 'admin' in mis_permisos %}
-        <div class="col-lg-8 mb-4">
-            <div class="consolidado-card">
-                <h5><i data-lucide="bar-chart-3"></i> Consolidado de Asistencia</h5>
-                <div class="scroll-zone">
+        <!-- Pestaña 2: Consolidado Estudiantil -->
+        <div class="tab-pane fade" id="consolidado" role="tabpanel" tabindex="0">
+            {% if 'admin' in mis_permisos %}
+                <div class="row g-4 justify-content-center w-100 m-0">
                     {% for reg in registros %}
-                    <div class="reg-card">
-                        <div class="d-flex w-100 justify-content-between align-items-center">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="pct-badge {% if reg.porcentaje >= 80 %}high{% elif reg.porcentaje >= 50 %}mid{% else %}low{% endif %}">
-                                    {{ reg.porcentaje }}%
-                                </div>
-                                <div>
-                                    <div class="grade">{{ reg.grado_seccion }}</div>
-                                    <div class="date"><i data-lucide="calendar"></i> {{ reg.fecha.strftime('%d/%m/%Y') }}</div>
+                    {% set ns = namespace(grado=none) %}
+                    {% for g in grados %}
+                        {% if g.nombre == reg.grado_seccion %}
+                            {% set ns.grado = g %}
+                        {% endif %}
+                    {% endfor %}
+                    <div class="col-12">
+                        <div class="card border-secondary border-opacity-25 text-body shadow-sm" style="background: var(--surface); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 15px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                            <div class="card-body p-4">
+                                <div class="row align-items-center text-center text-md-start">
+                                    <!-- Datos del Aula -->
+                                    <div class="col-12 col-md-3 mb-3 mb-md-0">
+                                        <h4 class="card-title fw-bold mb-1">{{ reg.grado_seccion }}</h4>
+                                        <div class="d-flex flex-column gap-1">
+                                            <span class="text-muted small">
+                                                <i data-lucide="calendar" style="width:14px;height:14px;margin-right:2px;vertical-align:-1px;"></i> {{ reg.fecha.strftime('%d/%m/%Y') }}
+                                            </span>
+                                            <span class="text-muted small">
+                                                <i data-lucide="user" style="width:14px;height:14px;margin-right:2px;vertical-align:-1px;"></i> {{ ns.grado.docente.nombre if ns.grado and ns.grado.docente else 'Sin Docente' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Matrícula y Desglose -->
+                                    <div class="col-12 col-md-4 mb-3 mb-md-0 d-flex flex-column flex-md-row align-items-center gap-3">
+                                        <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill shadow-sm">
+                                            <i data-lucide="users" style="width:16px;height:16px;margin-right:4px;"></i> {{ reg.matricula_total }} Total
+                                        </span>
+                                        <div class="d-flex gap-3">
+                                            <div class="text-center">
+                                                <small class="d-block text-body-secondary" style="font-size:0.7rem; letter-spacing:0.5px;">VARONES</small>
+                                                <span class="text-body fw-bold"><i data-lucide="user" style="width:12px;height:12px;color:var(--primary);"></i> {{ reg.varones }}</span>
+                                            </div>
+                                            <div class="text-center">
+                                                <small class="d-block text-body-secondary" style="font-size:0.7rem; letter-spacing:0.5px;">HEMBRAS</small>
+                                                <span class="text-body fw-bold"><i data-lucide="user" style="width:12px;height:12px;color:#ef4444;"></i> {{ reg.hembras }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Índice de Asistencia -->
+                                    <div class="col-12 col-md-2 mb-3 mb-md-0">
+                                        <div class="d-flex justify-content-between mb-1" style="font-size: 0.8rem;">
+                                            <span class="text-body-secondary">Asistencia</span>
+                                            <span class="text-body fw-bold">{{ reg.porcentaje }}%</span>
+                                        </div>
+                                        <div class="progress" style="height: 6px; background-color: rgba(255,255,255,0.1);">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ reg.porcentaje }}%" aria-valuenow="{{ reg.porcentaje }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Botones -->
+                                    <div class="col-12 col-md-3 mt-3 mt-md-0 d-flex flex-column gap-2 justify-content-center">
+                                        {% if ns.grado %}
+                                        <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#modalDetalleAula{{ ns.grado.id }}" style="font-size: 0.85rem;">
+                                            Ver Detalle Completo <i data-lucide="arrow-right" class="ms-1" style="width:14px;height:14px;vertical-align:-2px;"></i>
+                                        </button>
+                                        {% endif %}
+                                        <button class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#modalEliminarAsistencia{{ reg.id }}" style="font-size: 0.85rem;">
+                                            Eliminar Registro <i data-lucide="trash-2" class="ms-1" style="width:14px;height:14px;vertical-align:-2px;"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                            <form action="/eliminar_asistencia/{{ reg.id }}" method="POST" class="form-eliminar">
-                                <button type="submit" class="btn-del-reg" title="Eliminar registro">
-                                    <i data-lucide="trash-2"></i>
-                                </button>
-                            </form>
-                        </div>
-                        <div class="reg-detail">
-                            <span class="gender">
-                                <i data-lucide="user" style="color:#ef4444;"></i> {{ reg.hembras }}
-                                &nbsp;|&nbsp;
-                                <i data-lucide="user" style="color:var(--primary);"></i> {{ reg.varones }}
-                            </span>
-                            <span class="total">Total: {{ reg.asistentes }} / {{ reg.matricula_total }}</span>
                         </div>
                     </div>
                     {% else %}
-                    <div class="empty-state d-flex flex-column align-items-center justify-content-center text-center w-100 py-4">
-                        <i data-lucide="inbox"></i>
-                        <h5 style="font-weight:700;">Sin registros hoy</h5>
+                        <div class="col-12 text-center py-5">
+                            <i data-lucide="inbox" style="width:48px;height:48px;color:var(--text-muted);margin-bottom:12px;"></i>
+                            <p class="text-muted mb-0">No hay registros de asistencia cargados en el sistema.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Modales para el Detalle de Aula (Uno por cada grado) -->
+                {% for grado in grados %}
+                <div class="modal fade" id="modalDetalleAula{{ grado.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+                        <div class="modal-content border-0 shadow-lg text-body" style="background: var(--surface); border-radius: 12px; overflow: hidden;">
+                            <div class="modal-header border-bottom border-secondary border-opacity-25 p-4">
+                                <h5 class="modal-title fw-bold d-flex align-items-center">
+                                    <i data-lucide="book-open" class="text-primary me-2"></i> Detalle de {{ grado.nombre }}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <h6 class="text-body-secondary text-uppercase fw-bold mb-4" style="font-size: 0.8rem; letter-spacing: 1px;">Lista de Estudiantes</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-borderless align-middle mb-0 text-body">
+                                        <thead class="border-bottom border-secondary border-opacity-25 text-body-secondary" style="font-size: 0.85rem;">
+                                            <tr>
+                                                <th scope="col" class="py-3">Estudiante</th>
+                                                <th scope="col" class="py-3 text-center">Inasistencias Acumuladas</th>
+                                                <th scope="col" class="py-3 text-end">Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if grado.estudiantes %}
+                                                {% for est in grado.estudiantes %}
+                                                <tr style="border-bottom: 1px solid rgba(128,128,128,0.2);">
+                                                    <td class="py-3">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="bg-secondary bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 36px; height: 36px;">
+                                                                <i data-lucide="user" style="width:18px;height:18px;color:var(--primary);"></i>
+                                                            </div>
+                                                            <div>
+                                                                <span class="d-block fw-bold text-body" style="font-size: 0.95rem;">{{ est.nombre }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="py-3 text-center text-body fw-bold">
+                                                        {{ est.inasistencias | default('0') }}
+                                                    </td>
+                                                    <td class="py-3 text-end">
+                                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3 py-1">Regular</span>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            {% else %}
+                                            <tr>
+                                                <td colspan="3" class="text-center py-5" style="height: 250px;">
+                                                    <div class="d-flex flex-column justify-content-center align-items-center h-100 text-muted">
+                                                        <i data-lucide="inbox" style="width:64px;height:64px;margin-bottom:16px; opacity:0.5;"></i>
+                                                        <p class="mb-0 fs-5">No hay estudiantes registrados en esta aula.</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                </div>
+                {% endfor %}
+                </div>
+            {% else %}
+                <div class="d-flex flex-column align-items-center justify-content-center py-5">
+                    <i data-lucide="lock" style="width: 64px; height: 64px; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                    <h4 class="text-white fw-bold mb-2">Acceso Restringido</h4>
+                    <p class="text-muted text-center" style="max-width: 400px;">
+                        El consolidado general de asistencia estudiantil es de uso exclusivo para el personal directivo.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pestaña 3: Asistencia de Personal -->
+        <div class="tab-pane fade" id="personal" role="tabpanel" tabindex="0">
+            {% if 'admin' in mis_permisos %}
+                <!-- Tabla de Personal irá aquí -->
+            {% else %}
+                <div class="d-flex flex-column align-items-center justify-content-center py-5">
+                    <i data-lucide="lock" style="width: 64px; height: 64px; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                    <h4 class="text-white fw-bold mb-2">Acceso Restringido</h4>
+                    <p class="text-muted text-center" style="max-width: 400px;">
+                        El registro de asistencia del personal es de uso exclusivo para el personal directivo.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal Selección de Aula -->
+<div class="modal fade" id="modalAulasAsistencia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width: 450px;">
+        <div class="modal-content border-0 shadow-lg text-body" style="background: var(--surface); border-radius: 12px;">
+            <div class="modal-header border-secondary border-bottom p-4">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                    <i data-lucide="book-open" style="color: var(--primary);"></i> Directorio de Aulas
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="list-group list-group-flush gap-2">
+                    {% for grado in grados %}
+                    <button type="button" class="list-group-item list-group-item-action text-start text-body border-secondary rounded d-flex align-items-center justify-content-between p-3 btn-seleccionar-aula bg-transparent" 
+                        style="transition: background 0.2s;"
+                        data-id="{{ grado.id }}" 
+                        data-nombre="{{ grado.nombre }}"
+                        data-v="{{ grado.total_varones }}" 
+                        data-h="{{ grado.total_hembras }}"
+                        data-docente="{{ grado.docente.nombre if grado.docente else 'Sin Asignar' }}"
+                        data-bs-dismiss="modal">
+                        <div>
+                            <strong class="d-block mb-1 text-body" style="font-size: 1rem;">{{ grado.nombre }}</strong>
+                            <small class="text-body-secondary d-block">
+                                <i data-lucide="user" style="width:12px;height:12px;margin-right:2px;vertical-align:-1px;"></i> {{ grado.docente.nombre if grado.docente else 'Sin Asignar' }}
+                            </small>
+                        </div>
+                        <i data-lucide="chevron-right" class="text-muted"></i>
+                    </button>
                     {% endfor %}
                 </div>
             </div>
         </div>
-        {% endif %}
-
     </div>
 </div>
+
+<!-- Modales de Eliminación -->
+{% for reg in registros %}
+<div class="modal fade" id="modalEliminarAsistencia{{ reg.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+            <div class="modal-body p-4 text-start">
+                <h5 style="font-weight:800; color:#ef4444; display:flex; align-items:center; gap:6px;">
+                    <i data-lucide="alert-triangle" style="width:20px;height:20px;"></i> Confirmar eliminación
+                </h5>
+                <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
+                    ¿Estás seguro de que deseas eliminar este registro de asistencia?<br>Esta acción no se puede deshacer.
+                </p>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                <form action="{{ url_for('academico.eliminar_asistencia', id=reg.id) }}" method="POST" class="d-flex gap-2 w-100 m-0">
+                    <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-danger-link w-50 border-0" style="display:flex; justify-content:center; align-items:center;">Sí, borrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.getElementById('selectorGrado').addEventListener('change', function() {
-        const selected = this.options[this.selectedIndex];
-        const v = parseInt(selected.getAttribute('data-v'));
-        const h = parseInt(selected.getAttribute('data-h'));
-        document.getElementById('infoMatricula').classList.remove('d-none');
-        document.getElementById('txtV').innerText = v;
-        document.getElementById('txtH').innerText = h;
-        document.getElementById('txtTotal').innerText = (v + h) + " Alumnos";
-    });
+    document.addEventListener('DOMContentLoaded', function() {
+        const botonesAula = document.querySelectorAll('.btn-seleccionar-aula');
+        const hiddenGradoId = document.getElementById('hiddenGradoId');
+        const btnSeleccionarAula = document.getElementById('btnSeleccionarAula');
+        
+        const resumenAula = document.getElementById('resumenAula');
+        const txtDocenteAsignado = document.getElementById('txtDocenteAsignado');
+        const txtMatriculaVarones = document.getElementById('txtMatriculaVarones');
+        const txtMatriculaHembras = document.getElementById('txtMatriculaHembras');
 
-    document.querySelectorAll('.form-eliminar').forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            Swal.fire({
-                title: '¿Estás seguro de eliminar este registro?',
-                text: 'No podrás revertir esto.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#9a9a9a',
-                confirmButtonText: 'Confirmar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if(result.isConfirmed) {
-                    form.submit();
-                }
+        botonesAula.forEach(boton => {
+            boton.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const nombre = this.getAttribute('data-nombre');
+                const v = this.getAttribute('data-v');
+                const h = this.getAttribute('data-h');
+                const docente = this.getAttribute('data-docente');
+
+                // Update hidden input and button text
+                hiddenGradoId.value = id;
+                btnSeleccionarAula.innerHTML = `<span><i data-lucide="book-open" class="me-2" style="width: 18px; height: 18px;"></i> ${nombre}</span> <i data-lucide="check-circle" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--primary);"></i>`;
+                
+                // Update styling of button to look selected
+                btnSeleccionarAula.classList.remove('btn-outline-primary');
+                btnSeleccionarAula.classList.add('btn-primary');
+                btnSeleccionarAula.style.color = '#fff';
+
+                // Update summary block
+                txtDocenteAsignado.innerText = docente;
+                txtMatriculaVarones.innerText = v;
+                txtMatriculaHembras.innerText = h;
+                
+                // Reveal summary block
+                resumenAula.classList.remove('d-none');
+                
+                // Re-initialize lucide icons for the new button content
+                lucide.createIcons();
             });
         });
     });

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends"base.html" %}
 
 {% block title %}Dashboard Global - Kolegium{% endblock %}
 {% block header_title %}Dashboard Global{% endblock %}
@@ -6,7 +6,7 @@
 {% block extra_css %}
 <style>
     .welcome-card {
-        background: #fff;
+        background: var(--surface);
         border-radius: 16px;
         padding: 32px;
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
@@ -30,7 +30,7 @@
         font-size: 1.65rem;
         font-weight: 800;
         letter-spacing: -0.03em;
-        background: linear-gradient(135deg, #0f172a, var(--primary));
+        background: linear-gradient(135deg, var(--text-main), var(--primary));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 4px;
@@ -157,7 +157,7 @@
     }
 
     .quick-card {
-        background: #fff;
+        background: var(--surface);
         border-radius: 16px;
         padding: 24px;
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
@@ -200,7 +200,7 @@
     }
 
     .btn-quick:hover {
-        background: #eceef0;
+        background: var(--surface-container-high);
         color: var(--primary);
         transform: translateX(4px);
     }
@@ -212,7 +212,7 @@
     }
 
     .chart-card {
-        background: #fff;
+        background: var(--surface);
         border-radius: 16px;
         padding: 24px;
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
@@ -238,7 +238,7 @@
     }
 
     .feed-card {
-        background: #fff;
+        background: var(--surface);
         border-radius: 16px;
         padding: 24px;
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
@@ -267,7 +267,7 @@
 
     .feed-item {
         padding: 12px 0;
-        border-bottom: 1px solid #f2f4f6;
+        border-bottom: 1px solid var(--border-color);
     }
 
     .feed-item:last-child {
@@ -303,7 +303,7 @@
     }
 
     .btn-feed-all:hover {
-        background: #eceef0;
+        background: var(--surface-container-high);
         color: var(--primary);
     }
 
@@ -342,7 +342,45 @@
 {% endblock %}
 
 {% block content %}
-<div class="mx-auto" style="max-width: 1300px;">
+<style>
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    gap: 4px;
+}
+.calendar-day-header {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+.calendar-day {
+    font-size: 0.8rem;
+    border-radius: 50%;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+}
+.calendar-day.empty {
+    background: transparent;
+}
+.calendar-day.today {
+    background: linear-gradient(135deg, var(--primary), var(--primary-container));
+    color: #fff !important;
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(67, 24, 255, 0.3);
+}
+.calendar-day:not(.empty) {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.calendar-day:not(.empty):hover:not(.today) {
+    background: var(--surface-container-high);
+}
+</style>
+<div class="w-100 px-4 px-md-5">
 
     <div class="welcome-card d-flex flex-column flex-md-row justify-content-between align-items-center">
         <div class="text-center text-md-start">
@@ -398,10 +436,10 @@
         <div class="col-12 col-xl-3 col-md-6">
             <div class="quick-card">
                 <div class="card-label"><i data-lucide="zap"></i> ACCESOS RÁPIDOS</div>
-                <a href="/asistencia" class="btn-quick">
+                <a href="{{ url_for('academico.asistencia') }}" class="btn-quick">
                     <i data-lucide="clipboard-list"></i> Registrar Estudiantes
                 </a>
-                <a href="/asistencia_personal" class="btn-quick">
+                <a href="{{ url_for('academico.asistencia_personal') }}" class="btn-quick">
                     <i data-lucide="briefcase"></i> Registrar Personal
                 </a>
                 <a href="/anuncios" class="btn-quick">
@@ -411,19 +449,137 @@
         </div>
     </div>
 
-    <div class="row g-3 pb-4">
-        <div class="col-lg-8">
+    <!-- Fila de alertas (Notificaciones Urgentes) -->
+    {% if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo'] %}
+    <div class="row g-4 mb-4">
+        <!-- Solicitudes Pendientes (Aulas) -->
+        <div class="col-12 col-md-4">
+            <button onclick="document.getElementById('modalAula').classList.remove('d-none')" class="card border-0 shadow-sm text-decoration-none position-relative h-100 w-100 text-start" style="background: var(--surface); transition: transform 0.2s; cursor: pointer; {% if solicitudes_pendientes %}border: 1px solid rgba(239, 68, 68, 0.5) !important;{% endif %}">
+                <div class="card-body p-3 d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-2 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center">
+                        <i data-lucide="inbox" style="width:20px;height:20px;"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.9rem;">Solicitudes de Aula</h6>
+                        <span class="text-muted" style="font-size: 0.75rem;">Auditar desde aquí</span>
+                    </div>
+                </div>
+                {% if solicitudes_pendientes %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem; padding: 4px 8px; transform: translate(-30%, 30%) !important; border: 2px solid var(--surface);">
+                    {{ solicitudes_pendientes|length }}
+                </span>
+                {% endif %}
+            </button>
+        </div>
+
+        <!-- Actualizaciones (Estudiantes) -->
+        <div class="col-12 col-md-4">
+            <button onclick="document.getElementById('modalPerfil').classList.remove('d-none')" class="card border-0 shadow-sm text-decoration-none position-relative h-100 w-100 text-start" style="background: var(--surface); transition: transform 0.2s; cursor: pointer; {% if actualizaciones_pendientes %}border: 1px solid rgba(239, 68, 68, 0.5) !important;{% endif %}">
+                <div class="card-body p-3 d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-2 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center">
+                        <i data-lucide="edit-3" style="width:20px;height:20px;"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.9rem;">Actualizaciones de Perfil</h6>
+                        <span class="text-muted" style="font-size: 0.75rem;">Auditar desde aquí</span>
+                    </div>
+                </div>
+                {% if actualizaciones_pendientes %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem; padding: 4px 8px; transform: translate(-30%, 30%) !important; border: 2px solid var(--surface);">
+                    {{ actualizaciones_pendientes|length }}
+                </span>
+                {% endif %}
+            </button>
+        </div>
+
+        <!-- Defensoría -->
+        <div class="col-12 col-md-4">
+            <button onclick="document.getElementById('modalDefensoria').classList.remove('d-none')" class="card border-0 shadow-sm text-decoration-none position-relative h-100 w-100 text-start" style="background: var(--surface); transition: transform 0.2s; cursor: pointer; {% if solicitudes_defensoria %}border: 1px solid rgba(239, 68, 68, 0.5) !important;{% endif %}">
+                <div class="card-body p-3 d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-2 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center">
+                        <i data-lucide="shield-alert" style="width:20px;height:20px;"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.9rem;">Solicitudes de Defensoría</h6>
+                        <span class="text-muted" style="font-size: 0.75rem;">Auditar desde aquí</span>
+                    </div>
+                </div>
+                {% if solicitudes_defensoria %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem; padding: 4px 8px; transform: translate(-30%, 30%) !important; border: 2px solid var(--surface);">
+                    {{ solicitudes_defensoria|length }}
+                </span>
+                {% endif %}
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-3 pb-4 align-items-stretch">
+        <div class="col-lg-8 d-flex flex-column gap-3">
             <div class="chart-card">
                 <div class="card-label"><i data-lucide="trending-up"></i> TENDENCIA SEMANAL</div>
-                <div style="position: relative; height: 30vh; width: 100%;">
+                <div style="position: relative; height: 288px; max-height: 288px; width: 100%;">
                     <canvas id="graficaAsistencia"></canvas>
                 </div>
             </div>
+            
+            <!-- WIDGET ACTIVIDAD RECIENTE -->
+            <div class="card border-0 shadow-sm rounded-4 flex-grow-1" style="background: var(--surface);">
+                <div class="card-body p-3">
+                    <div class="card-label mb-3 text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 1px; color: var(--text-muted);"><i data-lucide="clock" style="width:14px;height:14px;vertical-align:-2px;"></i> ACTIVIDAD RECIENTE</div>
+                    <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+                        {% for actividad in actividades_recientes %}
+                        <li class="d-flex align-items-center gap-3">
+                            {% set color_class = 'bg-primary' %}
+                            {% if 'Asistencia' in actividad.actividad %}
+                                {% set color_class = 'bg-success' %}
+                            {% elif 'Defensoría' in actividad.actividad or 'Incidencia' in actividad.actividad %}
+                                {% set color_class = 'bg-warning' %}
+                            {% endif %}
+                            <span class="rounded-circle {{ color_class }}" style="width: 8px; height: 8px; display: inline-block;"></span>
+                            <div class="flex-grow-1 text-truncate">
+                                <p class="mb-0 text-dark fw-bold text-truncate" style="font-size: 0.85rem;" title="{{ actividad.actividad }}">{{ actividad.actividad }}</p>
+                                <span class="text-muted" style="font-size: 0.7rem;">
+                                    {{ actividad.usuario.nombre_completo }} • {{ actividad.fecha.strftime('%d/%m/%Y %I:%M %p') }}
+                                </span>
+                            </div>
+                        </li>
+                        {% else %}
+                        <li class="text-center text-muted" style="font-size: 0.85rem; padding: 20px 0;">
+                            No hay actividad reciente registrada.
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
         </div>
-        <div class="col-lg-4">
-            <div class="feed-card">
+        <div class="col-lg-4 d-flex flex-column gap-3 h-100">
+            <!-- WIDGET CALENDARIO -->
+            <div class="card border-0 shadow-sm rounded-4 flex-shrink-0" style="background: var(--bg-card);">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0" id="calendar-month-year" style="color: var(--text-main); font-size: 0.9rem;">Cargando...</h6>
+                        <i data-lucide="calendar" style="width: 16px; height: 16px; color: var(--primary);"></i>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="calendar-day-header">L</div>
+                        <div class="calendar-day-header">M</div>
+                        <div class="calendar-day-header">M</div>
+                        <div class="calendar-day-header">J</div>
+                        <div class="calendar-day-header">V</div>
+                        <div class="calendar-day-header">S</div>
+                        <div class="calendar-day-header">D</div>
+                    </div>
+                    <div class="calendar-grid mt-1" id="calendar-days">
+                        <!-- JS injects days here -->
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="feed-card flex-grow-1 d-flex flex-column">
                 <div class="card-label"><i data-lucide="bell"></i> ÚLTIMOS ANUNCIOS</div>
-                <div style="flex:1;">
+                <div style="flex:1; overflow-y: auto;">
                     {% for a in anuncios %}
                     <div class="feed-item">
                         <h6>{{ a.titulo }}</h6>
@@ -436,16 +592,222 @@
                     </div>
                     {% endfor %}
                 </div>
-                <a href="/anuncios" class="btn-feed-all">Ver todo el tablón <i data-lucide="arrow-right"
+                <a href="/anuncios" class="btn-feed-all mt-auto">Ver todo el tablón <i data-lucide="arrow-right"
                         style="vertical-align:-2px;"></i></a>
             </div>
         </div>
     </div>
 
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const today = now.getDate();
+
+    document.getElementById('calendar-month-year').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+    // Convert Sunday-first (0) to Monday-first (1) for display
+    let startingDay = firstDay === 0 ? 6 : firstDay - 1; 
+
+    const calendarDays = document.getElementById('calendar-days');
+    let html = '';
+
+    for (let i = 0; i < startingDay; i++) {
+        html += `<div class="calendar-day empty"></div>`;
+    }
+
+    for (let i = 1; i <= daysInMonth; i++) {
+        if (i === today) {
+            html += `<div class="calendar-day today">${i}</div>`;
+        } else {
+            html += `<div class="calendar-day">${i}</div>`;
+        }
+    }
+
+    if(calendarDays) {
+        calendarDays.innerHTML = html;
+        
+        // Add interactivity
+        const dayElements = calendarDays.querySelectorAll('.calendar-day:not(.empty)');
+        dayElements.forEach(el => {
+            el.addEventListener('click', function() {
+                // Remove 'today' class from currently selected day
+                const currentSelected = calendarDays.querySelector('.calendar-day.today');
+                if (currentSelected) {
+                    currentSelected.classList.remove('today');
+                }
+                // Add 'today' class to clicked day
+                this.classList.add('today');
+            });
+        });
+    }
+});
+</script>
 {% endblock %}
 
 {% block extra_js %}
+<!-- Modal de Defensoría -->
+<div id="modalDefensoria" class="d-none" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: var(--surface); border-radius: 16px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); padding: 24px; position: relative;">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0 fw-bold" style="color: var(--text-main); font-size: 1.1rem;"><i data-lucide="shield-alert" style="width:18px;height:18px;color:var(--primary);margin-right:6px;"></i> Auditar Solicitudes de Defensoría</h5>
+            <button onclick="document.getElementById('modalDefensoria').classList.add('d-none')" class="btn border-0 p-1 rounded-circle" style="background: var(--surface-container-high); color: var(--text-muted);">
+                <i data-lucide="x" style="width:18px;height:18px;"></i>
+            </button>
+        </div>
+
+        {% if not solicitudes_defensoria %}
+            <div class="text-center text-muted py-5">
+                <i data-lucide="shield-check" class="text-success mb-3" style="width: 40px; height: 40px;"></i>
+                <p class="mb-0" style="font-size: 0.95rem;">Todo al día. No hay solicitudes pendientes.</p>
+            </div>
+        {% else %}
+            <div class="d-flex flex-column gap-3">
+            {% for solicitud in solicitudes_defensoria %}
+                <div class="p-3 rounded-4 border" style="background: var(--bg-card); border-left: 4px solid #10b981 !important;">
+                    <h6 class="mb-1 fw-bold text-dark" style="font-size: 0.95rem;">{{ solicitud.estudiante.nombre_completo }}</h6>
+                    <p class="mb-2 text-muted" style="font-size: 0.8rem;"><i data-lucide="user" style="width:14px;height:14px;vertical-align:-2px;"></i> Defensor(a): {{ solicitud.solicitante.nombre_completo }}</p>
+                    
+                    <div class="mb-3 p-2 bg-light rounded" style="font-size: 0.8rem;">
+                        <strong class="text-primary d-block mb-1">Motivo:</strong>
+                        <div class="text-muted fst-italic">"{{ solicitud.motivo }}"</div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <form action="{{ url_for('aprobar_solicitud', id=solicitud.id) }}" method="POST" class="m-0 flex-grow-1">
+                            <button type="submit" class="btn btn-success rounded-3 w-100 d-flex justify-content-center align-items-center py-2 shadow-sm" style="font-size: 0.85rem; font-weight: 700;">
+                                <i data-lucide="check" style="width:16px; height:16px; margin-right:6px;"></i> Aprobar
+                            </button>
+                        </form>
+                        <form action="{{ url_for('rechazar_solicitud', id=solicitud.id) }}" method="POST" class="m-0 flex-grow-1">
+                            <button type="submit" class="btn btn-outline-danger rounded-3 w-100 d-flex justify-content-center align-items-center py-2 shadow-sm" style="font-size: 0.85rem; font-weight: 700; background: #fff;">
+                                <i data-lucide="x" style="width:16px; height:16px; margin-right:6px;"></i> Rechazar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Aula -->
+<div id="modalAula" class="d-none" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: var(--surface); border-radius: 16px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); padding: 24px; position: relative;">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0 fw-bold" style="color: var(--text-main); font-size: 1.1rem;"><i data-lucide="inbox" style="width:18px;height:18px;color:var(--primary);margin-right:6px;"></i> Auditar Solicitudes de Aula</h5>
+            <button onclick="document.getElementById('modalAula').classList.add('d-none')" class="btn border-0 p-1 rounded-circle" style="background: var(--surface-container-high); color: var(--text-muted);">
+                <i data-lucide="x" style="width:18px;height:18px;"></i>
+            </button>
+        </div>
+
+        {% if not solicitudes_pendientes %}
+            <div class="text-center text-muted py-5">
+                <i data-lucide="shield-check" class="text-success mb-3" style="width: 40px; height: 40px;"></i>
+                <p class="mb-0" style="font-size: 0.95rem;">Todo al día. No hay solicitudes pendientes.</p>
+            </div>
+        {% else %}
+            <div class="d-flex flex-column gap-3">
+            {% for solicitud in solicitudes_pendientes %}
+                <div class="p-3 rounded-4 border" style="background: var(--bg-card); border-left: 4px solid var(--primary) !important;">
+                    <h6 class="mb-1 fw-bold text-dark" style="font-size: 0.95rem;">{{ solicitud.estudiante.nombre_completo }}</h6>
+                    <p class="mb-2 text-muted" style="font-size: 0.8rem;"><i data-lucide="user" style="width:14px;height:14px;vertical-align:-2px;"></i> Docente: {{ solicitud.docente.nombre_completo }}</p>
+                    
+                    <div class="mb-3 p-2 bg-light rounded" style="font-size: 0.8rem;">
+                        <strong class="text-primary d-block mb-1">Motivo:</strong>
+                        <div class="text-muted fst-italic">"{{ solicitud.motivo }}"</div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <form action="{{ url_for('academico.aprobar_solicitud', id=solicitud.id) }}" method="POST" class="m-0 flex-grow-1">
+                            <button type="submit" class="btn btn-success rounded-3 w-100 d-flex justify-content-center align-items-center py-2 shadow-sm" style="font-size: 0.85rem; font-weight: 700;">
+                                <i data-lucide="check" style="width:16px; height:16px; margin-right:6px;"></i> Aprobar
+                            </button>
+                        </form>
+                        <form action="{{ url_for('academico.rechazar_solicitud', id=solicitud.id) }}" method="POST" class="m-0 flex-grow-1">
+                            <button type="submit" class="btn btn-outline-danger rounded-3 w-100 d-flex justify-content-center align-items-center py-2 shadow-sm" style="font-size: 0.85rem; font-weight: 700; background: #fff;">
+                                <i data-lucide="x" style="width:16px; height:16px; margin-right:6px;"></i> Rechazar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Perfil -->
+<div id="modalPerfil" class="d-none" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: var(--surface); border-radius: 16px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); padding: 24px; position: relative;">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0 fw-bold" style="color: var(--text-main); font-size: 1.1rem;"><i data-lucide="edit-3" style="width:18px;height:18px;color:var(--primary);margin-right:6px;"></i> Auditar Actualizaciones de Perfil</h5>
+            <button onclick="document.getElementById('modalPerfil').classList.add('d-none')" class="btn border-0 p-1 rounded-circle" style="background: var(--surface-container-high); color: var(--text-muted);">
+                <i data-lucide="x" style="width:18px;height:18px;"></i>
+            </button>
+        </div>
+
+        {% if not actualizaciones_pendientes %}
+            <div class="text-center text-muted py-5">
+                <i data-lucide="shield-check" class="text-success mb-3" style="width: 40px; height: 40px;"></i>
+                <p class="mb-0" style="font-size: 0.95rem;">Todo al día. No hay actualizaciones pendientes.</p>
+            </div>
+        {% else %}
+            <div class="d-flex flex-column gap-3">
+            {% for actualizacion in actualizaciones_pendientes %}
+                <div class="p-3 rounded-4 border" style="background: var(--bg-card); border-left: 4px solid #3b82f6 !important;">
+                    <h6 class="mb-1 fw-bold text-dark" style="font-size: 0.95rem;">{{ actualizacion.estudiante.nombre_completo }}</h6>
+                    <p class="mb-2 text-muted" style="font-size: 0.8rem;"><i data-lucide="user" style="width:14px;height:14px;vertical-align:-2px;"></i> Docente: {{ actualizacion.docente.nombre_completo }}</p>
+                    
+                    <div class="mb-3 p-2 bg-light rounded" style="font-size: 0.8rem;">
+                        <strong class="text-primary d-block mb-1">Cambios solicitados:</strong>
+                        {% if actualizacion.rep_telefono %}
+                            <div><span class="text-muted">Teléfono:</span> {{ actualizacion.rep_telefono }}</div>
+                        {% endif %}
+                        {% if actualizacion.rep_direccion %}
+                            <div><span class="text-muted">Dirección:</span> {{ actualizacion.rep_direccion }}</div>
+                        {% endif %}
+                        {% if actualizacion.alergias %}
+                            <div><span class="text-muted">Alergias:</span> {{ actualizacion.alergias }}</div>
+                        {% endif %}
+                        {% if actualizacion.neuro_detalle %}
+                            <div><span class="text-muted">Condición:</span> {{ actualizacion.neuro_detalle }}</div>
+                        {% endif %}
+                        {% if not actualizacion.rep_telefono and not actualizacion.rep_direccion and not actualizacion.alergias and not actualizacion.neuro_detalle %}
+                            <div class="text-muted fst-italic">Sin datos adicionales</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <form action="{{ url_for('academico.aprobar_actualizacion', id=actualizacion.id) }}" method="POST" class="m-0 flex-grow-1">
+                            <button type="submit" class="btn btn-success rounded-3 w-100 d-flex justify-content-center align-items-center py-2 shadow-sm" style="font-size: 0.85rem; font-weight: 700;">
+                                <i data-lucide="check" style="width:16px; height:16px; margin-right:6px;"></i> Aprobar
+                            </button>
+                        </form>
+                        <form action="{{ url_for('academico.rechazar_actualizacion', id=actualizacion.id) }}" method="POST" class="m-0 flex-grow-1">
+                            <button type="submit" class="btn btn-outline-danger rounded-3 w-100 d-flex justify-content-center align-items-center py-2 shadow-sm" style="font-size: 0.85rem; font-weight: 700; background: #fff;">
+                                <i data-lucide="x" style="width:16px; height:16px; margin-right:6px;"></i> Rechazar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const ctx = document.getElementById('graficaAsistencia').getContext('2d');

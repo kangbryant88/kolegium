@@ -14,7 +14,7 @@
 
     {% if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo'] %}
     <div class="w-100" style="max-width: 300px;">
-        <form action="{{ url_for('mi_aula') }}" method="GET" class="d-flex align-items-center w-100">
+        <form action="{{ url_for('academico.mi_aula') }}" method="GET" class="d-flex align-items-center w-100">
             <select name="grado_id" class="form-select border-primary shadow-sm w-100" onchange="this.form.submit()">
                 <option value="">-- Seleccione un Salón --</option>
                 {% for g in grados %}
@@ -65,13 +65,16 @@
                     </h4>
                     <p class="text-muted fw-bold mb-3"><i data-lucide="user-check" style="width:16px;height:16px;" class="me-1"></i> Docente Titular: <span>{{ docente_titular }}</span></p>
                     <div class="d-flex gap-2 flex-wrap">
-                        <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem;"><i data-lucide="users" style="width:14px;height:14px;" class="me-1 text-primary"></i> Total: {{ total_matricula }}</span>
-                        <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem;"><i data-lucide="user" style="width:14px;height:14px;" class="me-1 text-danger"></i> Niñas: {{ total_hembras }}</span>
-                        <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem;"><i data-lucide="user" style="width:14px;height:14px;" class="me-1 text-info"></i> Varones: {{ total_varones }}</span>
+                        <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem; background-color: var(--surface); color: var(--text-main);"><i data-lucide="users" style="width:14px;height:14px;" class="me-1 text-primary"></i> Total: {{ total_matricula }}</span>
+                        <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem; background-color: var(--surface); color: var(--text-main);"><i data-lucide="user" style="width:14px;height:14px;" class="me-1 text-danger"></i> Niñas: {{ total_hembras }}</span>
+                        <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem; background-color: var(--surface); color: var(--text-main);"><i data-lucide="user" style="width:14px;height:14px;" class="me-1 text-info"></i> Varones: {{ total_varones }}</span>
                     </div>
                 </div>
-                <div>
-                    <a href="{{ url_for('descargar_inscripcion_inicial', grado_id=grado.id) }}" class="btn btn-success btn-lg shadow rounded-pill px-4 fw-bold d-flex align-items-center" style="letter-spacing: 0.5px;">
+                <div class="d-flex flex-column gap-2 flex-md-row">
+                    <button class="btn btn-primary btn-lg shadow rounded-pill px-4 fw-bold d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalNuevoIngreso" style="letter-spacing: 0.5px;">
+                        <i data-lucide="user-plus" class="me-2" style="width:20px;height:20px;"></i> Nuevo Ingreso
+                    </button>
+                    <a href="{{ url_for('academico.descargar_inscripcion_inicial', grado_id=grado.id) }}" class="btn btn-success btn-lg shadow rounded-pill px-4 fw-bold d-flex align-items-center" style="letter-spacing: 0.5px;">
                         <i data-lucide="download" class="me-2" style="width:20px;height:20px;"></i> Inscripción Inicial
                     </a>
                 </div>
@@ -106,7 +109,7 @@
                 </div>
             </div>
             
-            <form action="{{ url_for('guardar_asistencia_aula') }}" method="POST">
+            <form action="{{ url_for('academico.guardar_asistencia_aula') }}" method="POST">
                 <input type="hidden" name="grado_id" value="{{ grado.id }}">
                 
                 <div class="card-body p-0 mt-3">
@@ -139,11 +142,11 @@
                                         {% set porc = asistencia_porcentaje[est.id] %}
                                         <div class="d-inline-flex align-items-center justify-content-center" data-bs-toggle="tooltip" title="{{ porc }}% Resumen de Asistencia">
                                             {% if porc >= 90 %}
-                                                <span class="badge rounded-circle p-2 bg-success text-white shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="check" style="width:16px;"></i></span>
+                                                <span class="badge rounded-circle p-2 bg-success  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="check" style="width:16px;"></i></span>
                                             {% elif porc >= 75 %}
                                                 <span class="badge rounded-circle p-2 bg-warning text-dark shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="minus" style="width:16px;"></i></span>
                                             {% else %}
-                                                <span class="badge rounded-circle p-2 bg-danger text-white shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="alert-circle" style="width:16px;"></i></span>
+                                                <span class="badge rounded-circle p-2 bg-danger  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="alert-circle" style="width:16px;"></i></span>
                                             {% endif %}
                                         </div>
                                     </td>
@@ -156,7 +159,26 @@
                                     </td>
                                     
                                     <td class="text-end px-4 py-3">
+                                        {% set solicitud = estado_solicitudes.get(est.id) %}
                                         <div class="btn-group gap-2">
+                                            {% if not solicitud or solicitud.estado == 'Rechazado' or solicitud.estado == 'Utilizado' %}
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalSolicitud{{ est.id }}" title="Solicitar enlace de expediente a Dirección">
+                                                <i data-lucide="lock" class="me-1" style="width:14px;height:14px;"></i> Solicitar Acceso
+                                            </button>
+                                            {% elif solicitud.estado == 'Pendiente' %}
+                                            <button type="button" class="btn btn-sm btn-light text-muted rounded-pill px-3 d-flex align-items-center border" disabled title="En revisión por Dirección">
+                                                <i data-lucide="clock" class="me-1" style="width:14px;height:14px;"></i> En revisión
+                                            </button>
+                                            {% elif solicitud.estado == 'Aprobado' %}
+                                            {% set url_publica = url_for('academico.expediente_publico', token=solicitud.token_generado, _external=True) %}
+                                            {% set mensaje = "Aquí tienes el expediente temporal de " ~ est.nombre_completo ~ ": " ~ url_publica ~ "%0A%0A*Nota: Este enlace es confidencial y ha sido aprobado por Dirección.*" %}
+                                            <a href="https://api.whatsapp.com/send?text={{ mensaje }}" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 d-flex align-items-center" style="background-color: #25D366; border-color: #25D366;" title="Enviar por WhatsApp">
+                                                <i data-lucide="send" class="me-1" style="width:14px;height:14px;"></i> Enviar Enlace
+                                            </a>
+                                            {% endif %}
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalActualizar_{{ est.id }}" title="Actualización Rápida">
+                                                <i data-lucide="edit-3" class="me-1" style="width:14px;height:14px;"></i> Actualizar
+                                            </button>
                                             <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalFicha_{{ est.id }}">
                                                 <i data-lucide="activity" class="me-1" style="width:14px;height:14px;"></i> Ficha Médica
                                             </button>
@@ -177,7 +199,7 @@
                 </div>
                 
                 <div class="card-footer border-top-0 p-4 text-center">
-                    <button type="submit" class="btn btn-primary px-5 py-2 fw-bold text-white shadow-sm rounded-pill" style="font-size: 1.05rem; letter-spacing: 0.5px;">
+                    <button type="submit" class="btn btn-primary px-5 py-2 fw-bold  shadow-sm rounded-pill" style="font-size: 1.05rem; letter-spacing: 0.5px;">
                         <i data-lucide="save" class="me-2" style="width:18px;"></i> Guardar Asistencia del Día
                     </button>
                 </div>
@@ -188,13 +210,58 @@
 
 <!-- Modales por Estudiante -->
 {% for est in estudiantes %}
+<!-- Modal Actualizar Estudiante -->
+<div class="modal fade" id="modalActualizar_{{ est.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                        <i data-lucide="edit-3" style="width:24px;height:24px;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold">Actualización Rápida</h5>
+                        <p class="text-muted small mb-0">{{ est.nombre_completo }}</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('academico.actualizar_estudiante_rapido', id=est.id) }}" method="POST">
+                <div class="modal-body px-4 py-4">
+                    <h6 class="fw-bold mb-3 mt-4" style="font-size:0.9rem;">Datos de Contacto (Representante)</h6>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <input type="text" name="rep_telefono" class="form-control bg-light border-0 py-2" placeholder="Teléfono" value="{{ est.representante_info.telefono if est.representante_info else '' }}">
+                        </div>
+                        <div class="col-12">
+                            <input type="text" name="rep_direccion" class="form-control bg-light border-0 py-2" placeholder="Dirección de Habitación" value="{{ est.representante_info.direccion_completa if est.representante_info else '' }}">
+                        </div>
+                    </div>
+                    <hr style="opacity: 0.1;">
+                    <h6 class="fw-bold mb-3 mt-4" style="font-size:0.9rem;">Ficha Médica</h6>
+                    <div class="mb-2">
+                        <input type="text" name="alergias" class="form-control bg-light border-0 py-2" placeholder="Alergias" value="{{ est.alergias or '' }}">
+                    </div>
+                    <div>
+                        <input type="text" name="neuro_detalle" class="form-control bg-light border-0 py-2" placeholder="Condición Especial / Neurodivergencia" value="{{ est.neuro_detalle or '' }}">
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn text-muted fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Ficha Médica -->
 <div class="modal fade" id="modalFicha_{{ est.id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow-lg">
             <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
                 <div class="d-flex align-items-center">
-                    <div class="bg-info text-white p-2 rounded-3 me-3">
+                    <div class="bg-info  p-2 rounded-3 me-3">
                         <i data-lucide="activity" style="width:24px;height:24px;"></i>
                     </div>
                     <div>
@@ -241,7 +308,7 @@
 <div class="modal fade" id="modalNota_{{ est.id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow-lg">
-            <form action="{{ url_for('agregar_incidencia') }}" method="POST">
+            <form action="{{ url_for('academico.agregar_incidencia') }}" method="POST">
                 <input type="hidden" name="estudiante_id" value="{{ est.id }}">
                 <input type="hidden" name="grado_id" value="{{ grado.id }}">
                 
@@ -283,7 +350,72 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Solicitud Acceso (Expediente) -->
+<div class="modal fade" id="modalSolicitud{{ est.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg" style="background: var(--surface);">
+            <form action="{{ url_for('academico.solicitar_enlace', estudiante_id=est.id) }}" method="POST">
+                <div class="modal-header border-bottom px-4 pt-4 pb-3 rounded-top-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                            <i data-lucide="lock" style="width:24px;height:24px;"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold">Solicitar Acceso Temporal</h5>
+                            <p class="text-muted small mb-0">{{ est.nombre_completo }}</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body px-4 py-4">
+                    <p class="text-muted small mb-3">Dirección revisará esta solicitud. Al ser aprobada, se generará un enlace de un solo uso para compartir con el representante del estudiante.</p>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold">Motivo de la Solicitud</label>
+                        <textarea name="motivo" class="form-control" rows="3" placeholder="Indique por qué el representante necesita ver el expediente..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer px-4 py-3 rounded-bottom-4 border-top-0">
+                    <button type="button" class="btn text-muted fw-semibold px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary fw-semibold rounded-pill px-4 shadow-sm border-0" style="background-color: var(--primary);">
+                        Enviar Solicitud
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endfor %}
+
+<!-- Modal Nuevo Ingreso -->
+<div class="modal fade" id="modalNuevoIngreso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-fullscreen-lg-down">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                        <i data-lucide="user-plus" style="width:24px;height:24px;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold">Registrar Nuevo Ingreso</h5>
+                        <p class="text-muted small mb-0">Alta rápida en el sistema desde el salón de clases.</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('academico.nuevo_ingreso_rapido') }}" method="POST">
+                <div class="modal-body px-4 py-4" style="max-height: 70vh; overflow-y: auto;">
+                    {% include 'includes/_formulario_estudiante.html' %}
+                </div>
+                <div class="modal-footer border-top-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn text-muted fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Solicitar Inscripción</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -301,7 +433,7 @@
                     labels: ['Asistencias', 'Inasistencias'],
                     datasets: [{
                         data: [asist, 100 - asist],
-                        backgroundColor: ['#4648d4', '#e2e8f0'],
+                        backgroundColor: ['#4648d4', 'var(--border-color)'],
                         borderWidth: 0,
                         cutout: '75%'
                     }]

@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+
+{% block title %}Módulo de Defensoría - EduPlanner OS{% endblock %}
+{% block header_title %}Módulo Defensoría{% endblock %}
+
+{% block extra_css %}
+
+<style>
+    .page-header .title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
+    .page-header .subtitle { color: var(--on-surface-variant); font-size: 0.85rem; }
+
+    .btn-excel {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 10px 20px; border-radius: 999px; border: none;
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff; font-size: 0.85rem; font-weight: 700;
+        cursor: pointer; transition: all 0.25s;
+    }
+
+    .btn-excel:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(70,72,212,0.25); }
+    .btn-excel i { width: 16px; height: 16px; }
+
+    .form-card {
+        background: #fff; border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04); padding: 24px;
+    }
+
+    .form-card h5 { font-weight: 700; font-size: 0.95rem; color: var(--primary); display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
+    .form-card h5 i { width: 18px; height: 18px; }
+
+    .edu-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--on-surface-variant); margin-bottom: 6px; display: block; }
+
+    .edu-input, .edu-select, .edu-textarea {
+        width: 100%; padding: 0.7rem 0.9rem; border-radius: 10px;
+        border: none; background: #eceef0; font-size: 0.85rem;
+        font-family: 'Inter', sans-serif; color: var(--on-surface);
+        transition: all 0.2s; outline: none;
+        min-width: 0; /* prevent flex overflow on mobile */
+    }
+
+    .edu-input:focus, .edu-select:focus, .edu-textarea:focus { background: #fff; box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
+    .edu-textarea { resize: vertical; min-height: 60px; }
+
+    .input-icon-group {
+        display: flex; border-radius: 10px; overflow: hidden;
+        min-width: 0; /* prevent flex overflow */
+        width: 100%;
+    }
+
+    .input-icon-group .icon { padding: 0 12px; background: #eceef0; display: flex; align-items: center; flex-shrink: 0; }
+    .input-icon-group .icon i { width: 15px; height: 15px; color: var(--on-surface-variant); }
+    .input-icon-group .edu-input { border-radius: 0; min-width: 0; flex: 1; }
+
+    .btn-submit-def {
+        width: 100%; padding: 14px; border: none; border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff; font-weight: 700; font-size: 0.9rem;
+        font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.25s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+
+    .btn-submit-def:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(70,72,212,0.3); }
+    .btn-submit-def i { width: 18px; height: 18px; }
+
+    .timeline-card {
+        background: #fff; border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04); padding: 24px; height: 100%;
+    }
+
+    .timeline-card h5 { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+    .timeline-card h5 i { width: 18px; height: 18px; color: var(--primary); }
+
+    .btn-pdf { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 999px; border: none; background: #ef4444; color: #fff; font-size: 0.78rem; font-weight: 700; text-decoration: none; transition: all 0.2s; }
+    .btn-pdf:hover { background: #dc2626; color: #fff; }
+    .btn-pdf i { width: 14px; height: 14px; }
+
+    .scroll-zone { max-height: 560px; overflow-y: auto; padding-right: 8px; }
+    .scroll-zone::-webkit-scrollbar { width: 5px; }
+    .scroll-zone::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 3px; }
+
+    .plan-card { background: var(--surface); border-radius: 14px; padding: 16px; margin-bottom: 12px; transition: transform 0.2s; }
+    .plan-card:hover { transform: translateY(-2px); }
+
+    .badge-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; }
+    .badge-status.pending { background: rgba(245,158,11,0.1); color: #d97706; }
+    .badge-status.done { background: rgba(16,185,129,0.1); color: #059669; }
+
+    .plan-card .topic { font-weight: 700; font-size: 0.95rem; margin-top: 4px; }
+    .plan-card .purpose { color: var(--on-surface-variant); font-size: 0.85rem; margin: 8px 0; }
+
+    .plan-detail {
+        margin-top: 8px; padding: 10px 14px; background: #fff; border-radius: 10px;
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 0.8rem;
+    }
+
+    .plan-detail .loc { font-weight: 700; display: flex; align-items: center; gap: 4px; }
+    .plan-detail .loc i { width: 13px; height: 13px; color: #ef4444; }
+    .plan-detail .time { font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 4px; }
+    .plan-detail .time i { width: 13px; height: 13px; }
+
+    .btn-sm-action {
+        padding: 5px 12px; border-radius: 999px; border: 1px solid #eceef0;
+        background: #fff; font-size: 0.75rem; font-weight: 700;
+        cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;
+    }
+
+    .btn-sm-action i { width: 12px; height: 12px; }
+    .btn-sm-action.edit { color: var(--primary); }
+    .btn-sm-action.edit:hover { background: rgba(70,72,212,0.06); border-color: rgba(70,72,212,0.2); }
+    .btn-sm-action.del { color: #ef4444; }
+    .btn-sm-action.del:hover { background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.2); }
+
+    .modal-edu .modal-content { border-radius: 16px; border: none; box-shadow: 0 20px 40px rgba(15,23,42,0.12); }
+    .modal-edu .icon-warning { width: 64px; height: 64px; border-radius: 50%; background: rgba(239,68,68,0.08); color: #ef4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .modal-edu .icon-warning i { width: 28px; height: 28px; }
+    .btn-cancel-modal { flex:1; padding:10px; border-radius:999px; border:1px solid #eceef0; background:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; font-family:'Inter',sans-serif; color:var(--on-surface); transition: all 0.2s; }
+    .btn-danger-modal { flex:1; padding:10px; border-radius:999px; border:none; background:#ef4444; color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; font-family:'Inter',sans-serif; transition: all 0.2s; }
+    .btn-save-modal { flex:1; padding:10px; border-radius:999px; border:none; background:linear-gradient(135deg,var(--primary),var(--primary-container)); color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; font-family:'Inter',sans-serif; transition: all 0.2s; }
+    .btn-save-modal:hover { box-shadow: 0 6px 16px rgba(70,72,212,0.3); }
+    .btn-danger-modal:hover { background:#dc2626; }
+
+    .modal-form-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--on-surface-variant); margin-bottom: 6px; display: block; }
+
+    .empty-state { text-align: center; padding: 2.5rem; background: var(--surface); border-radius: 16px; color: var(--on-surface-variant); opacity: 0.6; }
+    .empty-state i { width: 36px; height: 36px; margin-bottom: 8px; }
+
+    .banner-info { background: rgba(245,158,11,0.08); border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .banner-info span { font-size: 0.85rem; font-weight: 600; color: #92400e; display: flex; align-items: center; gap: 6px; }
+    .banner-info span i { width: 16px; height: 16px; }
+    .banner-info a { padding: 5px 14px; border-radius: 999px; background: #0f172a; color: #fff; font-size: 0.78rem; font-weight: 700; text-decoration: none; }
+
+    .step-circle { width: 36px; height: 36px; flex-shrink: 0; background: linear-gradient(135deg, var(--primary), var(--primary-container)); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; margin-right: 14px; }
+
+    .btn-outline-dl { padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(70,72,212,0.2); background: transparent; color: var(--primary); font-size: 0.78rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; }
+    .btn-outline-dl:hover { background: rgba(70,72,212,0.06); color: var(--primary); }
+    .btn-outline-dl i { width: 13px; height: 13px; }
+
+    .btn-gen-upload { width: 100%; padding: 10px; border-radius: 999px; border: none; background: #10b981; color: #fff; font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; }
+    .btn-gen-upload:hover { background: #059669; }
+    .btn-gen-upload i { width: 15px; height: 15px; }
+
+    .edu-file-input { width: 100%; padding: 8px; border-radius: 10px; border: none; background: #eceef0; font-size: 0.8rem; font-family: 'Inter', sans-serif; margin-bottom: 12px; }
+
+    /* ====== MOBILE RESPONSIVE FIXES ====== */
+    @media (max-width: 575.98px) {
+        /* Stack date + time vertically on phones */
+        .form-card .row.g-2 > .col-6 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+
+        .form-card {
+            padding: 16px;
+        }
+
+        .form-card h5 {
+            font-size: 0.9rem;
+        }
+
+        .btn-submit-def {
+            font-size: 0.85rem;
+            padding: 12px;
+        }
+
+        .plan-card {
+            padding: 12px;
+        }
+
+        /* Stack edit/delete buttons under the status */
+        .plan-card .d-flex.w-100 {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .plan-detail {
+            flex-direction: column;
+            gap: 6px;
+            align-items: flex-start;
+        }
+
+        .timeline-card {
+            padding: 14px;
+        }
+
+        /* The header row with export button */
+        .d-flex.flex-column.flex-md-row {
+            text-align: center;
+        }
+
+        .btn-excel {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 1200px;">
+
+    {% if total_anuncios > 0 %}
+    <div id="ocultador-banner-defensoria">
+        <div class="banner-info">
+            <span><i data-lucide="megaphone"></i> Hay {{ total_anuncios }} nuevos anuncios importantes para el personal.</span>
+            <a href="/anuncios">Ver Tablón</a>
+        </div>
+    </div>
+    <script>
+        if (parseInt(localStorage.getItem('anuncios_vistos') || '0') >= parseInt('{{ total_anuncios }}')) {
+            document.getElementById('ocultador-banner-defensoria').style.display = 'none';
+        }
+    </script>
+    {% endif %}
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-4">
+        <div class="page-header">
+            <h3 class="title">Planificación de Defensoría</h3>
+            <p class="subtitle mb-0">Gestión de Charlas y Actividades Fuera de Aula</p>
+        </div>
+        <button class="btn-excel" data-bs-toggle="modal" data-bs-target="#modalCargaAutomatica">
+            <i data-lucide="file-spreadsheet"></i> Carga Automática (Excel)
+        </button>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-5 mb-4">
+            <div class="form-card">
+                <h5><i data-lucide="calendar-plus"></i> Agendar Nueva Actividad</h5>
+                <form action="/defensoria" method="POST">
+                    <div class="mb-3">
+                        <label class="edu-label">TEMA / TÍTULO DE LA CHARLA</label>
+                        <input type="text" name="tema_charla" class="edu-input" placeholder="Ej: Prevención del Acoso Escolar" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="edu-label">PROPÓSITO U OBJETIVO</label>
+                        <textarea name="proposito" class="edu-textarea" rows="2" placeholder="Ej: Concientizar sobre el respeto..." required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="edu-label">AÑO / SECCIÓN</label>
+                        <input type="text" name="poblacion_objetivo" class="edu-input" placeholder="Ej: 3er Año Secc B" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="edu-label">FECHA</label>
+                            <div class="input-icon-group">
+                                <div class="icon"><i data-lucide="calendar"></i></div>
+                                <input type="date" name="fecha_programada" class="edu-input" required>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="edu-label">HORA</label>
+                            <div class="input-icon-group">
+                                <div class="icon"><i data-lucide="clock"></i></div>
+                                <input type="time" name="hora_programada" class="edu-input" required>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit-def">
+                        <i data-lucide="calendar-check"></i> Agregar al Cronograma
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="timeline-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0"><i data-lucide="calendar-range"></i> Cronograma Activo</h5>
+                    <a href="/exportar_pdf_defensoria" class="btn-pdf"><i data-lucide="file-text"></i> Generar PDF</a>
+                </div>
+                <div class="scroll-zone">
+                    {% for plan in planificaciones %}
+                    <div class="plan-card">
+                        <div class="d-flex w-100 justify-content-between align-items-start mb-1">
+                            <div>
+                                <span class="badge-status {% if plan.estado == 'Pendiente' %}pending{% else %}done{% endif %}">{{ plan.estado }}</span>
+                                <div class="topic">{{ plan.tema_charla }}</div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn-sm-action edit" data-bs-toggle="modal" data-bs-target="#modalEditar{{ plan.id }}"><i data-lucide="pencil"></i> Editar</button>
+                                <button class="btn-sm-action del" data-bs-toggle="modal" data-bs-target="#modalEliminar{{ plan.id }}"><i data-lucide="trash-2"></i></button>
+                            </div>
+                        </div>
+                        <p class="purpose"><strong>Propósito:</strong> {{ plan.proposito }}</p>
+                        <div class="plan-detail">
+                            <span class="loc"><i data-lucide="map-pin"></i> {{ plan.poblacion_objetivo }}</span>
+                            <span class="time"><i data-lucide="clock"></i> {{ plan.fecha_programada.strftime('%d/%m/%Y') }} a las {{ plan.hora_programada }}</span>
+                        </div>
+                    </div>
+
+                    <div class="modal fade modal-edu" id="modalEditar{{ plan.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header border-0 mt-3 px-4">
+                                    <h5 style="font-weight:800; display:flex; align-items:center; gap:6px; color:var(--primary);">
+                                        <i data-lucide="pen-square" style="width:18px;height:18px;"></i> Editar Actividad
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form action="/editar_defensoria/{{ plan.id }}" method="POST">
+                                    <div class="modal-body p-4">
+                                        <div class="mb-3">
+                                            <label class="modal-form-label">TEMA</label>
+                                            <input type="text" name="tema_charla" class="edu-input" value="{{ plan.tema_charla }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="modal-form-label">PROPÓSITO</label>
+                                            <textarea name="proposito" class="edu-textarea" rows="3" required>{{ plan.proposito }}</textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="modal-form-label">AÑO / SECCIÓN</label>
+                                            <input type="text" name="poblacion_objetivo" class="edu-input" value="{{ plan.poblacion_objetivo }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0 pb-4 px-4 d-flex gap-2">
+                                        <button type="button" class="btn-cancel-modal" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn-save-modal"><i data-lucide="save" style="width:14px;height:14px;vertical-align:-1px;margin-right:4px;"></i> Guardar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal fade modal-edu" id="modalEliminar{{ plan.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered modal-sm">
+                            <div class="modal-content">
+                                <div class="modal-body text-center p-4">
+                                    <div class="icon-warning"><i data-lucide="alert-triangle"></i></div>
+                                    <h5 style="font-weight:800;">¿Estás seguro?</h5>
+                                    <p style="color:var(--on-surface-variant);font-size:0.85rem;">Eliminarás permanentemente esta actividad.</p>
+                                    <form action="/eliminar_defensoria/{{ plan.id }}" method="POST" class="d-flex gap-2 mt-3">
+                                        <button type="button" class="btn-cancel-modal" data-bs-dismiss="modal">No</button>
+                                        <button type="submit" class="btn-danger-modal">Sí, borrar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i data-lucide="inbox"></i>
+                        <h5 style="font-weight:700;">Cronograma Limpio</h5>
+                        <p style="font-size:0.85rem;">No hay actividades programadas por ahora.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade modal-edu" id="modalCargaAutomatica" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 style="font-weight:800; display:flex; align-items:center; gap:6px; color:var(--primary);">
+                    <i data-lucide="rocket" style="width:20px;height:20px;"></i> Carga Masiva
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p style="color:var(--on-surface-variant); font-size:0.875rem; margin-bottom:20px;">Sigue estos pasos para cargar tu cronograma desde Excel:</p>
+                <div class="d-flex align-items-center mb-4">
+                    <div class="step-circle">1</div>
+                    <div>
+                        <h6 style="font-weight:700; margin-bottom:4px; font-size:0.9rem;">Descarga la plantilla</h6>
+                        <a href="/descargar_plantilla" class="btn-outline-dl"><i data-lucide="cloud-download"></i> Bajar Excel</a>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center mb-4">
+                    <div class="step-circle">2</div>
+                    <div>
+                        <h6 style="font-weight:700; margin-bottom:4px; font-size:0.9rem;">Completa los datos</h6>
+                        <p style="font-size:0.8rem; color:var(--on-surface-variant); margin:0;">Llena el archivo con los temas y propósitos.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="step-circle">3</div>
+                    <div style="flex:1;">
+                        <h6 style="font-weight:700; margin-bottom:4px; font-size:0.9rem;">Sube el archivo</h6>
+                        <form action="/subir_plan" method="POST" enctype="multipart/form-data">
+                            <input type="file" name="archivo_plan" class="edu-file-input" accept=".xlsx" required>
+                            <button type="submit" class="btn-gen-upload"><i data-lucide="zap"></i> Generar ahora</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}

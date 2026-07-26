@@ -1,0 +1,235 @@
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, date
+
+db = SQLAlchemy()
+
+# ==========================================
+# --- MODELOS DE BASE DE DATOS ---
+# ==========================================
+
+class Rol(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(50), unique=True, nullable=False)
+    permisos = db.Column(db.String(500), nullable=False, default="")
+    usuarios = db.relationship('Usuario', backref='rol_info', lazy=True)
+
+class Usuario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    nombre_completo = db.Column(db.String(100), nullable=False) 
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    area_trabajo = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    rol_id = db.Column(db.Integer, db.ForeignKey('rol.id'), nullable=True)
+    # Autogestión MPPE y Expediente Digital
+    usuario_autogestion = db.Column(db.String(100), nullable=True)
+    clave_autogestion = db.Column(db.String(100), nullable=True)
+    voucher_path = db.Column(db.String(250), nullable=True)
+    constancia_path = db.Column(db.String(250), nullable=True)
+    curriculum_path = db.Column(db.String(250), nullable=True)
+    rif_path = db.Column(db.String(250), nullable=True)
+    cedula_path = db.Column(db.String(250), nullable=True)
+    foto_perfil_path = db.Column(db.String(250), nullable=True)
+    cargo_solicitado = db.Column(db.String(100), nullable=True)
+
+class Anuncio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(100), nullable=False)
+    mensaje = db.Column(db.Text, nullable=False)
+    fecha = db.Column(db.DateTime, default=datetime.now)
+    autor_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    autor = db.relationship('Usuario', backref='anuncios_creados')
+
+class Bitacora(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fecha = db.Column(db.DateTime, default=datetime.now)
+    grado = db.Column(db.String(50), nullable=False)
+    actividad = db.Column(db.String(200), nullable=False)
+    estado = db.Column(db.String(50), default='Completado')
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    usuario = db.relationship('Usuario', backref='bitacoras')
+
+class PlanificacionDefensoria(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tema_charla = db.Column(db.String(200), nullable=False)
+    proposito = db.Column(db.Text, nullable=False)
+    poblacion_objetivo = db.Column(db.String(100), nullable=False) 
+    fecha_programada = db.Column(db.Date, nullable=False)
+    hora_programada = db.Column(db.String(20), nullable=False)
+    estado = db.Column(db.String(50), default='Pendiente')
+    notas_seguimiento = db.Column(db.Text, nullable=True) 
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+
+class Grado(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(50), nullable=False)
+    total_varones = db.Column(db.Integer, default=0)
+    total_hembras = db.Column(db.Integer, default=0)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    docente_info = db.relationship('Usuario', backref='grados_asignados', lazy=True)
+
+class Tema(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+
+class AsistenciaDiaria(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fecha = db.Column(db.Date, nullable=False)
+    grado_seccion = db.Column(db.String(100), nullable=False)
+    matricula_total = db.Column(db.Integer, nullable=False)
+    varones = db.Column(db.Integer, nullable=False, default=0)
+    hembras = db.Column(db.Integer, nullable=False, default=0)
+    asistentes = db.Column(db.Integer, nullable=False)
+    porcentaje = db.Column(db.Float, nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+
+class AsistenciaPersonal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fecha = db.Column(db.Date, nullable=False)
+    categoria = db.Column(db.String(50), nullable=False)
+    matricula_base = db.Column(db.Integer, nullable=False, default=0)
+    asistentes = db.Column(db.Integer, nullable=False, default=0)
+    porcentaje = db.Column(db.Float)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+
+class Representante(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    cedula = db.Column(db.String(20), unique=True, nullable=False)
+    nombre_completo = db.Column(db.String(100), nullable=False)
+    telefono = db.Column(db.String(20))
+    parentesco = db.Column(db.String(50)) # Madre, Padre, etc.
+    email = db.Column(db.String(120))
+    email_representante = db.Column(db.String(120))
+    direccion_habitacion = db.Column(db.Text)
+    direccion_completa = db.Column(db.Text)
+    estudiantes = db.relationship('Estudiante', backref='representante_info', lazy=True)
+
+class Estudiante(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    # Identidad y Legal
+    cedula_escolar = db.Column(db.String(30), unique=True, nullable=False)
+    nombre_completo = db.Column(db.String(150), nullable=False)
+    fecha_nacimiento = db.Column(db.Date, nullable=False)
+    lugar_nacimiento = db.Column(db.String(100))
+    genero = db.Column(db.String(20))
+    num_acta = db.Column(db.String(50))
+    num_oficio = db.Column(db.String(50))
+    # Salud y Nutrición
+    talla = db.Column(db.Float) # En cm
+    peso = db.Column(db.Float) # En kg
+    calzado = db.Column(db.String(10))
+    talla_camisa = db.Column(db.String(50))
+    talla_pantalon = db.Column(db.String(50))
+    tipaje = db.Column(db.String(10)) # Grupo sanguíneo
+    vacunacion_completa = db.Column(db.String(20)) # Si/No/Parcial
+    alergias = db.Column(db.String(200))
+    neurodivergencia = db.Column(db.Boolean, default=False)
+    neuro_detalle = db.Column(db.String(200))
+    # Procedencia y Estado
+    literal = db.Column(db.String(2))
+    literal_escolar = db.Column(db.String(2))
+    procedencia = db.Column(db.Text)
+    plantel_procedencia = db.Column(db.String(150))
+    email_estudiante = db.Column(db.String(120))
+    es_repetidor = db.Column(db.Boolean, default=False)
+    doc_partida = db.Column(db.Boolean, default=False)
+    doc_sano = db.Column(db.Boolean, default=False)
+    doc_vacuna = db.Column(db.Boolean, default=False)
+    lateralidad = db.Column(db.String(20))
+    nuevo_ingreso = db.Column(db.Boolean, default=False)
+    institucion_procedencia = db.Column(db.String(150))
+    estatus = db.Column(db.String(20), default='Activo') # Activo o Egreso
+    fecha_registro = db.Column(db.DateTime, default=datetime.now)
+    # Relaciones
+    grado_id = db.Column(db.Integer, db.ForeignKey('grado.id'))
+    representante_id = db.Column(db.Integer, db.ForeignKey('representante.id'))
+
+class EnlaceTemporal(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(50), unique=True, nullable=False)
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+    usado = db.Column(db.Boolean, default=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.now)
+    estudiante = db.relationship('Estudiante', backref='enlaces_temporales')
+
+class Incidencia(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fecha = db.Column(db.DateTime, default=datetime.now)
+    categoria = db.Column(db.String(50), nullable=False) # Conducta, Académico, Salud, Familiar
+    descripcion = db.Column(db.Text, nullable=False)
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+
+class AsistenciaEstudiante(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fecha = db.Column(db.Date, nullable=False)
+    asistio = db.Column(db.Boolean, nullable=False)
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+
+estudiante_brigada = db.Table('estudiante_brigada',
+    db.Column('estudiante_id', db.Integer, db.ForeignKey('estudiante.id'), primary_key=True),
+    db.Column('brigada_id', db.Integer, db.ForeignKey('brigada.id'), primary_key=True)
+)
+
+class Brigada(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    descripcion = db.Column(db.Text)
+    estudiantes = db.relationship('Estudiante', secondary=estudiante_brigada, lazy='subquery',
+        backref=db.backref('brigadas', lazy=True))
+
+class Acta(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fecha = db.Column(db.DateTime, default=datetime.now)
+    contenido_manual = db.Column(db.Text, nullable=False)
+    tipo_acta = db.Column(db.String(50), default='General')
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=True)
+    defensor_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    # Relaciones
+    estudiante = db.relationship('Estudiante', backref='actas')
+    defensor = db.relationship('Usuario', backref='actas_creadas')
+
+class SolicitudEnlace(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    docente_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+    motivo = db.Column(db.Text, nullable=False)
+    estado = db.Column(db.String(50), default='Pendiente')
+    fecha_solicitud = db.Column(db.DateTime, default=datetime.utcnow)
+    token_generado = db.Column(db.String(100), nullable=True)
+
+    docente = db.relationship('Usuario', backref='solicitudes_enlace')
+    estudiante = db.relationship('Estudiante', backref='solicitudes_enlace')
+
+class SolicitudActualizacion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    docente_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+    
+    rep_telefono = db.Column(db.String(50))
+    rep_direccion = db.Column(db.Text)
+    alergias = db.Column(db.String(200))
+    neuro_detalle = db.Column(db.String(200))
+    
+    estado = db.Column(db.String(50), default='Pendiente')
+    fecha_solicitud = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    docente = db.relationship('Usuario', backref='solicitudes_actualizacion')
+    estudiante = db.relationship('Estudiante', backref='solicitudes_actualizacion')
+
+class SolicitudDefensoria(db.Model):
+    __tablename__ = 'solicitudes_defensoria'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+    solicitante_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False) 
+    
+    motivo = db.Column(db.Text, nullable=False)
+    fecha_solicitud = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    estado = db.Column(db.String(20), default='Pendiente', nullable=False)
+    fecha_respuesta = db.Column(db.DateTime, nullable=True)
+    
+    estudiante = db.relationship('Estudiante', backref='solicitudes_visita')
+    solicitante = db.relationship('Usuario', backref='solicitudes_defensoria_realizadas')

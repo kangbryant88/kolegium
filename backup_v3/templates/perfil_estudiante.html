@@ -34,7 +34,7 @@
                 <i data-lucide="log-out" class="me-2" style="width:16px;"></i> Registrar Egreso
             </button>
         {% else %}
-            <form action="{{ url_for('egresar_estudiante', id=estudiante.id) }}" method="POST" class="m-0">
+            <form action="{{ url_for('academico.egresar_estudiante', id=estudiante.id) }}" method="POST" class="m-0">
                 <button type="submit" class="btn btn-outline-success px-3 fw-semibold rounded-pill d-flex align-items-center">
                     <i data-lucide="log-in" class="me-2" style="width:16px;"></i> Reingresar Estudiante
                 </button>
@@ -200,7 +200,7 @@
 <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 rounded-4 shadow-lg">
-            <form action="{{ url_for('editar_estudiante', id=estudiante.id) }}" method="POST">
+            <form action="{{ url_for('academico.editar_estudiante', id=estudiante.id) }}" method="POST">
                 
                 <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
                     <div class="d-flex align-items-center">
@@ -347,7 +347,7 @@
 <div class="modal fade" id="modalEgreso" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow-lg">
-            <form action="{{ url_for('egresar_estudiante', id=estudiante.id) }}" method="POST">
+            <form action="{{ url_for('academico.egresar_estudiante', id=estudiante.id) }}" method="POST">
                 <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
                     <div class="d-flex align-items-center">
                         <div class="bg-warning text-dark p-2 rounded-3 me-3">
@@ -377,7 +377,7 @@
 <div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow-lg">
-            <form action="{{ url_for('eliminar_estudiante', id=estudiante.id) }}" method="POST">
+            <form action="{{ url_for('academico.eliminar_estudiante', id=estudiante.id) }}" method="POST">
                 <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
                     <div class="d-flex align-items-center">
                         <div class="bg-danger text-white p-2 rounded-3 me-3">

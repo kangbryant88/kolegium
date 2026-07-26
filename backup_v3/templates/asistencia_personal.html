@@ -162,7 +162,7 @@
 
     <!-- Formulario -->
     <div class="card-edu">
-        <form action="{{ url_for('asistencia_personal') }}" method="POST">
+        <form action="{{ url_for('academico.asistencia_personal') }}" method="POST">
             <div class="form-grid">
                 <div class="form-group">
                     <label for="fecha">Fecha</label>
@@ -243,10 +243,10 @@
                         </td>
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-1">
-                                <a href="{{ url_for('editar_asistencia_personal', id=r.id) }}" class="btn-action-sm" title="Editar">
+                                <a href="{{ url_for('academico.editar_asistencia_personal', id=r.id) }}" class="btn-action-sm" title="Editar">
                                     <i data-lucide="edit-2"></i>
                                 </a>
-                                <a href="{{ url_for('eliminar_asistencia_personal', id=r.id) }}" class="btn-action-sm danger link-eliminar" title="Eliminar">
+                                <a href="{{ url_for('academico.eliminar_asistencia_personal', id=r.id) }}" class="btn-action-sm danger link-eliminar" title="Eliminar">
                                     <i data-lucide="trash-2"></i>
                                 </a>
                             </div>

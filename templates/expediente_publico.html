@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expediente Escolar Validado - Kolegium</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --primary: #4648d4;
+            --surface: #ffffff;
+            --background: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --radius-card: 20px;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            user-select: none; /* Disable text selection for security/read-only feel */
+        }
+
+        .public-header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(70,72,212, 0.15);
+        }
+
+        .kolegium-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .card-expediente {
+            background: var(--surface);
+            border-radius: var(--radius-card);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+            border: none;
+            overflow: hidden;
+            margin-top: -30px;
+        }
+
+        .avatar-placeholder {
+            width: 100px;
+            height: 100px;
+            background-color: rgba(70,72,212, 0.1);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0 auto;
+            border: 4px solid var(--surface);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .data-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .data-value {
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+        
+        .footer-public {
+            margin-top: auto;
+            padding: 2rem 0 1rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="public-header pb-5">
+        <div class="container">
+            <div class="kolegium-brand mb-2">
+                <i data-lucide="shield-check" style="width: 28px; height: 28px;"></i> KOLEGIUM
+            </div>
+            <p class="mb-0 fw-medium" style="opacity: 0.9;">Expediente Escolar Validado</p>
+        </div>
+    </header>
+
+    <main class="container px-3 pb-5" style="max-width: 600px;">
+        <div class="card card-expediente">
+            <div class="card-body p-4 p-md-5">
+                
+                <div class="text-center mb-4 mt-n3">
+                    <div class="avatar-placeholder mb-3">
+                        {{ estudiante.nombre_completo[0]|upper }}
+                    </div>
+                    <h2 class="fw-bold mb-1">{{ estudiante.nombre_completo }}</h2>
+                    <p class="text-muted mb-0 d-flex justify-content-center align-items-center">
+                        <i data-lucide="hash" class="me-1" style="width:16px;"></i> {{ estudiante.cedula_escolar }}
+                    </p>
+                </div>
+
+                <div class="row g-4 mt-2 border-top pt-3">
+                    <div class="col-6">
+                        <div class="data-label"><i data-lucide="calendar" style="width:14px;vertical-align:-2px;" class="me-1"></i> Nacimiento</div>
+                        <div class="data-value">{{ estudiante.fecha_nacimiento.strftime('%d/%m/%Y') }}</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="data-label"><i data-lucide="user" style="width:14px;vertical-align:-2px;" class="me-1"></i> Género</div>
+                        <div class="data-value">{{ estudiante.genero }}</div>
+                    </div>
+                    
+                    <div class="col-12">
+                        <div class="data-label"><i data-lucide="graduation-cap" style="width:14px;vertical-align:-2px;" class="me-1"></i> Asignación Actual</div>
+                        <div class="data-value fw-bold text-primary">
+                            {% if estudiante.grado_id %}
+                                Grado ID: {{ estudiante.grado_id }}
+                            {% else %}
+                                Sin Asignar
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if estudiante.alergias %}
+                    <div class="col-12">
+                        <div class="p-3 rounded-3" style="background-color: rgba(245,158,11,0.1); border-left: 3px solid #f59e0b;">
+                            <div class="data-label text-warning"><i data-lucide="alert-circle" style="width:14px;vertical-align:-2px;" class="me-1"></i> Alertas Médicas</div>
+                            <div class="data-value fw-semibold">{{ estudiante.alergias }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Datos del Representante -->
+                {% if estudiante.representante_info %}
+                <hr class="my-4" style="opacity: 0.1;">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <h6 class="fw-bold text-primary mb-1 text-uppercase" style="letter-spacing: 0.5px; font-size: 0.85rem;">
+                            <i data-lucide="users" style="width:16px;vertical-align:-3px;" class="me-1"></i> Representante Legal
+                        </h6>
+                    </div>
+                    <div class="col-12">
+                        <div class="data-label">Nombre Completo</div>
+                        <div class="data-value">{{ estudiante.representante_info.nombre_completo }} <span class="text-muted fw-normal" style="font-size: 0.9rem;">({{ estudiante.representante_info.parentesco or 'Familiar' }})</span></div>
+                    </div>
+                    <div class="col-6">
+                        <div class="data-label">Cédula</div>
+                        <div class="data-value">{{ estudiante.representante_info.cedula }}</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="data-label">Teléfono</div>
+                        <div class="data-value">{{ estudiante.representante_info.telefono or 'No registrado' }}</div>
+                    </div>
+                    {% if estudiante.representante_info.direccion_completa or estudiante.representante_info.direccion_habitacion %}
+                    <div class="col-12">
+                        <div class="data-label">Dirección</div>
+                        <div class="data-value" style="font-size: 0.95rem; line-height: 1.4;">{{ estudiante.representante_info.direccion_completa or estudiante.representante_info.direccion_habitacion }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Ficha Médica Expandida -->
+                {% if estudiante.tipaje or estudiante.vacunacion_completa or estudiante.neurodivergencia %}
+                <hr class="my-4" style="opacity: 0.1;">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <h6 class="fw-bold text-primary mb-1 text-uppercase" style="letter-spacing: 0.5px; font-size: 0.85rem;">
+                            <i data-lucide="heart-pulse" style="width:16px;vertical-align:-3px;" class="me-1"></i> Ficha Médica
+                        </h6>
+                    </div>
+                    {% if estudiante.tipaje %}
+                    <div class="col-6">
+                        <div class="data-label">Tipo de Sangre</div>
+                        <div class="data-value text-danger fw-bold">{{ estudiante.tipaje }}</div>
+                    </div>
+                    {% endif %}
+                    {% if estudiante.vacunacion_completa %}
+                    <div class="col-6">
+                        <div class="data-label">Vacunación</div>
+                        <div class="data-value">{{ estudiante.vacunacion_completa }}</div>
+                    </div>
+                    {% endif %}
+                    {% if estudiante.neurodivergencia %}
+                    <div class="col-12">
+                        <div class="p-3 rounded-3 mt-1" style="background-color: rgba(70,72,212,0.05); border-left: 3px solid var(--primary);">
+                            <div class="data-label text-primary">Condición Especial Registrada</div>
+                            <div class="data-value fw-semibold" style="font-size: 0.95rem;">{{ estudiante.neuro_detalle or 'Sí (Sin detalles especificados)' }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer-public">
+        <div class="container">
+            <i data-lucide="lock" style="width: 14px; vertical-align: -2px;" class="me-1"></i>
+            Documento generado por la Escuela Primaria Daniel O'Leary - Confidencial
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+        // Prevent right click to deter simple saving
+        document.addEventListener('contextmenu', event => event.preventDefault());
+    </script>
+</body>
+</html>

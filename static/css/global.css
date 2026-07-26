@@ -1,0 +1,136 @@
+/* =========================================
+   KOLEGIUM SaaS - Theme Variables (Light & Dark)
+   Estilo: Premium Solid (Clean & Accessible)
+========================================= */
+
+/* --- Variables Base y Light Mode --- */
+:root, [data-bs-theme="light"] {
+    /* Paleta de Colores Base */
+    --bg-app: #F3F4F6;           
+    --bg-card: #FFFFFF;          
+    --surface: #FFFFFF;
+    --surface-container: #F8FAFC;
+    --surface-container-high: #F1F5F9;
+    --surface-container-lowest: #FFFFFF;
+    
+    /* Colores de Acento */
+    --primary: #4318FF;          
+    --primary-hover: #3311DB;
+    --primary-container: #EEF2FF;
+    --primary-fixed-dim: #6366F1;
+    --on-primary: #FFFFFF;
+    --tertiary: #8B5CF6;
+    
+    /* Tipografía y Textos */
+    --text-main: #111827;        
+    --text-muted: #374151;       
+    --on-surface: #111827;
+    --on-surface-variant: #374151;
+    
+    /* Sidebar */
+    --sidebar-bg: #f8fafc;
+    --sidebar-text: #374151;
+    --sidebar-text-active: #4f46e5;
+    --sidebar-active-bg: rgba(79, 70, 229, 0.1);
+    --sidebar-active-border: #4f46e5;
+    --sidebar-hover: #F1F5F9;
+
+    /* Estructura, Bordes y Sombras */
+    --border-color: rgba(226, 232, 240, 0.8);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-card: 16px;         
+    --radius-btn: 10px;          
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
+    --shadow-soft: 0px 10px 30px rgba(0, 0, 0, 0.04);
+    
+    --transition: all 0.3s ease;
+    --font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* --- Dark Mode --- */
+[data-bs-theme="dark"] {
+    /* Paleta de Colores Base — Fondo negro puro, tarjetas gris oscuro */
+    --bg-app: #050505;           
+    --bg-card: #111827;          
+    --surface: #111827;
+    --surface-container: #1E293B;
+    --surface-container-high: #334155;
+    --surface-container-lowest: #050505;
+    
+    /* Colores de Acento */
+    --primary: #7551FF;          
+    --primary-hover: #8F72FF;
+    --primary-container: #21285E;
+    --primary-fixed-dim: #4318FF;
+    --on-primary: #FFFFFF;
+    --tertiary: #A78BFA;
+    
+    /* Tipografía y Textos */
+    --text-main: #FFFFFF;        
+    --text-muted: #D1D5DB;       
+    --on-surface: #FFFFFF;
+    --on-surface-variant: #D1D5DB;
+    
+    /* Sidebar — azul marino profundo, contrasta con fondo negro */
+    --sidebar-bg: #0F172A;
+    --sidebar-text: #D1D5DB;
+    --sidebar-text-active: #FFFFFF;
+    --sidebar-active-bg: rgba(255, 255, 255, 0.1);
+    --sidebar-active-border: #818CF8;
+    --sidebar-hover: #1E293B;
+
+    /* Estructura, Bordes y Sombras */
+    --border-color: rgba(255, 255, 255, 0.08);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-soft: 0px 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Reseteo Global --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* --- Estilos Base --- */
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    -webkit-font-smoothing: antialiased; 
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-main);
+    font-weight: 700;
+    letter-spacing: -0.02em; 
+}
+
+a {
+    text-decoration: none;
+    color: var(--primary);
+    transition: var(--transition);
+}
+
+a:hover {
+    color: var(--primary-hover);
+}
+
+.theme-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    transition: background 0.2s;
+    padding: 0;
+}
+.theme-btn:hover {
+    background: rgba(148, 163, 184, 0.15);
+}

@@ -1,0 +1,236 @@
+                <h6 class="fw-bold text-primary mb-3 text-uppercase" style="font-size:0.8rem;letter-spacing:1px;"><i
+                        data-lucide="id-card" class="me-1" style="width:16px;"></i> Identidad y Legal (Generador de
+                    Cédula Escolar)</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold text-body">Nombre Completo del Estudiante</label>
+                        <input type="text" class="form-control" name="nombre_estudiante" required
+                            placeholder="Ej. Juan Pérez">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold text-body">Fecha Nacimiento</label>
+                        <input type="date" class="form-control" name="fecha_nacimiento" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-body">Nro Parto</label>
+                        <input type="number" class="form-control" name="nro_parto" required min="1" value="1">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-body">Género</label>
+                        <select class="form-select" name="genero">
+                            <option value="Masculino">Masculino</option>
+                            <option value="Femenino">Femenino</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-body">Lugar Nacimiento</label>
+                                <input type="text" class="form-control" name="lugar_nacimiento"
+                                    placeholder="Estado, Ciudad, Hospital">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold text-body">Nro de Acta</label>
+                                <input type="text" class="form-control" name="num_acta" placeholder="Ej. 1290">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold text-body">Nro de Oficio</label>
+                                <input type="text" class="form-control" name="num_oficio" placeholder="Ej. 04052">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-body">Plantel de Procedencia</label>
+                                <input type="text" class="form-control" name="plantel_procedencia"
+                                    placeholder="Nombre de la Institución Anterior">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-body">Correo Electrónico (Estudiante)</label>
+                                <input type="email" class="form-control" name="email_estudiante"
+                                    placeholder="estudiante@ejemplo.com">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-primary mb-3 text-uppercase"
+                    style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i
+                        data-lucide="users" class="me-1" style="width:16px;"></i> Referencia Familiar y Procedencia</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-body">Cédula Madre/Representante</label>
+                        <input type="text" class="form-control" name="cedula_representante" required
+                            placeholder="Ej. 12345678">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-body">Nombre Representante</label>
+                        <input type="text" class="form-control" name="nombre_representante" required
+                            placeholder="Ej. María Pérez">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-body">Parentesco</label>
+                        <select class="form-select" name="parentesco">
+                            <option value="Madre">Madre</option>
+                            <option value="Padre">Padre</option>
+                            <option value="Abuelo/a">Abuelo/a</option>
+                            <option value="Tío/a">Tío/a</option>
+                            <option value="Hermano/a Mayor">Hermano/a Mayor</option>
+                            <option value="Otro Tutor Legal">Otro Tutor Legal</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold text-body">Teléfono</label>
+                        <input type="text" class="form-control" name="telefono_representante"
+                            placeholder="04XX-XXXXXXX">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold text-body">Correo del Representante</label>
+                        <input type="email" class="form-control" name="email_representante"
+                            placeholder="correo@ejemplo.com">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-body">Dirección de Habitación</label>
+                        <input type="text" class="form-control" name="direccion_habitacion"
+                            placeholder="Ej. Urb. Los Mangos, Calle 4, Casa Nro 12">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold text-body">Dirección Completa (Adicional)</label>
+                        <textarea class="form-control" name="direccion_completa" rows="2"
+                            placeholder="Describa punto de referencia y otros detalles"></textarea>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-body">Grado a Asignar</label>
+                        <select class="form-select" name="grado_id">
+                            <option value="">-- Seleccione (Opcional) --</option>
+                            {% for g in grados %}
+                            <option value="{{ g.id }}">{{ g.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-body">Literal (A-D)</label>
+                        <select class="form-select" name="literal_escolar">
+                            <option value="">N/A</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-body">Procedencia / Institución</label>
+                        <input type="text" class="form-control" name="procedencia"
+                            placeholder="(Nuevo Ingreso / Nro. Plantel)">
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-primary mb-3 text-uppercase"
+                    style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i
+                        data-lucide="activity" class="me-1" style="width:16px;"></i> Referencia Médica y Física</h6>
+                <div class="row g-3 mb-2">
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-body">Medida Talla</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" class="form-control" name="talla" placeholder="110">
+                            <span class="input-group-text bg-body-tertiary text-body-secondary">cm</span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-body">Medida Peso</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" class="form-control" name="peso" placeholder="25">
+                            <span class="input-group-text bg-body-tertiary text-body-secondary">kg</span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-body">Talla Calzado</label>
+                        <input type="text" class="form-control" name="calzado" placeholder="Ej. 28">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold text-body">Talla de Camisa/Franela</label>
+                        <input type="text" class="form-control" name="talla_camisa" placeholder="Ej. 10 o S">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold text-body">Talla de Pantalón/Falda</label>
+                        <input type="text" class="form-control" name="talla_pantalon" placeholder="Ej. 12 o M">
+                    </div>
+                    <div class="col-md-2 mt-3">
+                        <label class="form-label fw-semibold text-body">Grupo Sanguíneo</label>
+                        <select class="form-select" name="tipaje">
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="No Sabe">No Sabe</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold text-body">Lateralidad</label>
+                        <select class="form-select" name="lateralidad">
+                            <option value="Diestro">Diestro</option>
+                            <option value="Zurdo">Zurdo</option>
+                            <option value="Ambidextro">Ambidextro</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-body">Alergias</label>
+                        <input type="text" class="form-control" name="alergias"
+                            placeholder="Alimentos, Medicamentos, Ninguna...">
+                    </div>
+
+                    <div class="col-md-4 mt-3">
+                        <label class="form-label fw-semibold text-body">Esquema de Vacunación</label>
+                        <select class="form-select" name="vacunacion_completa">
+                            <option value="Si">Sí, Esquema Completo</option>
+                            <option value="Parcial">No, Incompleto</option>
+                            <option value="No">Sin Vacunación</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-8 mt-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="form-check form-switch me-3">
+                                <input class="form-check-input mt-1" type="checkbox" role="switch" id="switchNeuro"
+                                    name="neurodivergencia">
+                                <label class="form-check-label fw-semibold" for="switchNeuro">Estudiante Neurodivergente
+                                    / N.E.E</label>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control bg-body-tertiary" name="neuro_detalle" id="inputNeuroDetalle"
+                            placeholder="Si aplica, indique diagnóstico (TEA, TDAH, Dislexia, Condición Motora...)"
+                            disabled>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-primary mb-3 text-uppercase"
+                    style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i
+                        data-lucide="file-check-2" class="me-1" style="width:16px;"></i> Estatus Histórico</h6>
+                <div class="row pt-2 g-3">
+                    <div class="col-md-6 mb-2">
+                        <div class="form-check form-switch pt-1 text-body-secondary">
+                            <input class="form-check-input" type="checkbox" name="nuevo_ingreso" id="checkNuevoIngreso"
+                                checked>
+                            <label class="form-check-label fw-semibold text-body" for="checkNuevoIngreso">
+                                Estudiante de Nuevo Ingreso
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <div class="form-check form-switch pt-1 text-body-secondary">
+                            <input class="form-check-input" type="checkbox" name="es_repetidor" id="checkRepetidor">
+                            <label class="form-check-label fw-semibold text-body" for="checkRepetidor">
+                                Estudiante Repitiente
+                            </label>
+                        </div>
+                    </div>
+                </div>

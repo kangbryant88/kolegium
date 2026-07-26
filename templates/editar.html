@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends"base.html" %}
 
 {% block title %}Editar Registro - Kolegium{% endblock %}
 {% block header_title %}Editar Registro{% endblock %}
@@ -9,12 +9,12 @@
     .page-header .subtitle { color: var(--on-surface-variant); font-size: 0.85rem; }
 
     .edit-card {
-        background: #fff; border-radius: 16px;
+        background: var(--surface); border-radius: 16px;
         box-shadow: 0 1px 3px rgba(15,23,42,0.04); overflow: hidden;
     }
 
     .edit-card .card-top {
-        padding: 18px 24px; border-bottom: 1px solid #f2f4f6;
+        padding: 18px 24px; border-bottom: 1px solid var(--border-color);
         display: flex; justify-content: space-between; align-items: center;
     }
 
@@ -43,26 +43,26 @@
     }
 
     .input-icon-group .icon {
-        padding: 0 12px; background: #eceef0; display: flex; align-items: center;
+        padding: 0 12px; background: var(--surface-container-high); display: flex; align-items: center;
     }
 
     .input-icon-group .icon i { width: 15px; height: 15px; color: var(--on-surface-variant); }
 
     .edu-input, .edu-select {
         width: 100%; padding: 0.7rem 0.9rem; border-radius: 10px;
-        border: none; background: #eceef0; font-size: 0.85rem;
+        border: none; background: var(--surface-container-high); font-size: 0.85rem;
         font-family: 'Inter', sans-serif; color: var(--on-surface);
         transition: all 0.2s; outline: none;
     }
 
-    .edu-input:focus, .edu-select:focus { background: #fff; box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
+    .edu-input:focus, .edu-select:focus { background: var(--surface); box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
 
     .input-icon-group .edu-input,
     .input-icon-group .edu-select { border-radius: 0; }
 
     .btn-cancel {
-        padding: 10px 24px; border-radius: 999px; border: 1px solid #eceef0;
-        background: #fff; color: var(--on-surface); font-weight: 700;
+        padding: 10px 24px; border-radius: 999px; border: 1px solid var(--surface-container-high);
+        background: var(--surface); color: var(--on-surface); font-weight: 700;
         font-size: 0.85rem; text-decoration: none;
         display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
     }
@@ -141,7 +141,7 @@
                 </div>
 
                 <div class="mt-5 mb-5 pb-5 mb-md-0 pb-md-0 d-flex flex-column flex-md-row justify-content-end gap-3" style="margin-bottom: 80px !important;">
-                    <a href="/planificador" class="btn-cancel order-2 order-md-1">
+                    <a href="{{ url_for('academico.planificador') }}" class="btn-cancel order-2 order-md-1">
                         <i data-lucide="x"></i> Cancelar
                     </a>
                     <button type="submit" class="btn-save order-1 order-md-2">

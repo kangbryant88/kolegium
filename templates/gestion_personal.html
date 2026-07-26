@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends"base.html" %}
 {% block title %}Gestión de Personal - Kolegium{% endblock %}
 
 {% block content %}
@@ -115,7 +115,7 @@
                                     <div class="d-flex align-items-start gap-2">
                                         <i data-lucide="info" class="mt-1 flex-shrink-0" style="width: 16px; height: 16px;"></i>
                                         <div>
-                                            <strong>¿No conoces tu clave?</strong> Busca en tu bandeja de entrada o en la carpeta de Spam un correo de <em>no-responde@mppe.gob.ve</em> con el asunto "clave y usuario sistema autogestion ME". Si la cambiaste y la olvidaste, deberás gestionar el reseteo directamente en el departamento de Recursos Humanos de la Zona Educativa.
+                                            <strong>¿No conoces tu clave?</strong> Busca en tu bandeja de entrada o en la carpeta de Spam un correo de <em>no-responde@mppe.gob.ve</em> con el asunto"clave y usuario sistema autogestion ME". Si la cambiaste y la olvidaste, deberás gestionar el reseteo directamente en el departamento de Recursos Humanos de la Zona Educativa.
                                         </div>
                                     </div>
                                 </div>
@@ -254,12 +254,12 @@ function togglePassword(id) {
     const eye = document.getElementById(`eye_${id}`);
     const eyeSlash = document.getElementById(`eyeSlash_${id}`);
     
-    if (input.type === "password") {
-        input.type = "text";
+    if (input.type ==="password") {
+        input.type ="text";
         eye.classList.add('d-none');
         eyeSlash.classList.remove('d-none');
     } else {
-        input.type = "password";
+        input.type ="password";
         eyeSlash.classList.add('d-none');
         eye.classList.remove('d-none');
     }

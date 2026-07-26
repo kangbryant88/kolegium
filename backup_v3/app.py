@@ -221,13 +221,13 @@ def obtener_estudiantes_por_docente(usuario_id):
 
 @app.route('/')
 def index():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     permisos = session.get('permisos', '')
     if 'dashboard' not in permisos:
-        if 'planificador' in permisos: return redirect(url_for('planificador'))
+        if 'planificador' in permisos: return redirect(url_for('academico.planificador'))
         if 'defensoria' in permisos: return redirect(url_for('defensoria'))
-        if 'asistencia' in permisos: return redirect(url_for('asistencia'))
-        return redirect(url_for('en_espera'))
+        if 'asistencia' in permisos: return redirect(url_for('academico.asistencia'))
+        return redirect(url_for('auth.en_espera'))
 
     ahora = datetime.now()
     dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
@@ -278,7 +278,7 @@ def login():
                 session['permisos'], session['nombre_rol'] = u.rol_info.permisos, u.rol_info.nombre
                 return redirect(url_for('index'))
             session['permisos'], session['nombre_rol'] = '', 'En Espera'
-            return redirect(url_for('en_espera'))
+            return redirect(url_for('auth.en_espera'))
         return render_template('login.html', error='Credenciales incorrectas.')
     return render_template('login.html')
 
@@ -295,12 +295,12 @@ def registro():
         if Usuario.query.count() == 1:
             nuevo.rol_id = Rol.query.filter_by(nombre='Administrador Supremo').first().id
             db.session.commit()
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     return render_template('registro.html')
 
 @app.route('/logout')
 def logout():
-    session.clear(); return redirect(url_for('login'))
+    session.clear(); return redirect(url_for('auth.login'))
 
 @app.route('/en_espera')
 def en_espera():
@@ -312,7 +312,7 @@ def en_espera():
 
 @app.route('/planificador')
 def planificador():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     uid = session['usuario_id']
     clases = Bitacora.query.filter_by(usuario_id=uid).order_by(Bitacora.fecha.desc()).all()
     grados = Grado.query.all(); temas = Tema.query.all()
@@ -326,7 +326,7 @@ def agregar():
     f = datetime.strptime(f"{datetime.now().strftime('%Y-%m-%d')} {hora}", "%Y-%m-%d %H:%M")
     db.session.add(Bitacora(fecha=f, grado=request.form['grado'], actividad=request.form['actividad'], 
                             estado=request.form['estado'], usuario_id=session['usuario_id']))
-    db.session.commit(); return redirect(url_for('planificador'))
+    db.session.commit(); return redirect(url_for('academico.planificador'))
 
 @app.route('/editar/<int:id>', methods=['GET', 'POST'])
 def editar(id):
@@ -334,24 +334,24 @@ def editar(id):
     if request.method == 'POST':
         reg.grado, reg.actividad, reg.estado = request.form['grado'], request.form['actividad'], request.form['estado']
         reg.fecha = datetime.strptime(f"{reg.fecha.strftime('%Y-%m-%d')} {request.form['hora']}", "%Y-%m-%d %H:%M")
-        db.session.commit(); return redirect(url_for('planificador'))
+        db.session.commit(); return redirect(url_for('academico.planificador'))
     return render_template('editar.html', registro=reg, grados=Grado.query.all())
 
 @app.route('/eliminar/<int:id>')
 def eliminar(id):
     db.session.delete(Bitacora.query.get_or_404(id)); db.session.commit()
-    return redirect(url_for('planificador'))
+    return redirect(url_for('academico.planificador'))
 
 @app.route('/reporte_diario')
 def reporte_diario():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     hoy = datetime.now().date()
     regs = [r for r in Bitacora.query.filter_by(usuario_id=session['usuario_id']).all() if r.fecha.date() == hoy]
     return render_template('reporte.html', registros=regs)
 
 @app.route('/reporte_general')
 def reporte_general():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     regs = Bitacora.query.filter_by(usuario_id=session['usuario_id']).order_by(Bitacora.fecha.desc()).all()
     return render_template('reporte.html', registros=regs)
 
@@ -396,7 +396,7 @@ def exportar_word():
 
 @app.route('/defensoria', methods=['GET', 'POST'])
 def defensoria():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     if request.method == 'POST':
         db.session.add(PlanificacionDefensoria(
             tema_charla=request.form['tema_charla'], proposito=request.form['proposito'],
@@ -422,7 +422,7 @@ def eliminar_defensoria(id):
 # --- EXPORTAR PDF DEFENSORÍA ---
 @app.route('/exportar_pdf_defensoria')
 def exportar_pdf_defensoria():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     
     # Creamos el documento PDF
     pdf = FPDF()
@@ -498,7 +498,7 @@ def guardar_masivo():
 
 @app.route('/asistencia', methods=['GET', 'POST'])
 def asistencia():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     if request.method == 'POST':
         grado = Grado.query.get(request.form['grado_id'])
         v, h = int(request.form['varones'] or 0), int(request.form['hembras'] or 0)
@@ -507,7 +507,7 @@ def asistencia():
         db.session.add(AsistenciaDiaria(fecha=datetime.strptime(request.form['fecha'], '%Y-%m-%d').date(), 
                        grado_seccion=grado.nombre, matricula_total=t, varones=v, hembras=h, asistentes=v+h, 
                        porcentaje=p, usuario_id=session['usuario_id']))
-        db.session.commit(); return redirect(url_for('asistencia'))
+        db.session.commit(); return redirect(url_for('academico.asistencia'))
     if session.get('rol_id') in [1, 2]:
         regs = AsistenciaDiaria.query.order_by(AsistenciaDiaria.fecha.desc()).all()
     else:
@@ -517,11 +517,11 @@ def asistencia():
 @app.route('/eliminar_asistencia/<int:id>', methods=['POST'])
 def eliminar_asistencia(id):
     db.session.delete(AsistenciaDiaria.query.get_or_404(id)); db.session.commit()
-    return redirect(url_for('asistencia'))
+    return redirect(url_for('academico.asistencia'))
 
 @app.route('/asistencia_personal', methods=['GET', 'POST'])
 def asistencia_personal():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     if request.method == 'POST':
         mat_base = int(request.form.get('matricula_base') or 0)
         asistentes = int(request.form.get('asistentes') or 0)
@@ -535,7 +535,7 @@ def asistencia_personal():
             usuario_id=session['usuario_id']
         ))
         db.session.commit()
-        return redirect(url_for('asistencia_personal'))
+        return redirect(url_for('academico.asistencia_personal'))
     if session.get('rol_id') in [1, 2]:
         regs = AsistenciaPersonal.query.order_by(AsistenciaPersonal.fecha.desc()).all()
     else:
@@ -554,14 +554,14 @@ def asistencia_personal():
 
 @app.route('/eliminar_asistencia_personal/<int:id>')
 def eliminar_asistencia_personal(id):
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     db.session.delete(AsistenciaPersonal.query.get_or_404(id))
     db.session.commit()
-    return redirect(url_for('asistencia_personal'))
+    return redirect(url_for('academico.asistencia_personal'))
 
 @app.route('/editar_asistencia_personal/<int:id>', methods=['GET', 'POST'])
 def editar_asistencia_personal(id):
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     reg = AsistenciaPersonal.query.get_or_404(id)
     if request.method == 'POST':
         mat_base = int(request.form.get('matricula_base') or 0)
@@ -574,7 +574,7 @@ def editar_asistencia_personal(id):
         reg.porcentaje = round((asistentes / mat_base) * 100, 1) if mat_base > 0 else 0.0
         
         db.session.commit()
-        return redirect(url_for('asistencia_personal'))
+        return redirect(url_for('academico.asistencia_personal'))
     
     return render_template('editar_asistencia_personal.html', registro=reg)
 
@@ -584,7 +584,7 @@ def editar_asistencia_personal(id):
 
 @app.route('/historial_global')
 def historial_global():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     if session.get('rol_id') not in [1, 2]:
         return redirect(url_for('index'))
     
@@ -612,7 +612,7 @@ def historial_global():
 
 @app.route('/configuracion', methods=['GET', 'POST'])
 def configuracion():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     if request.method == 'POST':
         if 'grado_num' in request.form and 'seccion_letra' in request.form:
             docente_id = request.form.get('docente_id')
@@ -660,14 +660,14 @@ def admin_usuarios():
 @app.route('/cambiar_rol/<int:id>', methods=['POST'])
 def cambiar_rol(id):
     if not session.get('logeado'): 
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     usuario = Usuario.query.get_or_404(id)
     
     # 1. Protección del Administrador Supremo (Tú)
     if usuario.id == 1:
         flash("No puedes cambiar el rol del creador del sistema.", "error")
-        return redirect(url_for('admin_usuarios'))
+        return redirect(url_for('admin.admin_usuarios'))
         
     # 2. Capturar el rol seleccionado en el menú desplegable
     nuevo_rol_id = request.form.get('rol')
@@ -675,7 +675,7 @@ def cambiar_rol(id):
     # Protección: Si el form está vacío o no eligieron nada, abortar
     if not nuevo_rol_id or nuevo_rol_id == '-- Elegir Rol --':
         flash("Por favor, selecciona un rol de la lista antes de autorizar.", "error")
-        return redirect(url_for('admin_usuarios'))
+        return redirect(url_for('admin.admin_usuarios'))
 
     # 3. Guardar el nuevo rol en la base de datos (¡Muy importante!)
     usuario.rol_id = int(nuevo_rol_id)
@@ -720,7 +720,7 @@ def cambiar_rol(id):
 
     # 5. Mensaje de éxito en pantalla y recarga
     flash("Rol actualizado correctamente.", "success")
-    return redirect(url_for('admin_usuarios'))
+    return redirect(url_for('admin.admin_usuarios'))
 
 @app.route('/eliminar_usuario/<int:id>', methods=['POST'])
 def eliminar_usuario(id):
@@ -729,14 +729,14 @@ def eliminar_usuario(id):
     if id != session['usuario_id']:
         usuario = Usuario.query.get_or_404(id)
         if usuario.id == 1:
-            return redirect(url_for('admin_usuarios'))
+            return redirect(url_for('admin.admin_usuarios'))
         db.session.delete(usuario)
         db.session.commit()
-    return redirect(url_for('admin_usuarios'))
+    return redirect(url_for('admin.admin_usuarios'))
 
 @app.route('/anuncios', methods=['GET', 'POST'])
 def anuncios():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     if request.method == 'POST' and 'anuncios' in session.get('permisos', ''):
         db.session.add(Anuncio(titulo=request.form['titulo'], mensaje=request.form['mensaje'], autor_id=session['usuario_id']))
         db.session.commit(); return redirect(url_for('anuncios'))
@@ -760,7 +760,7 @@ def generar_cedula_escolar(nro_parto, anio_nino, cedula_rep):
 @app.route('/estadistica_global')
 def estadistica_global():
     if not session.get('logeado'):
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
         
     estudiantes = Estudiante.query.all() or []
     total_estudiantes = len(estudiantes)
@@ -777,7 +777,7 @@ def estadistica_global():
 @app.route('/registrar_estudiante', methods=['POST'])
 def registrar_estudiante():
     if not session.get('logeado'):
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
 
     # Obtener datos del representante
     cedula_rep = request.form.get('cedula_representante')
@@ -857,17 +857,17 @@ def registrar_estudiante():
     db.session.add(estudiante)
     db.session.commit()
     
-    return redirect(url_for('estadistica_global'))
+    return redirect(url_for('academico.estadistica_global'))
 
 @app.route('/perfil_estudiante/<int:id>')
 def perfil_estudiante(id):
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     estudiante = Estudiante.query.get_or_404(id)
     return render_template('perfil_estudiante.html', estudiante=estudiante, grados=Grado.query.all())
 
 @app.route('/editar_estudiante/<int:id>', methods=['POST'])
 def editar_estudiante(id):
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     est = Estudiante.query.get_or_404(id)
     
     est.nombre_completo = request.form.get('nombre_estudiante')
@@ -902,23 +902,23 @@ def editar_estudiante(id):
     est.grado_id = request.form.get('grado_id')
     
     db.session.commit()
-    return redirect(url_for('perfil_estudiante', id=est.id))
+    return redirect(url_for('academico.perfil_estudiante', id=est.id))
 
 @app.route('/egresar_estudiante/<int:id>', methods=['POST'])
 def egresar_estudiante(id):
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     est = Estudiante.query.get_or_404(id)
     est.estatus = 'Activo' if est.estatus == 'Egreso' else 'Egreso'
     db.session.commit()
-    return redirect(url_for('perfil_estudiante', id=est.id))
+    return redirect(url_for('academico.perfil_estudiante', id=est.id))
 
 @app.route('/eliminar_estudiante/<int:id>', methods=['POST'])
 def eliminar_estudiante(id):
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     est = Estudiante.query.get_or_404(id)
     db.session.delete(est)
     db.session.commit()
-    return redirect(url_for('estadistica_global'))
+    return redirect(url_for('academico.estadistica_global'))
 
 # ==========================================
 # --- 11. MÓDULO MI AULA ---
@@ -926,7 +926,7 @@ def eliminar_estudiante(id):
 
 @app.route('/mi_aula', methods=['GET', 'POST'])
 def mi_aula():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     
     rol = session.get('nombre_rol')
     if rol not in ['Administrador Supremo', 'Equipo Directivo', 'Docente de Aula']:
@@ -998,7 +998,7 @@ def mi_aula():
 
 @app.route('/guardar_asistencia_aula', methods=['POST'])
 def guardar_asistencia_aula():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     grado_id = request.form.get('grado_id')
     estudiantes = Estudiante.query.filter_by(grado_id=grado_id).all()
     fecha_hoy = date.today()
@@ -1013,14 +1013,14 @@ def guardar_asistencia_aula():
             db.session.add(nuevo_registro)
             
     db.session.commit()
-    url = url_for('mi_aula')
+    url = url_for('academico.mi_aula')
     if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo'] and grado_id:
-        url = url_for('mi_aula', grado_id=grado_id)
+        url = url_for('academico.mi_aula', grado_id=grado_id)
     return redirect(url)
 
 @app.route('/agregar_incidencia', methods=['POST'])
 def agregar_incidencia():
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     estudiante_id = request.form.get('estudiante_id')
     categoria = request.form.get('categoria')
     descripcion = request.form.get('descripcion')
@@ -1036,14 +1036,14 @@ def agregar_incidencia():
         db.session.add(incidencia)
         db.session.commit()
         
-    url = url_for('mi_aula')
+    url = url_for('academico.mi_aula')
     if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo'] and grado_id:
-        url = url_for('mi_aula', grado_id=grado_id)
+        url = url_for('academico.mi_aula', grado_id=grado_id)
     return redirect(url)
 
 @app.route('/descargar_inscripcion_inicial/<int:grado_id>')
 def descargar_inscripcion_inicial(grado_id):
-    if not session.get('logeado'): return redirect(url_for('login'))
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
     
     grado = Grado.query.get_or_404(grado_id)
     estudiantes = Estudiante.query.filter_by(grado_id=grado.id).order_by(Estudiante.nombre_completo.asc()).all()

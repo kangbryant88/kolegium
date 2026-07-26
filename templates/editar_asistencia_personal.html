@@ -7,7 +7,7 @@
 <style>
     /* Cards */
     .card-edu {
-        background: #fff;
+        background: var(--surface);
         border-radius: 16px;
         box-shadow: 0 4px 12px rgba(15,23,42,0.03);
         padding: 24px;
@@ -39,7 +39,7 @@
     }
 
     .edu-input:focus {
-        background: #fff;
+        background: var(--surface);
         border-color: var(--primary);
         box-shadow: 0 0 0 3px rgba(70,72,212,0.12);
     }
@@ -76,7 +76,7 @@
         padding: 12px 24px;
         border-radius: 999px;
         border: 1px solid var(--surface-container-high);
-        background: #fff;
+        background: var(--surface);
         color: var(--on-surface-variant);
         font-size: 0.9rem;
         font-weight: 700;
@@ -101,7 +101,7 @@
             <p style="color: var(--on-surface-variant); font-size: 0.85rem;">Modifica los detalles de la asistencia de este día.</p>
         </div>
 
-        <form action="{{ url_for('editar_asistencia_personal', id=registro.id) }}" method="POST">
+        <form action="{{ url_for('academico.editar_asistencia_personal', id=registro.id) }}" method="POST">
             <div class="form-group">
                 <label for="fecha">Fecha</label>
                 <input type="date" name="fecha" id="fecha" class="edu-input" value="{{ registro.fecha.strftime('%Y-%m-%d') }}" required>
@@ -129,7 +129,7 @@
             </div>
             
             <div style="display: flex; gap: 12px; margin-top: 24px;">
-                <a href="{{ url_for('asistencia_personal') }}" class="btn-cancel">Cancelar</a>
+                <a href="{{ url_for('academico.asistencia_personal') }}" class="btn-cancel">Cancelar</a>
                 <button type="submit" class="btn-primary-edu">Guardar Cambios</button>
             </div>
         </form>

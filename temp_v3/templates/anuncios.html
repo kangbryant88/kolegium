@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Tablón de Anuncios - EduPlanner OS{% endblock %}
+{% block header_title %}Tablón de Anuncios{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header .title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
+    .page-header .subtitle { color: var(--on-surface-variant); font-size: 0.85rem; }
+
+    .btn-new-post {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 20px;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.25s;
+    }
+
+    .btn-new-post:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(70,72,212,0.25); }
+    .btn-new-post i { width: 16px; height: 16px; }
+
+    .anuncio-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+        position: relative;
+        transition: transform 0.2s;
+        border-left: 4px solid var(--primary);
+    }
+
+    .anuncio-card:hover { transform: translateY(-2px); }
+
+    .anuncio-card .title { font-size: 1.1rem; font-weight: 700; color: var(--on-surface); }
+
+    .anuncio-card .body {
+        color: var(--on-surface-variant);
+        font-size: 0.9rem;
+        line-height: 1.7;
+        margin: 12px 0 16px;
+    }
+
+    .anuncio-meta {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 12px;
+        border-top: 1px solid #f2f4f6;
+    }
+
+    .anuncio-meta .author {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .anuncio-meta .author img { width: 28px; height: 28px; border-radius: 8px; }
+
+    .anuncio-meta .date {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--on-surface-variant);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: var(--surface);
+        padding: 5px 12px;
+        border-radius: 999px;
+    }
+
+    .anuncio-meta .date i { width: 13px; height: 13px; }
+
+    .btn-icon-del {
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        border: none;
+        background: rgba(239,68,68,0.06);
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-icon-del:hover { background: rgba(239,68,68,0.12); }
+    .btn-icon-del i { width: 14px; height: 14px; }
+
+    .empty-state {
+        background: #fff;
+        border-radius: 16px;
+        padding: 3rem;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+    }
+
+    .empty-state i { width: 40px; height: 40px; color: var(--on-surface-variant); opacity: 0.3; margin-bottom: 12px; }
+    .empty-state h5 { font-weight: 700; }
+    .empty-state p { color: var(--on-surface-variant); font-size: 0.85rem; }
+
+    .modal-edu .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 20px 40px rgba(15,23,42,0.12);
+    }
+
+    .modal-edu .icon-warning {
+        width: 64px; height: 64px;
+        border-radius: 50%;
+        background: rgba(239,68,68,0.08);
+        color: #ef4444;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 16px;
+    }
+
+    .modal-edu .icon-warning i { width: 28px; height: 28px; }
+
+    .btn-cancel-modal {
+        flex: 1; padding: 10px; border-radius: 999px;
+        border: 1px solid #eceef0; background: #fff;
+        font-weight: 700; font-size: 0.85rem; cursor: pointer;
+        font-family: 'Inter', sans-serif; color: var(--on-surface);
+        transition: all 0.2s;
+    }
+
+    .btn-cancel-modal:hover { background: var(--surface); }
+
+    .btn-danger-modal {
+        flex: 1; padding: 10px; border-radius: 999px;
+        border: none; background: #ef4444; color: #fff;
+        font-weight: 700; font-size: 0.85rem; cursor: pointer;
+        font-family: 'Inter', sans-serif; transition: all 0.2s;
+    }
+
+    .btn-danger-modal:hover { background: #dc2626; }
+
+    .modal-form-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--on-surface-variant);
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    .edu-input, .edu-textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        border: none;
+        background: #eceef0;
+        font-size: 0.875rem;
+        font-family: 'Inter', sans-serif;
+        color: var(--on-surface);
+        transition: all 0.25s;
+        outline: none;
+    }
+
+    .edu-input:focus, .edu-textarea:focus {
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(70,72,212,0.12);
+    }
+
+    .edu-textarea { resize: vertical; min-height: 120px; }
+
+    .btn-publish {
+        flex: 1; padding: 10px; border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff; font-weight: 700; font-size: 0.85rem;
+        cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s;
+    }
+
+    .btn-publish:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(70,72,212,0.3); }
+    .btn-publish i { width: 14px; height: 14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 900px;">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 mb-4">
+        <div class="page-header text-center text-md-start">
+            <h3 class="title">Comunicados Oficiales</h3>
+            <p class="subtitle mb-0">Información importante de la Institución.</p>
+        </div>
+        {% if 'anuncios' in mis_permisos %}
+        <button class="btn-new-post" data-bs-toggle="modal" data-bs-target="#modalNuevoAnuncio">
+            <i data-lucide="plus-circle"></i> Publicar Anuncio
+        </button>
+        {% endif %}
+    </div>
+
+    {% for anuncio in anuncios %}
+    <div class="anuncio-card">
+        <div class="d-flex justify-content-between align-items-start mb-1">
+            <h4 class="title mb-0">{{ anuncio.titulo }}</h4>
+            {% if 'admin' in mis_permisos %}
+            <button type="button" class="btn-icon-del" data-bs-toggle="modal" data-bs-target="#modalBorrarAnuncio{{ anuncio.id }}" title="Borrar Anuncio">
+                <i data-lucide="trash-2"></i>
+            </button>
+            {% endif %}
+        </div>
+        <p class="body">{{ anuncio.mensaje }}</p>
+        <div class="anuncio-meta">
+            <div class="author">
+                <img src="https://ui-avatars.com/api/?name={{ anuncio.autor.nombre_completo }}&background=4648d4&color=fff&size=56&rounded=true&bold=true" alt="">
+                {{ anuncio.autor.nombre_completo }}
+            </div>
+            <div class="date">
+                <i data-lucide="clock"></i>
+                {{ anuncio.fecha.strftime('%d/%m/%Y - %I:%M %p') }}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i data-lucide="inbox"></i>
+        <h5>Tablón Limpio</h5>
+        <p>No hay comunicados en este momento.</p>
+    </div>
+    {% endfor %}
+
+</div>
+
+{% for anuncio in anuncios %}
+    {% if 'admin' in mis_permisos %}
+    <div class="modal fade modal-edu" id="modalBorrarAnuncio{{ anuncio.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="icon-warning"><i data-lucide="alert-triangle"></i></div>
+                    <h5 style="font-weight:800;">¿Estás seguro?</h5>
+                    <p style="color: var(--on-surface-variant); font-size: 0.85rem;">Vas a eliminar este comunicado. Todos dejarán de verlo.</p>
+                    <form action="/eliminar_anuncio/{{ anuncio.id }}" method="POST" class="d-flex gap-2 mt-3">
+                        <button type="button" class="btn-cancel-modal" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-danger-modal">Sí, borrar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}
+
+{% if 'anuncios' in mis_permisos %}
+<div class="modal fade modal-edu" id="modalNuevoAnuncio" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 style="font-weight:800; display:flex; align-items:center; gap:8px;">
+                    <i data-lucide="pen-square" style="width:20px;height:20px;color:var(--primary);"></i> Nuevo Comunicado
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/anuncios" method="POST">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="modal-form-label">TÍTULO DEL ANUNCIO</label>
+                        <input type="text" name="titulo" class="edu-input" placeholder="Ej. Suspensión de actividades..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="modal-form-label">MENSAJE DETALLADO</label>
+                        <textarea name="mensaje" class="edu-textarea" placeholder="Escribe el comunicado aquí..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4 px-4 d-flex gap-2">
+                    <button type="button" class="btn-cancel-modal" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-publish"><i data-lucide="send" style="width:14px;height:14px;vertical-align:-1px;margin-right:4px;"></i> Publicar a todos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    localStorage.setItem('anuncios_vistos', '{{ total_anuncios | default(0) }}');
+</script>
+{% endblock %}

@@ -101,7 +101,7 @@
             <p style="color: var(--on-surface-variant); font-size: 0.85rem;">Modifica los detalles de la asistencia de este día.</p>
         </div>
 
-        <form action="{{ url_for('editar_asistencia_personal', id=registro.id) }}" method="POST">
+        <form action="{{ url_for('academico.editar_asistencia_personal', id=registro.id) }}" method="POST">
             <div class="form-group">
                 <label for="fecha">Fecha</label>
                 <input type="date" name="fecha" id="fecha" class="edu-input" value="{{ registro.fecha.strftime('%Y-%m-%d') }}" required>
@@ -129,7 +129,7 @@
             </div>
             
             <div style="display: flex; gap: 12px; margin-top: 24px;">
-                <a href="{{ url_for('asistencia_personal') }}" class="btn-cancel">Cancelar</a>
+                <a href="{{ url_for('academico.asistencia_personal') }}" class="btn-cancel">Cancelar</a>
                 <button type="submit" class="btn-primary-edu">Guardar Cambios</button>
             </div>
         </form>

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends"base.html" %}
 
 {% block title %}Centro de Exportación - Kolegium{% endblock %}
 {% block header_title %}Centro de Exportación{% endblock %}
@@ -8,7 +8,7 @@
     .page-header .title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
 
     .controls-card {
-        background: #fff; border-radius: 16px;
+        background: var(--surface); border-radius: 16px;
         box-shadow: 0 1px 3px rgba(15,23,42,0.04);
         padding: 24px; margin-bottom: 24px;
     }
@@ -17,17 +17,17 @@
 
     .edu-input, .edu-textarea {
         width: 100%; padding: 0.7rem 0.9rem; border-radius: 10px;
-        border: none; background: #eceef0; font-size: 0.85rem;
+        border: none; background: var(--surface-container-high); font-size: 0.85rem;
         font-family: 'Inter', sans-serif; color: var(--on-surface);
         transition: all 0.2s; outline: none;
     }
 
-    .edu-input:focus, .edu-textarea:focus { background: #fff; box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
+    .edu-input:focus, .edu-textarea:focus { background: var(--surface); box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
     .edu-textarea { resize: vertical; }
 
     .btn-back {
-        padding: 8px 18px; border-radius: 999px; border: 1px solid #eceef0;
-        background: #fff; color: var(--on-surface); font-weight: 600;
+        padding: 8px 18px; border-radius: 999px; border: 1px solid var(--surface-container-high);
+        background: var(--surface); color: var(--on-surface); font-weight: 600;
         font-size: 0.8rem; text-decoration: none;
         display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s;
     }
@@ -36,7 +36,7 @@
     .btn-back i { width: 14px; height: 14px; }
 
     .report-card {
-        background: #fff; border-radius: 16px;
+        background: var(--surface); border-radius: 16px;
         box-shadow: 0 1px 3px rgba(15,23,42,0.04);
     }
 
@@ -56,13 +56,13 @@
     .edu-table thead th {
         font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
         letter-spacing: 0.5px; color: #000; padding: 10px 14px;
-        background: var(--surface); border-bottom: 1px solid #e2e8f0;
+        background: var(--surface); border-bottom: 1px solid var(--border-color);
         text-align: center;
     }
 
     .edu-table tbody td {
         padding: 10px 14px; vertical-align: middle; font-size: 0.82rem;
-        border-bottom: 1px solid #f2f4f6; color: #000;
+        border-bottom: 1px solid var(--border-color); color: #000;
     }
 
     .export-btns { margin-top: 24px; margin-bottom: 2rem; }
@@ -110,10 +110,10 @@
     /* 2. Excepción para la hoja de reporte (Siempre Blanca) */
     html[data-bs-theme="dark"] body .report-card,
     html[data-bs-theme="dark"] body .report-card * {
-        background-color: #ffffff !important;
+        background-color: #FFFFFF !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
-        border-color: #e2e8f0 !important;
+        border-color: var(--border-color) !important;
     }
     
     /* 3. Vencer la regla global de las tablas específicamente aquí */
@@ -126,7 +126,7 @@
     
     html[data-bs-theme="dark"] body .report-card .edu-table tbody td,
     html[data-bs-theme="dark"] body .report-card .edu-table tbody tr {
-        background-color: #ffffff !important;
+        background-color: #FFFFFF !important;
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
     }
@@ -141,7 +141,7 @@
             <div class="page-header">
                 <h3 class="title">Configuración del Reporte</h3>
             </div>
-            <a href="/planificador" class="btn-back"><i data-lucide="arrow-left"></i> Volver</a>
+            <a href="{{ url_for('academico.planificador') }}" class="btn-back"><i data-lucide="arrow-left"></i> Volver</a>
         </div>
 
         <div class="controls-card">
@@ -235,11 +235,11 @@
 {% block extra_js %}
 <script>
     function sincronizar() {
-        document.getElementById('span_area').innerText = document.getElementById('input_area').value || "________";
-        document.getElementById('span_fecha_rep').innerText = document.getElementById('input_fecha_rep').value || "________";
+        document.getElementById('span_area').innerText = document.getElementById('input_area').value ||"________";
+        document.getElementById('span_fecha_rep').innerText = document.getElementById('input_fecha_rep').value ||"________";
         const n = document.getElementById('input_notas').value;
         const v = document.getElementById('vista-impresion-notas');
-        if (n.trim() !== "") {
+        if (n.trim() !=="") {
             document.getElementById('texto-notas').innerText = n;
             v.style.display = 'block';
         } else {

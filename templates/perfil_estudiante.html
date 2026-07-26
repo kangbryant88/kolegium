@@ -3,6 +3,88 @@
 
 {% block content %}
 <!-- Cabecera del Expediente -->
+<!-- Estilos Premium para la Botonera -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+.action-bar-premium {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+}
+.action-bar-premium .btn-premium {
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    cursor: pointer;
+    text-decoration: none;
+}
+.action-bar-premium .btn-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+.action-bar-premium .btn-premium i {
+    font-size: 1.1rem;
+    margin-right: 8px;
+}
+
+/* Variantes de Color */
+.btn-whatsapp {
+    background: #25D366;
+    color: #ffffff !important;
+}
+.btn-whatsapp:hover {
+    background: #1ebe56;
+}
+
+.btn-primary-kolegium {
+    background: var(--primary);
+    color: #ffffff !important;
+}
+.btn-primary-kolegium:hover {
+    background: var(--primary-hover);
+}
+
+.btn-warning-premium {
+    background: transparent;
+    border: 1.5px solid rgba(245, 158, 11, 0.4) !important;
+    color: #f59e0b !important;
+    box-shadow: none !important;
+}
+.btn-warning-premium:hover {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: #f59e0b !important;
+    transform: translateY(-2px);
+}
+
+.btn-danger-premium {
+    background: transparent;
+    border: 1.5px solid rgba(239, 68, 68, 0.4) !important;
+    color: #ef4444 !important;
+    box-shadow: none !important;
+}
+.btn-danger-premium:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444 !important;
+    transform: translateY(-2px);
+}
+
+[data-bs-theme="dark"] .action-bar-premium .btn-premium {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+[data-bs-theme="dark"] .action-bar-premium .btn-warning-premium,
+[data-bs-theme="dark"] .action-bar-premium .btn-danger-premium {
+    box-shadow: none !important;
+}
+</style>
+
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom">
     <div class="mb-3 mb-md-0 d-flex align-items-center">
         <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold" style="width:56px;height:56px;font-size:1.5rem;">
@@ -24,29 +106,33 @@
         </div>
     </div>
     
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        <a href="{{ url_for('generar_enlace', id=estudiante.id) }}" target="_blank" class="btn btn-outline-success d-inline-flex align-items-center px-3 fw-semibold rounded-pill">
-            <i data-lucide="share-2" class="me-2" style="width:16px;"></i> Compartir
+    <div class="action-bar-premium">
+        <!-- Compartir / WhatsApp -->
+        <a href="{{ url_for('academico.generar_enlace', id=estudiante.id) }}" target="_blank" class="btn-premium btn-whatsapp">
+            <i class="fa-brands fa-whatsapp"></i> Compartir
         </a>
 
-        <button class="btn btn-outline-primary px-3 fw-semibold rounded-pill d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalEditar">
-            <i data-lucide="edit-3" class="me-2" style="width:16px;"></i> Editar Datos
+        <!-- Editar Datos -->
+        <button class="btn-premium btn-primary-kolegium" data-bs-toggle="modal" data-bs-target="#modalEditar">
+            <i class="fa-solid fa-pen-to-square"></i> Editar Datos
         </button>
         
+        <!-- Egreso / Reingreso -->
         {% if estudiante.estatus == 'Activo' %}
-            <button type="button" class="btn btn-outline-warning px-3 fw-semibold rounded-pill d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalEgreso">
-                <i data-lucide="log-out" class="me-2" style="width:16px;"></i> Registrar Egreso
+            <button type="button" class="btn-premium btn-warning-premium" data-bs-toggle="modal" data-bs-target="#modalEgreso">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Registrar Egreso
             </button>
         {% else %}
-            <form action="{{ url_for('egresar_estudiante', id=estudiante.id) }}" method="POST" class="m-0">
-                <button type="submit" class="btn btn-outline-success px-3 fw-semibold rounded-pill d-flex align-items-center">
-                    <i data-lucide="log-in" class="me-2" style="width:16px;"></i> Reingresar Estudiante
+            <form action="{{ url_for('academico.egresar_estudiante', id=estudiante.id) }}" method="POST" class="m-0">
+                <button type="submit" class="btn-premium btn-whatsapp">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Reingresar Estudiante
                 </button>
             </form>
         {% endif %}
 
-        <button type="button" class="btn btn-outline-danger px-3 fw-semibold rounded-pill d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalEliminar">
-            <i data-lucide="trash-2" class="me-2" style="width:16px;"></i> Eliminar
+        <!-- Eliminar -->
+        <button type="button" class="btn-premium btn-danger-premium" data-bs-toggle="modal" data-bs-target="#modalEliminar">
+            <i class="fa-solid fa-trash-can"></i> Eliminar
         </button>
     </div>
 </div>
@@ -193,7 +279,7 @@
                         {% if estudiante.nuevo_ingreso %}
                             <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2">Nuevo Ingreso</span>
                         {% else %}
-                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2">Regular / Continuidad</span>
+                            <span class="badge  bg-opacity-10 text-secondary rounded-pill px-2">Regular / Continuidad</span>
                         {% endif %}
                     </li>
                     <li class="mb-3">
@@ -213,11 +299,11 @@
 <!-- Modal Edición de Estudiante -->
 <div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <form action="{{ url_for('editar_estudiante', id=estudiante.id) }}" method="POST" class="modal-content border-0 rounded-4 shadow-lg">
+        <form action="{{ url_for('academico.editar_estudiante', id=estudiante.id) }}" method="POST" class="modal-content border-0 rounded-4 shadow-lg">
                 
                 <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
                     <div class="d-flex align-items-center">
-                        <div class="bg-primary text-white p-2 rounded-3 me-3">
+                        <div class="bg-primary  p-2 rounded-3 me-3">
                             <i data-lucide="edit" style="width:24px;height:24px;"></i>
                         </div>
                         <div>
@@ -367,7 +453,7 @@
 <div class="modal fade" id="modalEgreso" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow-lg">
-            <form action="{{ url_for('egresar_estudiante', id=estudiante.id) }}" method="POST">
+            <form action="{{ url_for('academico.egresar_estudiante', id=estudiante.id) }}" method="POST">
                 <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
                     <div class="d-flex align-items-center">
                         <div class="bg-warning text-dark p-2 rounded-3 me-3">
@@ -395,30 +481,22 @@
 
 <!-- Modal Eliminar Registro Permanente -->
 <div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 rounded-4 shadow-lg">
-            <form action="{{ url_for('eliminar_estudiante', id=estudiante.id) }}" method="POST">
-                <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
-                    <div class="d-flex align-items-center">
-                        <div class="bg-danger text-white p-2 rounded-3 me-3">
-                            <i data-lucide="alert-triangle" style="width:24px;height:24px;"></i>
-                        </div>
-                        <div>
-                            <h5 class="modal-title fw-bold text-dark">⚠️ Eliminar Registro Permanente</h5>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body px-4 py-4">
-                    <p class="mb-0 text-muted">ATENCIÓN: ¿Seguro que desea eliminar TODO el registro de este estudiante? Esta acción borrará permanentemente sus datos y no se puede deshacer.</p>
-                </div>
-                <div class="modal-footer px-4 py-3 bg-light rounded-bottom-4 border-top-0">
-                    <button type="button" class="btn btn-outline-secondary fw-semibold rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger fw-semibold rounded-pill px-4 shadow-sm border-0">
-                        Eliminar Definitivamente
-                    </button>
-                </div>
-            </form>
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+            <div class="modal-body p-4 text-start">
+                <h5 style="font-weight:800; color:#ef4444; display:flex; align-items:center; gap:6px;">
+                    <i data-lucide="alert-triangle" style="width:20px;height:20px;"></i> Confirmar eliminación
+                </h5>
+                <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
+                    ¿Estás seguro de que deseas eliminar TODO el registro de este estudiante?<br>Esta acción borrará permanentemente sus datos y no se puede deshacer.
+                </p>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                <form action="{{ url_for('academico.eliminar_estudiante', id=estudiante.id) }}" method="POST" class="d-flex gap-2 w-100 m-0">
+                    <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-danger-link w-50 border-0" style="display:flex; justify-content:center; align-items:center;">Sí, eliminar</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

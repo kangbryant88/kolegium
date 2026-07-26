@@ -789,7 +789,7 @@
                     <span class="link-label">Asistencia</span>
                 </a>
                 {% if 'admin' in mis_permisos %}
-                <a href="{{ url_for('asistencia_personal') }}"
+                <a href="{{ url_for('academico.asistencia_personal') }}"
                     class="sidebar-link {% if request.path == '/asistencia_personal' %}active{% endif %}">
                     <i data-lucide="users"></i>
                     <span class="link-label">Personal</span>

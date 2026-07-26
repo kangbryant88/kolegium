@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends"base.html" %}
 
 {% block title %}Panel de Administración - Kolegium{% endblock %}
 {% block header_title %}Panel de Administración{% endblock %}
@@ -31,7 +31,7 @@
         padding: 16px 20px;
         vertical-align: middle;
         font-size: 0.875rem;
-        border-bottom: 1px solid #f2f4f6;
+        border-bottom: 1px solid var(--border-color);
         color: var(--on-surface);
     }
 
@@ -64,7 +64,7 @@
         padding: 6px 10px;
         border-radius: 8px;
         border: none;
-        background: #eceef0;
+        background: var(--surface-container-high);
         font-size: 0.8rem;
         font-family: 'Inter', sans-serif;
         color: var(--on-surface);
@@ -73,7 +73,7 @@
         transition: all 0.2s;
     }
 
-    .edu-select-sm:focus { background: #fff; box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
+    .edu-select-sm:focus { background: var(--surface); box-shadow: 0 0 0 3px rgba(70,72,212,0.12); }
 
     .btn-auth {
         display: inline-flex;
@@ -133,7 +133,7 @@
         flex: 1;
         padding: 10px;
         border-radius: 999px;
-        border: 1px solid #eceef0;
+        border: 1px solid var(--surface-container-high);
         background: var(--surface);
         font-weight: 700;
         font-size: 0.85rem;
@@ -271,7 +271,7 @@
                 {% if not usuario.rol_id %}
                     <span class="badge-role pending"><i data-lucide="alert-triangle"></i> Pendiente</span><br>
                 {% endif %}
-                <form action="{{ url_for('cambiar_rol', id=usuario.id) }}" method="POST" class="d-flex align-items-center gap-2" style="margin:4px 0 0;">
+                <form action="{{ url_for('admin.cambiar_rol', id=usuario.id) }}" method="POST" class="d-flex align-items-center gap-2" style="margin:4px 0 0;">
                     <select name="rol" class="edu-select-sm">
                         <option value="" disabled {% if not usuario.rol_id %}selected{% endif %}>-- Elegir Rol --</option>
                         {% for r in roles %}
@@ -303,16 +303,21 @@
             </div>
 
             {% if usuario.id != session_uid %}
-            <div class="modal fade modal-edu text-start" id="modalEliminarUsuario{{ usuario.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-sm">
-                    <div class="modal-content">
-                        <div class="modal-body text-center p-4">
-                            <div class="icon-warning"><i data-lucide="alert-triangle"></i></div>
-                            <h5 style="font-weight:800; letter-spacing:-0.02em;">¿Dar de baja?</h5>
-                            <p style="color: var(--on-surface-variant); font-size: 0.85rem; margin-top:8px;">Vas a eliminar el acceso al profesor <strong>{{ usuario.nombre_completo }}</strong>. Esto no se puede deshacer.</p>
-                            <form action="/eliminar_usuario/{{ usuario.id }}" method="POST" class="d-flex gap-2 mt-3">
-                                <button type="button" class="btn-cancel-modal" data-bs-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn-danger-modal">Sí, eliminar</button>
+            <div class="modal fade" id="modalEliminarUsuario{{ usuario.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+                    <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+                        <div class="modal-body p-4 text-start">
+                            <h5 style="font-weight:800; color:#ef4444; display:flex; align-items:center; gap:6px;">
+                                <i data-lucide="alert-triangle" style="width:20px;height:20px;"></i> Confirmar eliminación
+                            </h5>
+                            <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
+                                ¿Estás seguro de que deseas dar de baja al profesor <strong>"{{ usuario.nombre_completo }}"</strong>?<br>Esta acción no se puede deshacer.
+                            </p>
+                        </div>
+                        <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                            <form action="/eliminar_usuario/{{ usuario.id }}" method="POST" class="d-flex gap-2 w-100 m-0">
+                                <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn-danger-link w-50 border-0" style="display:flex; justify-content:center; align-items:center;">Sí, eliminar</button>
                             </form>
                         </div>
                     </div>
@@ -468,12 +473,12 @@
                                 <td><span class="badge-role pending"><i data-lucide="alert-triangle"></i> {{ usuario.cargo_solicitado }}</span></td>
                                 <td style="text-align:right;">
                                     <div class="d-flex justify-content-end align-items-center gap-2">
-                                        <form action="{{ url_for('aprobar_cambio', id=usuario.id) }}" method="POST" style="margin:0;">
+                                        <form action="{{ url_for('admin.aprobar_cambio', id=usuario.id) }}" method="POST" style="margin:0;">
                                             <button type="submit" class="btn-auth" style="background: linear-gradient(135deg, #10b981, #059669);">
                                                 <i data-lucide="check"></i> Aprobar
                                             </button>
                                         </form>
-                                        <form action="{{ url_for('rechazar_cambio', id=usuario.id) }}" method="POST" style="margin:0;">
+                                        <form action="{{ url_for('admin.rechazar_cambio', id=usuario.id) }}" method="POST" style="margin:0;">
                                             <button type="submit" class="btn-icon-round danger" title="Rechazar">
                                                 <i data-lucide="x"></i>
                                             </button>

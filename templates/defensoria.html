@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends"base.html" %}
 
 {% block title %}Módulo de Defensoría - Kolegium{% endblock %}
 {% block header_title %}Módulo Defensoría{% endblock %}
@@ -43,7 +43,7 @@
     }
 
     .form-card {
-        background: #fff;
+        background: var(--surface);
         border-radius: 16px;
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
         padding: 24px;
@@ -81,7 +81,7 @@
         padding: 0.7rem 0.9rem;
         border-radius: 10px;
         border: none;
-        background: #eceef0;
+        background: var(--surface-container-high);
         font-size: 0.85rem;
         font-family: 'Inter', sans-serif;
         color: var(--on-surface);
@@ -94,7 +94,7 @@
     .edu-input:focus,
     .edu-select:focus,
     .edu-textarea:focus {
-        background: #fff;
+        background: var(--surface);
         box-shadow: 0 0 0 3px rgba(70, 72, 212, 0.12);
     }
 
@@ -114,7 +114,7 @@
 
     .input-icon-group .icon {
         padding: 0 12px;
-        background: #eceef0;
+        background: var(--surface-container-high);
         display: flex;
         align-items: center;
         flex-shrink: 0;
@@ -161,11 +161,10 @@
     }
 
     .timeline-card {
-        background: #fff;
+        background: var(--surface);
         border-radius: 16px;
         box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
         padding: 24px;
-        height: 100%;
     }
 
     .timeline-card h5 {
@@ -270,7 +269,7 @@
     .plan-detail {
         margin-top: 8px;
         padding: 10px 14px;
-        background: #fff;
+        background: var(--surface);
         border-radius: 10px;
         display: flex;
         justify-content: space-between;
@@ -307,8 +306,8 @@
     .btn-sm-action {
         padding: 5px 12px;
         border-radius: 999px;
-        border: 1px solid #eceef0;
-        background: #fff;
+        border: 1px solid var(--surface-container-high);
+        background: var(--surface);
         font-size: 0.75rem;
         font-weight: 700;
         cursor: pointer;
@@ -368,8 +367,8 @@
         flex: 1;
         padding: 10px;
         border-radius: 999px;
-        border: 1px solid #eceef0;
-        background: #fff;
+        border: 1px solid var(--surface-container-high);
+        background: var(--surface);
         font-weight: 700;
         font-size: 0.85rem;
         cursor: pointer;
@@ -545,7 +544,7 @@
         padding: 8px;
         border-radius: 10px;
         border: none;
-        background: #eceef0;
+        background: var(--surface-container-high);
         font-size: 0.8rem;
         font-family: 'Inter', sans-serif;
         margin-bottom: 12px;
@@ -604,18 +603,32 @@
         }
     }
 
+    .nav-pills {
+        border-bottom: 1px solid var(--border-color);
+        gap: 8px;
+    }
+
     .nav-pills .nav-link {
         color: var(--on-surface-variant);
         font-weight: 600;
+        border-radius: 0 !important;
+        padding: 12px 16px !important;
+        background: transparent !important;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .nav-pills .nav-link:hover {
+        color: var(--text-main);
     }
 
     .nav-pills .nav-link.active {
-        background: linear-gradient(135deg, var(--primary), var(--primary-container));
-        color: white;
+        color: var(--primary) !important;
+        border-bottom: 3px solid var(--primary);
     }
 
     .paper-sheet {
-        background: #fff;
+        background: #FFFFFF !important;
         width: 100%;
         max-width: 210mm;
         min-height: 297mm;
@@ -636,7 +649,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="mx-auto" style="max-width: 1200px;">
+<div class="mx-auto w-100" style="max-width: 1440px;">
 
     {% if total_anuncios > 0 %}
     <div id="ocultador-banner-defensoria">
@@ -664,33 +677,33 @@
     </div>
 
     <!-- PESTAÑAS (TABS) -->
-    <ul class="nav nav-pills mb-4 flex-nowrap" id="defensoria-pills" role="tablist" style="overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 5px;">
+    <ul class="nav nav-pills mb-4 flex-nowrap" id="defensoria-pills" role="tablist" style="overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch;">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active fw-bold" id="pills-plan-tab" data-bs-toggle="pill"
-                data-bs-target="#pills-plan" type="button" role="tab"
-                style="border-radius:999px; padding:8px 20px;">Planificación</button>
+            <button class="nav-link active" id="pills-plan-tab" data-bs-toggle="pill"
+                data-bs-target="#pills-plan" type="button" role="tab">Planificación</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link fw-bold mx-2" id="pills-actas-tab" data-bs-toggle="pill"
-                data-bs-target="#pills-actas" type="button" role="tab"
-                style="border-radius:999px; padding:8px 20px;">Actas Manuales</button>
+            <button class="nav-link" id="pills-actas-tab" data-bs-toggle="pill"
+                data-bs-target="#pills-actas" type="button" role="tab">Actas Manuales</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link fw-bold me-2" id="pills-historial-tab" data-bs-toggle="pill"
-                data-bs-target="#pills-historial" type="button" role="tab"
-                style="border-radius:999px; padding:8px 20px;">Historial de Actas</button>
+            <button class="nav-link" id="pills-historial-tab" data-bs-toggle="pill"
+                data-bs-target="#pills-historial" type="button" role="tab">Historial de Actas</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link fw-bold" id="pills-brigadas-tab" data-bs-toggle="pill"
-                data-bs-target="#pills-brigadas" type="button" role="tab"
-                style="border-radius:999px; padding:8px 20px;">Gestión de Brigadas</button>
+            <button class="nav-link" id="pills-brigadas-tab" data-bs-toggle="pill"
+                data-bs-target="#pills-brigadas" type="button" role="tab">Gestión de Brigadas</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="pills-solicitudes-tab" data-bs-toggle="pill"
+                data-bs-target="#pills-solicitudes" type="button" role="tab">Visitas y Solicitudes</button>
         </li>
     </ul>
 
     <div class="tab-content" id="pills-tabContent">
         <!-- 1. TAB PLANIFICACIÓN -->
         <div class="tab-pane fade show active" id="pills-plan" role="tabpanel">
-            <div class="row">
+            <div class="row align-items-start">
                 <div class="col-lg-5 mb-4">
                     <div class="form-card">
                         <h5><i data-lucide="calendar-plus"></i> Agendar Nueva Actividad</h5>
@@ -809,19 +822,21 @@
                                 </div>
                             </div>
 
-                            <div class="modal fade modal-edu" id="modalEliminar{{ plan.id }}" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered modal-sm">
-                                    <div class="modal-content">
-                                        <div class="modal-body text-center p-4">
-                                            <div class="icon-warning"><i data-lucide="alert-triangle"></i></div>
-                                            <h5 style="font-weight:800;">¿Estás seguro?</h5>
-                                            <p style="color:var(--on-surface-variant);font-size:0.85rem;">Eliminarás
-                                                permanentemente esta actividad.</p>
-                                            <form action="/eliminar_defensoria/{{ plan.id }}" method="POST"
-                                                class="d-flex gap-2 mt-3">
-                                                <button type="button" class="btn-cancel-modal"
-                                                    data-bs-dismiss="modal">No</button>
-                                                <button type="submit" class="btn-danger-modal">Sí, borrar</button>
+                            <div class="modal fade" id="modalEliminar{{ plan.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+                                    <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+                                        <div class="modal-body p-4 text-start">
+                                            <h5 style="font-weight:800; color:#ef4444; display:flex; align-items:center; gap:6px;">
+                                                <i data-lucide="alert-triangle" style="width:20px;height:20px;"></i> Confirmar eliminación
+                                            </h5>
+                                            <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
+                                                ¿Estás seguro de que deseas eliminar permanentemente esta actividad?<br>Esta acción no se puede deshacer.
+                                            </p>
+                                        </div>
+                                        <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                                            <form action="/eliminar_defensoria/{{ plan.id }}" method="POST" class="d-flex gap-2 w-100 m-0">
+                                                <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn-danger-link w-50 border-0" style="display:flex; justify-content:center; align-items:center;">Sí, borrar</button>
                                             </form>
                                         </div>
                                     </div>
@@ -858,12 +873,10 @@
                             </div>
                             <div class="mb-3">
                                 <label class="edu-label">Vincular a un Estudiante (Opcional)</label>
-                                <select name="estudiante_id" id="estudianteActaInput" class="edu-select">
-                                    <option value="">-- Ninguno --</option>
-                                    {% for est in estudiantes %}
-                                    <option value="{{ est.id }}">{{ est.nombre_completo }}</option>
-                                    {% endfor %}
-                                </select>
+                                <input type="hidden" name="estudiante_id" id="estudiante_id_actas">
+                                <button type="button" class="btn btn-outline-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-2" style="padding: 0.7rem; border-radius: 10px; background: var(--surface); color: var(--primary); border: 2px solid var(--primary-container);" onmouseover="this.style.background='var(--primary-container)';" onmouseout="this.style.background='var(--surface)';" onclick="abrirModalEstudiantes('estudiante_id_actas', 'texto_est_actas')">
+                                    <i data-lucide="user" style="width: 18px; height: 18px;"></i> <span id="texto_est_actas" class="text-truncate">-- Seleccionar Estudiante --</span>
+                                </button>
                             </div>
                             <div class="mb-4">
                                 <label class="edu-label">Contenido del Acta</label>
@@ -880,8 +893,8 @@
                 </div>
                 <div class="col-12 col-lg-7 d-none d-lg-block">
                     <h5 class="fw-bold text-muted mb-3"><i data-lucide="eye"></i> Previsualización en Vivo</h5>
-                    <div style="max-height: 600px; overflow-y: auto; background: #f8fafc; padding: 20px; border-radius: 8px;">
-                        <div id="hoja-preview" style="background: white; padding: 40px 50px; min-height: 800px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); word-wrap: break-word; overflow-wrap: break-word; white-space: pre-wrap; margin: 0 auto; font-family: 'Times New Roman', serif; color: #000; font-size: 12pt; line-height: 1.5;">
+                    <div style="max-height: 700px; overflow-y: auto; background: var(--surface-container-high); padding: 20px; border-radius: 8px;">
+                        <div id="hoja-preview" class="paper-sheet" style="min-height: 800px;">
 <h4 class="text-center fw-bold mt-3 mb-4">ACTA</h4>
 <div class="mb-4 text-start text-justify">
 <span id="prevBody"></span>
@@ -925,7 +938,7 @@
                                 <td class="p-3 align-middle">
                                     {% if acta.estudiante %}
                                         <div class="d-flex align-items-center">
-                                            <div class="avatar-circle me-2 bg-gradient bg-primary text-white" style="width:30px;height:30px;font-size:0.75rem;">
+                                            <div class="avatar-circle me-2 bg-gradient bg-primary" style="width:30px;height:30px;font-size:0.75rem;">
                                                 {{ acta.estudiante.nombres[0] }}{{ acta.estudiante.apellidos[0] }}
                                             </div>
                                             {{ acta.estudiante.nombre_completo }}
@@ -936,7 +949,12 @@
                                 </td>
                                 <td class="p-3 align-middle text-center">
                                     <div class="d-flex justify-content-center gap-2">
-                                        <button class="btn btn-sm btn-outline-primary fw-bold" onclick="verActa(`{{ acta.contenido_manual|replace('\n', '\\n')|replace('\r', '') }}`, '{{ acta.tipo_acta }}')">
+                                        <button type="button" class="btn btn-sm btn-outline-primary fw-bold" 
+                                            data-tipo="{{ acta.tipo_acta|e }}"
+                                            data-estudiante="{% if acta.estudiante %}{{ acta.estudiante.nombres }} {{ acta.estudiante.apellidos }}{% else %}Ninguno (Acta Genérica){% endif %}"
+                                            data-fecha="{{ acta.fecha.strftime('%d/%m/%Y %I:%M %p') }}"
+                                            data-contenido="{{ acta.contenido_manual|e }}"
+                                            onclick="abrirModalVerActa(this)">
                                             <i data-lucide="eye" style="width: 14px; height: 14px;"></i> Ver
                                         </button>
                                         <button class="btn btn-sm btn-outline-danger fw-bold" data-bs-toggle="modal" data-bs-target="#modalEliminarActa{{ acta.id }}">
@@ -947,16 +965,21 @@
                             </tr>
 
                             <!-- Modal Eliminar Acta -->
-                            <div class="modal fade modal-edu" id="modalEliminarActa{{ acta.id }}" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered modal-sm">
-                                    <div class="modal-content">
-                                        <div class="modal-body text-center p-4">
-                                            <div class="icon-warning mx-auto mb-3" style="width: 60px; height: 60px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #dc2626;"><i data-lucide="alert-triangle"></i></div>
-                                            <h5 style="text-align: center !important; width: 100% !important; margin: 0 auto 15px auto !important; font-weight: bold;">¿Eliminar esta acta?</h5>
-                                            <p class="text-center" style="color:var(--on-surface-variant);font-size:0.85rem;">Esta acción no se puede deshacer.</p>
-                                            <form action="/eliminar_acta/{{ acta.id }}" method="POST" class="d-flex flex-row justify-content-center align-items-center gap-3 w-100 mt-3">
+                            <div class="modal fade" id="modalEliminarActa{{ acta.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+                                    <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+                                        <div class="modal-body p-4 text-start">
+                                            <h5 style="font-weight:800; color:#ef4444; display:flex; align-items:center; gap:6px;">
+                                                <i data-lucide="alert-triangle" style="width:20px;height:20px;"></i> Confirmar eliminación
+                                            </h5>
+                                            <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
+                                                ¿Estás seguro de que deseas eliminar esta acta?<br>Esta acción no se puede deshacer.
+                                            </p>
+                                        </div>
+                                        <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                                            <form action="/eliminar_acta/{{ acta.id }}" method="POST" class="d-flex gap-2 w-100 m-0">
                                                 <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
-                                                <button type="submit" class="btn-danger-modal w-50">Sí, borrar</button>
+                                                <button type="submit" class="btn-danger-link w-50 border-0" style="display:flex; justify-content:center; align-items:center;">Sí, borrar</button>
                                             </form>
                                         </div>
                                     </div>
@@ -1005,12 +1028,10 @@
                         <form action="/asignar_brigada" method="POST">
                             <div class="mb-2">
                                 <label class="edu-label">Seleccionar Estudiante</label>
-                                <select name="estudiante_id" class="edu-select p-2" required>
-                                    <option value="">-- Buscar Estudiante --</option>
-                                    {% for est in estudiantes %}
-                                    <option value="{{ est.id }}">{{ est.nombre_completo }}</option>
-                                    {% endfor %}
-                                </select>
+                                <input type="hidden" name="estudiante_id" id="estudiante_id_brigadas" required>
+                                <button type="button" class="btn btn-outline-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-2" style="padding: 0.7rem; border-radius: 10px; background: var(--surface); color: var(--primary); border: 2px solid var(--primary-container);" onmouseover="this.style.background='var(--primary-container)';" onmouseout="this.style.background='var(--surface)';" onclick="abrirModalEstudiantes('estudiante_id_brigadas', 'texto_est_brigadas')">
+                                    <i data-lucide="user" style="width: 18px; height: 18px;"></i> <span id="texto_est_brigadas" class="text-truncate">-- Seleccionar Estudiante --</span>
+                                </button>
                             </div>
                             <div class="mb-2">
                                 <label class="edu-label">Seleccionar Brigada</label>
@@ -1067,6 +1088,147 @@
                 </div>
             </div>
         </div><!-- END TAB BRIGADAS -->
+
+        <!-- 5. TAB SOLICITUDES -->
+        <div class="tab-pane fade" id="pills-solicitudes" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-4 mb-4">
+                    <div class="form-card">
+                        <h5><i data-lucide="file-question"></i> Solicitar Datos a Dirección</h5>
+                        <form action="{{ url_for('solicitar_datos') }}" method="POST">
+                            <div class="mb-3">
+                                <label class="edu-label">Seleccionar Estudiante</label>
+                                <input type="hidden" name="estudiante_id" id="estudiante_id_solicitudes" required>
+                                <button type="button" class="btn btn-outline-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-2" style="padding: 0.7rem; border-radius: 10px; background: var(--surface); color: var(--primary); border: 2px solid var(--primary-container);" onmouseover="this.style.background='var(--primary-container)';" onmouseout="this.style.background='var(--surface)';" onclick="abrirModalEstudiantes('estudiante_id_solicitudes', 'texto_est_solicitudes')">
+                                    <i data-lucide="user" style="width: 18px; height: 18px;"></i> <span id="texto_est_solicitudes" class="text-truncate">-- Seleccionar Estudiante --</span>
+                                </button>
+                            </div>
+                            <div class="mb-3">
+                                <label class="edu-label">Motivo de la Visita / Solicitud</label>
+                                <textarea name="motivo" class="edu-textarea" rows="4" placeholder="Indique detalladamente por qué necesita acceder a la información de contacto..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn-submit-def" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                                <i data-lucide="send"></i> Enviar Solicitud
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="col-lg-8">
+                    <div class="form-card w-100 h-100">
+                        <h5 class="mb-4"><i data-lucide="list-checks"></i> Solicitudes Pendientes / Aprobadas</h5>
+                        
+                        <div class="d-flex flex-column gap-3">
+                            {% for solicitud in solicitudes %}
+                                {% if solicitud.estado == 'Pendiente' %}
+                                <!-- Tarjeta: Solicitud Pendiente -->
+                                <div class="card border-0 shadow-sm" style="border-left: 4px solid #f59e0b; background: var(--surface-container-lowest);">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                                                <div class="bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem;">{{ solicitud.estudiante.nombre_completo[0] }}</div>
+                                                {{ solicitud.estudiante.nombre_completo }}
+                                            </h6>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge rounded-pill" style="background: rgba(245, 158, 11, 0.1); color: #d97706; padding: 6px 12px; font-weight: 700;">
+                                                    <i data-lucide="clock" style="width: 14px; height: 14px; margin-right: 4px;"></i> Pendiente
+                                                </span>
+                                                <form id="form-eliminar-{{ solicitud.id }}" action="/defensoria/eliminar_solicitud/{{ solicitud.id }}" method="POST" style="margin: 0;">
+                                                    <button type="button" class="btn btn-link text-muted p-0 border-0" title="Eliminar Solicitud" onclick="abrirModalEliminar('{{ solicitud.id }}')">
+                                                        <i data-lucide="trash-2" style="width: 16px; height: 16px; color: #94a3b8; transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <p class="text-muted small mb-3"><strong>Motivo:</strong> {{ solicitud.motivo }}</p>
+                                        
+                                        <div class="p-3 rounded-3" style="background: rgba(148, 163, 184, 0.05); border: 1px dashed var(--border-color);">
+                                            <div class="d-flex align-items-center justify-content-center gap-2 text-muted small fw-bold">
+                                                <i data-lucide="lock" style="width: 16px; height: 16px;"></i> Oculto hasta aprobación de Dirección
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% elif solicitud.estado == 'Aprobada' %}
+                                <!-- Tarjeta: Solicitud Aprobada -->
+                                <div class="card border-0 shadow-sm" style="border-left: 4px solid #10b981; background: var(--surface-container-lowest);">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                                                <div class="bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem;">{{ solicitud.estudiante.nombre_completo[0] }}</div>
+                                                {{ solicitud.estudiante.nombre_completo }}
+                                            </h6>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge rounded-pill" style="background: rgba(16, 185, 129, 0.1); color: #059669; padding: 6px 12px; font-weight: 700;">
+                                                    <i data-lucide="check-circle-2" style="width: 14px; height: 14px; margin-right: 4px;"></i> Acceso Concedido
+                                                </span>
+                                                <form id="form-eliminar-{{ solicitud.id }}" action="/defensoria/eliminar_solicitud/{{ solicitud.id }}" method="POST" style="margin: 0;">
+                                                    <button type="button" class="btn btn-link text-muted p-0 border-0" title="Eliminar Solicitud" onclick="abrirModalEliminar('{{ solicitud.id }}')">
+                                                        <i data-lucide="trash-2" style="width: 16px; height: 16px; color: #94a3b8; transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <p class="text-muted small mb-3"><strong>Motivo:</strong> {{ solicitud.motivo }}</p>
+                                        
+                                        <div class="p-3 rounded-3 mb-3" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2);">
+                                            <h6 class="fw-bold mb-2" style="font-size: 0.85rem; color: #059669;"><i data-lucide="unlock" style="width: 14px; height: 14px;"></i> Datos Revelados</h6>
+                                            <ul class="list-unstyled mb-0 small" style="color: var(--text-main);">
+                                                <li class="mb-1"><strong>Representante:</strong> {% if solicitud.estudiante.representante_info %}{{ solicitud.estudiante.representante_info.nombre_completo }} ({{ solicitud.estudiante.representante_info.parentesco }}){% else %}No registrado{% endif %}</li>
+                                                <li class="mb-1"><strong>Teléfono:</strong> {% if solicitud.estudiante.representante_info %}{{ solicitud.estudiante.representante_info.telefono }}{% else %}N/A{% endif %}</li>
+                                                <li class="mb-0"><strong>Dirección:</strong> {% if solicitud.estudiante.representante_info %}{{ solicitud.estudiante.representante_info.direccion_habitacion }}{% else %}N/A{% endif %}</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <a href="{{ url_for('descargar_ficha_pdf', id=solicitud.id) }}" target="_blank" class="btn w-100 fw-bold d-flex align-items-center justify-content-center gap-2 text-white shadow-sm btn-submit-def text-decoration-none" style="background: linear-gradient(135deg, #059669, #10b981);">
+                                            <i data-lucide="file-down"></i> Descargar Ficha de Visita (PDF)
+                                        </a>
+                                    </div>
+                                </div>
+                                {% elif solicitud.estado == 'Rechazada' %}
+                                <!-- Tarjeta: Solicitud Rechazada -->
+                                <div class="card border-0 shadow-sm" style="border-left: 4px solid #ef4444; background: var(--surface-container-lowest);">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                                                <div class="bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center rounded-circle fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem;">{{ solicitud.estudiante.nombre_completo[0] }}</div>
+                                                {{ solicitud.estudiante.nombre_completo }}
+                                            </h6>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge rounded-pill" style="background: rgba(239, 68, 68, 0.1); color: #b91c1c; padding: 6px 12px; font-weight: 700;">
+                                                    <i data-lucide="x-circle" style="width: 14px; height: 14px; margin-right: 4px;"></i> Denegada
+                                                </span>
+                                                <form id="form-eliminar-{{ solicitud.id }}" action="/defensoria/eliminar_solicitud/{{ solicitud.id }}" method="POST" style="margin: 0;">
+                                                    <button type="button" class="btn btn-link text-muted p-0 border-0" title="Eliminar Solicitud" onclick="abrirModalEliminar('{{ solicitud.id }}')">
+                                                        <i data-lucide="trash-2" style="width: 16px; height: 16px; color: #94a3b8; transition: color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <p class="text-muted small mb-3"><strong>Motivo:</strong> {{ solicitud.motivo }}</p>
+                                        
+                                        <div class="p-3 rounded-3" style="background: rgba(239, 68, 68, 0.05); border: 1px dashed rgba(239, 68, 68, 0.3);">
+                                            <div class="d-flex align-items-center justify-content-center gap-2 small fw-bold" style="color: #b91c1c;">
+                                                <i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i> Solicitud denegada por Dirección. Por favor, revise el motivo e intente nuevamente si es necesario.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                <div class="empty-state d-flex flex-column align-items-center justify-content-center text-center w-100 py-5">
+                                    <i data-lucide="inbox" style="width: 48px; height: 48px; margin-bottom: 15px; opacity: 0.5;"></i>
+                                    <h5 style="font-weight:700;">No hay solicitudes activas</h5>
+                                    <p style="font-size:0.85rem; max-width: 400px; margin: 0 auto;">Cuando solicites acceso a datos confidenciales, podrás hacer seguimiento de su estado aquí.</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div><!-- END TAB SOLICITUDES -->
+
     </div><!-- END TAB CONTENT -->
 </div>
 
@@ -1113,13 +1275,186 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Confirmar Eliminación (Defensoría Solicitudes) -->
+<div class="modal fade" id="modalConfirmarEliminacion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+            <div class="modal-body p-4 text-start">
+                <h5 style="font-weight:800; color:#ef4444; display:flex; align-items:center; gap:6px;">
+                    <i data-lucide="alert-triangle" style="width:20px;height:20px;"></i> Confirmar eliminación
+                </h5>
+                <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
+                    ¿Estás seguro de que deseas eliminar este registro?<br>Esta acción no se puede deshacer.
+                </p>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                <button type="button" class="btn-cancel-modal w-50" onclick="cerrarModalEliminar()">Cancelar</button>
+                <button type="button" class="btn-danger-link w-50 border-0" style="display:flex; justify-content:center; align-items:center;" onclick="ejecutarEliminacion()">Sí, borrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal Ver Acta Detalle -->
+<div class="modal fade modal-edu" id="modalVerActaDetalle" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                    <h5 class="fw-bold d-flex align-items-center gap-2 mb-0" style="color: var(--primary);">
+                        <i data-lucide="file-text" style="width: 20px; height: 20px;"></i> 
+                        <span id="mva-tipo">Tipo de Acta</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="bg-light border rounded p-4 mx-auto shadow-sm" style="min-height: 400px;">
+                    <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-4">
+                        <div>
+                            <p class="edu-label mb-1">Estudiante Asociado</p>
+                            <p class="fw-bold text-dark mb-0" id="mva-estudiante">Nombre</p>
+                        </div>
+                        <div class="text-end">
+                            <p class="edu-label mb-1">Fecha</p>
+                            <p class="fw-bold text-dark mb-0" id="mva-fecha">Fecha</p>
+                        </div>
+                    </div>
+                    
+                    <div class="text-dark" style="font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; font-family: 'Times New Roman', serif;" id="mva-contenido"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Directorio de Estudiantes -->
+<div class="modal fade modal-edu" id="modalDirectorioEstudiantes" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                    <h5 class="fw-bold d-flex align-items-center gap-2 mb-0" style="color: var(--primary);">
+                        <i data-lucide="users" style="width: 24px; height: 24px;"></i> 
+                        <span>Directorio de Estudiantes</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <style>
+                    .student-select-btn:hover {
+                        background-color: rgba(70, 72, 212, 0.1) !important;
+                        transform: translateX(4px);
+                        transition: all 0.2s ease;
+                    }
+                </style>
+
+                <div class="accordion" id="accordionGrados">
+                    {% for grado in grados %}
+                    <div class="accordion-item border-0 mb-3 rounded shadow-sm overflow-hidden">
+                        <h2 class="accordion-header" id="headingGrado{{ grado.id }}">
+                            <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGrado{{ grado.id }}" aria-expanded="false" aria-controls="collapseGrado{{ grado.id }}" style="background: var(--surface-container-high); color: var(--on-surface);">
+                                <i data-lucide="graduation-cap" class="me-2 text-primary" style="width: 20px; height: 20px;"></i> {{ grado.nombre }}
+                            </button>
+                        </h2>
+                        <div id="collapseGrado{{ grado.id }}" class="accordion-collapse collapse" aria-labelledby="headingGrado{{ grado.id }}" data-bs-parent="#accordionGrados">
+                            <div class="accordion-body p-4" style="background-color: #1a1f2b; color: #f8f9fa;">
+                                <div class="row g-4">
+                                    <!-- Varones -->
+                                    <div class="col-md-6 border-end">
+                                        <h6 class="fw-bold text-center mb-3" style="color: #3b82f6;"><i data-lucide="user" class="me-1" style="width:16px;"></i> Varones</h6>
+                                        <div class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+                                            {% set found_varones = namespace(value=false) %}
+                                            {% for est in estudiantes if est.grado_id == grado.id and est.genero == 'Masculino' %}
+                                            {% set found_varones.value = true %}
+                                            <button type="button" class="btn text-start text-truncate w-100 p-2 rounded student-select-btn mb-2 border-secondary" style="background: rgba(255,255,255,0.05); color: #f8f9fa;" onclick="seleccionarEstudiante({{ est.id }}, '{{ est.nombre_completo|e }}')">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="avatar-circle bg-primary bg-opacity-10 text-primary" style="width: 32px; height: 32px; font-size: 0.8rem; flex-shrink: 0;">{{ est.nombre_completo[0] }}</div>
+                                                    <span style="font-size: 0.9rem; font-weight: 500;">{{ est.nombre_completo }}</span>
+                                                </div>
+                                            </button>
+                                            {% endfor %}
+                                            {% if not found_varones.value %}
+                                            <p class="text-muted small text-center fst-italic py-3">No hay varones registrados en este grado.</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hembras -->
+                                    <div class="col-md-6">
+                                        <h6 class="fw-bold text-center mb-3" style="color: #ec4899;"><i data-lucide="user" class="me-1" style="width:16px;"></i> Hembras</h6>
+                                        <div class="d-flex flex-column gap-2" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
+                                            {% set found_hembras = namespace(value=false) %}
+                                            {% for est in estudiantes if est.grado_id == grado.id and est.genero == 'Femenino' %}
+                                            {% set found_hembras.value = true %}
+                                            <button type="button" class="btn text-start text-truncate w-100 p-2 rounded student-select-btn mb-2 border-secondary" style="background: rgba(255,255,255,0.05); color: #f8f9fa;" onclick="seleccionarEstudiante({{ est.id }}, '{{ est.nombre_completo|e }}')">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="avatar-circle bg-danger bg-opacity-10 text-danger" style="width: 32px; height: 32px; font-size: 0.8rem; flex-shrink: 0;">{{ est.nombre_completo[0] }}</div>
+                                                    <span style="font-size: 0.9rem; font-weight: 500;">{{ est.nombre_completo }}</span>
+                                                </div>
+                                            </button>
+                                            {% endfor %}
+                                            {% if not found_hembras.value %}
+                                            <p class="text-muted small text-center fst-italic py-3">No hay hembras registradas en este grado.</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i data-lucide="inbox" class="text-muted mb-3" style="width: 48px; height: 48px; opacity: 0.5;"></i>
+                        <p class="text-muted">No hay grados registrados en el sistema.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
+
+
 <!-- HTML2PDF CDN para generar Actas del lado del cliente -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
+    // Variables globales para la selección de estudiantes
+    let currentEstudianteInputId = null;
+    let currentEstudianteTextId = null;
+
+    function abrirModalEstudiantes(inputId, textId) {
+        currentEstudianteInputId = inputId;
+        currentEstudianteTextId = textId;
+        const myModal = new bootstrap.Modal(document.getElementById('modalDirectorioEstudiantes'));
+        myModal.show();
+        setTimeout(() => { lucide.createIcons(); }, 100);
+    }
+
+    function seleccionarEstudiante(id, nombre) {
+        if (currentEstudianteInputId && currentEstudianteTextId) {
+            document.getElementById(currentEstudianteInputId).value = id;
+            document.getElementById(currentEstudianteTextId).textContent = nombre;
+            
+            // Efecto visual premium en el botón
+            const btn = document.getElementById(currentEstudianteTextId).parentElement;
+            btn.style.background = 'var(--primary)';
+            btn.style.color = '#fff';
+            btn.classList.replace('btn-outline-primary', 'btn-primary');
+        }
+        
+        const modalEl = document.getElementById('modalDirectorioEstudiantes');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) {
+            modal.hide();
+        }
+    }
+
     // Live Preview Logic para las Actas
     document.addEventListener('DOMContentLoaded', () => {
         const inputContenido = document.getElementById('contenidoActaInput');
@@ -1158,20 +1493,17 @@
         }
     });
 
-    // Función para Visualizar Actas desde el historial
-    function verActa(contenido, tipo) {
-        document.getElementById('pills-actas-tab').click(); // Saltar a pestaña de Actas
-        const sTipo = document.getElementById('tipoActaInput');
-        const sCont = document.getElementById('contenidoActaInput');
+    // Funciones para Visualizar Actas en Modal (Historial)
+    function abrirModalVerActa(btn) {
+        document.getElementById('mva-tipo').textContent = btn.getAttribute('data-tipo');
+        document.getElementById('mva-estudiante').textContent = btn.getAttribute('data-estudiante');
+        document.getElementById('mva-fecha').textContent = btn.getAttribute('data-fecha');
+        // whitespace-pre-wrap in css preserves newlines
+        document.getElementById('mva-contenido').textContent = btn.getAttribute('data-contenido');
         
-        sTipo.value = tipo;
-        sCont.value = contenido;
-        
-        sTipo.dispatchEvent(new Event('change'));
-        sCont.dispatchEvent(new Event('input'));
-        
-        // Scroll hacia arriba para ver el Formulario
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const myModal = new bootstrap.Modal(document.getElementById('modalVerActaDetalle'));
+        myModal.show();
+        lucide.createIcons();
     }
 
     // Función de Toast en lugar del Alert
@@ -1237,6 +1569,33 @@
                     alert('Ocurrió un error al guardar el acta en el servidor.');
                 }
             });
+    }
+
+    // Modal de Confirmación para Eliminar Solicitudes
+    let idParaEliminar = null;
+
+    let modalConfirmInstance = null;
+
+    function abrirModalEliminar(id) {
+        idParaEliminar = id;
+        const modalEl = document.getElementById('modalConfirmarEliminacion');
+        if (!modalConfirmInstance) {
+            modalConfirmInstance = new bootstrap.Modal(modalEl);
+        }
+        modalConfirmInstance.show();
+    }
+
+    function cerrarModalEliminar() {
+        idParaEliminar = null;
+        if (modalConfirmInstance) {
+            modalConfirmInstance.hide();
+        }
+    }
+
+    function ejecutarEliminacion() {
+        if (idParaEliminar) {
+            document.getElementById('form-eliminar-' + idParaEliminar).submit();
+        }
     }
 </script>
 {% endblock %}

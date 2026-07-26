@@ -1,0 +1,342 @@
+/* =============================================
+   KOLEGIUM SaaS – Component Styles
+   Premium Clean · Horizon Academy Theme
+============================================= */
+
+/* ====== 1. DARK-MODE CARD SURFACES ====== */
+[data-bs-theme="dark"] .welcome-card,
+[data-bs-theme="dark"] .quick-card,
+[data-bs-theme="dark"] .chart-card,
+[data-bs-theme="dark"] .feed-card,
+[data-bs-theme="dark"] .table-card,
+[data-bs-theme="dark"] .form-card,
+[data-bs-theme="dark"] .consolidado-card,
+[data-bs-theme="dark"] .card-edu,
+[data-bs-theme="dark"] .config-card,
+[data-bs-theme="dark"] .timeline-card,
+[data-bs-theme="dark"] .main-card,
+[data-bs-theme="dark"] .edit-card,
+[data-bs-theme="dark"] .anuncio-card,
+[data-bs-theme="dark"] .empty-state,
+[data-bs-theme="dark"] .reg-detail,
+[data-bs-theme="dark"] .plan-detail,
+[data-bs-theme="dark"] .top-navbar {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border: none !important;
+    border-radius: var(--radius-card) !important;
+    box-shadow: var(--shadow-soft) !important;
+}
+
+/* ====== 2. NEUTRALIZAR BOOTSTRAP UTILITIES EN DARK MODE ====== */
+/* Estas clases de Bootstrap fuerzan colores fijos (#212529, #fff, #f8f9fa)
+   que destruyen la legibilidad en dark mode. Las neutralizamos para que
+   hereden nuestras variables de tema. */
+
+/* text-dark → heredar color del tema */
+[data-bs-theme="dark"] .text-dark {
+    color: var(--text-main) !important;
+}
+
+/* bg-white → usar fondo de tarjeta del tema */
+[data-bs-theme="dark"] .bg-white {
+    background-color: var(--bg-card) !important;
+}
+
+/* bg-light → usar superficie del tema */
+[data-bs-theme="dark"] .bg-light {
+    background-color: var(--surface-container) !important;
+}
+
+/* text-muted → usar color muted del tema */
+[data-bs-theme="dark"] .text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* form-label y form-check-label legibles */
+[data-bs-theme="dark"] .form-label,
+[data-bs-theme="dark"] .form-check-label {
+    color: var(--text-main) !important;
+}
+
+/* Form controls (Bootstrap defaults) */
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select,
+[data-bs-theme="dark"] .input-group-text {
+    background-color: var(--surface-container-high) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-bs-theme="dark"] .form-control::placeholder {
+    color: var(--text-muted) !important;
+    opacity: 0.7;
+}
+
+/* table-light header rows in modals */
+[data-bs-theme="dark"] .table-light,
+[data-bs-theme="dark"] .table-light th {
+    background-color: var(--surface-container) !important;
+    color: var(--text-main) !important;
+}
+
+/* table hover rows */
+[data-bs-theme="dark"] .table-hover > tbody > tr:hover {
+    background-color: var(--surface-container-high) !important;
+    --bs-table-hover-bg: var(--surface-container-high);
+}
+
+/* list-group items inside modals/visor */
+[data-bs-theme="dark"] .list-group-item {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Modal body and content */
+[data-bs-theme="dark"] .modal-content {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+}
+
+[data-bs-theme="dark"] .modal-header,
+[data-bs-theme="dark"] .modal-footer {
+    background-color: var(--surface-container) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* btn-close visibility */
+[data-bs-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* ====== 3. TABLAS Y FORMULARIOS PROPIOS ====== */
+[data-bs-theme="dark"] .edu-table thead th,
+[data-bs-theme="dark"] .edu-input,
+[data-bs-theme="dark"] .edu-select,
+[data-bs-theme="dark"] .edu-textarea {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* ====== 4. GLOBAL TABLE RESPONSIVE ====== */
+.table-responsive,
+[class*="table-responsive"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+    width: 100%;
+}
+
+.table-responsive::-webkit-scrollbar { height: 4px; }
+.table-responsive::-webkit-scrollbar-thumb {
+    background: var(--outline-variant);
+    border-radius: 2px;
+}
+
+.table-responsive>table,
+.table-responsive>.edu-table {
+    min-width: 600px;
+}
+
+/* ====== 5. MOBILE CARD PADDING ====== */
+@media (max-width: 575.98px) {
+    .form-card .card-body-inner,
+    .form-card .card-inner,
+    .config-card .card-inner,
+    .edit-card .card-inner,
+    .controls-card,
+    .consolidado-card,
+    .timeline-card,
+    .quick-card,
+    .chart-card,
+    .feed-card {
+        padding: 14px !important;
+    }
+}
+
+/* ====== 6. DESKTOP INPUT/TABLE SCALING ====== */
+@media (min-width: 992px) {
+    .edu-input,
+    .edu-select,
+    .edu-textarea {
+        font-size: 1.05rem !important;
+        padding: 0.9rem 1.2rem !important;
+    }
+
+    .edu-label {
+        font-size: 0.8rem !important;
+    }
+
+    .edu-table tbody td {
+        font-size: 1rem !important;
+        padding: 18px 24px !important;
+    }
+
+    .edu-table thead th {
+        font-size: 0.85rem !important;
+    }
+
+    .btn-submit-attendance,
+    .btn-save,
+    .btn-create,
+    .btn-submit-def {
+        font-size: 1.1rem !important;
+        padding: 16px !important;
+    }
+}
+
+/* ====== 7. HEADING & TEXT COLOR INHERITANCE ====== */
+[data-bs-theme="dark"] h1,
+[data-bs-theme="dark"] h2,
+[data-bs-theme="dark"] h3,
+[data-bs-theme="dark"] h4,
+[data-bs-theme="dark"] h5,
+[data-bs-theme="dark"] h6 {
+    color: var(--text-main) !important;
+}
+
+[data-bs-theme="dark"] p,
+[data-bs-theme="dark"] span:not(.notif-badge):not(.badge):not(.staff-badge) {
+    color: var(--text-muted) !important;
+}
+
+/* ====== 8. BUTTON THEMING ====== */
+.btn, button {
+    border-radius: var(--radius-btn) !important;
+}
+
+.btn-primary,
+.btn-submit-attendance,
+.btn-save,
+.btn-create,
+.btn-submit-def,
+[class*="btn-primary"] {
+    background-color: var(--primary) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+}
+
+/* ====== 9. GENERIC .card BASELINE ====== */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-card);
+    color: var(--text-main);
+}
+
+.card-header {
+    background: var(--surface-container);
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+[data-bs-theme="dark"] .card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+[data-bs-theme="dark"] .card-header {
+    background: var(--surface-container) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* ====== 10. ANIMATED GRADIENT CARDS (Estadística) ====== */
+
+/* Keyframes – smooth gradient animation */
+@keyframes gradientShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Tarjeta de Ingresos (Verde Esmeralda Premium) */
+.card-ingreso-animada {
+    background: linear-gradient(-45deg, #059669, #10B981, #047857, #34D399) !important;
+    background-size: 300% 300%;
+    animation: gradientShift 6s ease infinite;
+    border: none !important;
+    border-radius: var(--radius-card, 20px) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card-ingreso-animada:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 35px rgba(16, 185, 129, 0.4);
+}
+
+/* Tarjeta de Egresos (Rojo Carmesí Premium) */
+.card-egreso-animada {
+    background: linear-gradient(-45deg, #DC2626, #EF4444, #B91C1C, #F87171) !important;
+    background-size: 300% 300%;
+    animation: gradientShift 6s ease infinite;
+    border: none !important;
+    border-radius: var(--radius-card, 20px) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card-egreso-animada:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 35px rgba(239, 68, 68, 0.4);
+}
+
+/* Legibilidad extrema – todo texto dentro de las tarjetas animadas */
+.card-ingreso-animada *,
+.card-egreso-animada * {
+    color: #FFFFFF !important;
+    text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* ====== 11. GRADIENT CARD GRADO BUTTONS ====== */
+.btn-grado {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-main) !important;
+    transition: all 0.2s ease;
+}
+
+.btn-grado:hover {
+    border-color: var(--primary) !important;
+    box-shadow: 0 4px 16px rgba(67, 24, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+[data-bs-theme="dark"] .btn-grado {
+    background: var(--surface-container) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+
+/* ====== 12. BADGE OVERRIDES ====== */
+[data-bs-theme="dark"] .badge.bg-primary {
+    background-color: var(--primary) !important;
+    color: #FFFFFF !important;
+}
+
+[data-bs-theme="dark"] .badge.bg-success {
+    background-color: #059669 !important;
+    color: #FFFFFF !important;
+}
+
+[data-bs-theme="dark"] .badge.bg-danger {
+    background-color: #DC2626 !important;
+    color: #FFFFFF !important;
+}
+
+/* ====== 13. OUTLINE BUTTON DARK MODE ====== */
+[data-bs-theme="dark"] .btn-outline-secondary {
+    color: var(--text-muted) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-bs-theme="dark"] .btn-outline-secondary:hover {
+    background-color: var(--surface-container-high) !important;
+    color: var(--text-main) !important;
+}
+

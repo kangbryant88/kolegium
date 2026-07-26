@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends"base.html" %}
 
 {% block title %}Tablón de Anuncios - Kolegium{% endblock %}
 {% block header_title %}Tablón de Anuncios{% endblock %}
@@ -27,7 +27,7 @@
     .btn-new-post i { width: 16px; height: 16px; }
 
     .anuncio-card {
-        background: #fff;
+        background: var(--surface);
         border-radius: 16px;
         padding: 24px;
         margin-bottom: 16px;
@@ -54,7 +54,7 @@
         justify-content: space-between;
         align-items: center;
         padding-top: 12px;
-        border-top: 1px solid #f2f4f6;
+        border-top: 1px solid var(--border-color);
     }
 
     .anuncio-meta .author {
@@ -99,7 +99,7 @@
     .btn-icon-del i { width: 14px; height: 14px; }
 
     .empty-state {
-        background: #fff;
+        background: var(--surface);
         border-radius: 16px;
         padding: 3rem;
         text-align: center;
@@ -129,7 +129,7 @@
 
     .btn-cancel-modal {
         flex: 1; padding: 10px; border-radius: 999px;
-        border: 1px solid #eceef0; background: #fff;
+        border: 1px solid var(--surface-container-high); background: var(--surface);
         font-weight: 700; font-size: 0.85rem; cursor: pointer;
         font-family: 'Inter', sans-serif; color: var(--on-surface);
         transition: all 0.2s;
@@ -161,7 +161,7 @@
         padding: 0.75rem 1rem;
         border-radius: 12px;
         border: none;
-        background: #eceef0;
+        background: var(--surface-container-high);
         font-size: 0.875rem;
         font-family: 'Inter', sans-serif;
         color: var(--on-surface);
@@ -170,7 +170,7 @@
     }
 
     .edu-input:focus, .edu-textarea:focus {
-        background: #fff;
+        background: var(--surface);
         box-shadow: 0 0 0 3px rgba(70,72,212,0.12);
     }
 
@@ -238,16 +238,21 @@
 
 {% for anuncio in anuncios %}
     {% if 'admin' in mis_permisos %}
-    <div class="modal fade modal-edu" id="modalBorrarAnuncio{{ anuncio.id }}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content">
-                <div class="modal-body text-center p-4">
-                    <div class="icon-warning"><i data-lucide="alert-triangle"></i></div>
-                    <h5 style="font-weight:800;">¿Estás seguro?</h5>
-                    <p style="color: var(--on-surface-variant); font-size: 0.85rem;">Vas a eliminar este comunicado. Todos dejarán de verlo.</p>
-                    <form action="/eliminar_anuncio/{{ anuncio.id }}" method="POST" class="d-flex gap-2 mt-3">
-                        <button type="button" class="btn-cancel-modal" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn-danger-modal">Sí, borrar</button>
+    <div class="modal fade" id="modalBorrarAnuncio{{ anuncio.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+            <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+                <div class="modal-body p-4 text-start">
+                    <h5 style="font-weight:800; color:#ef4444; display:flex; align-items:center; gap:6px;">
+                        <i data-lucide="alert-triangle" style="width:20px;height:20px;"></i> Confirmar eliminación
+                    </h5>
+                    <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
+                        ¿Estás seguro de que deseas borrar este comunicado?<br>Esta acción no se puede deshacer.
+                    </p>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                    <form action="/eliminar_anuncio/{{ anuncio.id }}" method="POST" class="d-flex gap-2 w-100 m-0">
+                        <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-danger-link w-50 border-0" style="display:flex; justify-content:center; align-items:center;">Sí, borrar</button>
                     </form>
                 </div>
             </div>

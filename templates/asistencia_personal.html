@@ -12,7 +12,7 @@
 
     /* Cards */
     .card-edu {
-        background: #fff;
+        background: var(--surface);
         border-radius: 16px;
         box-shadow: 0 4px 12px rgba(15,23,42,0.03);
         padding: 24px;
@@ -20,7 +20,7 @@
     }
     
     .table-card {
-        background: #fff;
+        background: var(--surface);
         border-radius: 16px;
         box-shadow: 0 4px 12px rgba(15,23,42,0.03);
         overflow: hidden;
@@ -56,7 +56,7 @@
     }
 
     .edu-input:focus {
-        background: #fff;
+        background: var(--surface);
         border-color: var(--primary);
         box-shadow: 0 0 0 3px rgba(70,72,212,0.12);
     }
@@ -101,7 +101,7 @@
         padding: 16px 20px;
         vertical-align: middle;
         font-size: 0.9rem;
-        border-bottom: 1px solid #f2f4f6;
+        border-bottom: 1px solid var(--border-color);
         color: var(--on-surface);
     }
     
@@ -162,7 +162,7 @@
 
     <!-- Formulario -->
     <div class="card-edu">
-        <form action="{{ url_for('asistencia_personal') }}" method="POST">
+        <form action="{{ url_for('academico.asistencia_personal') }}" method="POST">
             <div class="form-grid">
                 <div class="form-group">
                     <label for="fecha">Fecha</label>
@@ -234,21 +234,21 @@
                         <td class="text-center" style="font-weight: 600;">{{ r.asistentes }}</td>
                         <td class="text-center">
                             {% if r.porcentaje == 100 %}
-                                <span class="badge-pct green"><i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> {{ "{:.1f}".format(r.porcentaje) }}%</span>
+                                <span class="badge-pct green"><i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> {{"{:.1f}".format(r.porcentaje) }}%</span>
                             {% elif r.porcentaje >= 75 %}
-                                <span class="badge-pct yellow"><i data-lucide="alert-circle" style="width: 14px; height: 14px;"></i> {{ "{:.1f}".format(r.porcentaje) }}%</span>
+                                <span class="badge-pct yellow"><i data-lucide="alert-circle" style="width: 14px; height: 14px;"></i> {{"{:.1f}".format(r.porcentaje) }}%</span>
                             {% else %}
-                                <span class="badge-pct red"><i data-lucide="x-circle" style="width: 14px; height: 14px;"></i> {{ "{:.1f}".format(r.porcentaje) }}%</span>
+                                <span class="badge-pct red"><i data-lucide="x-circle" style="width: 14px; height: 14px;"></i> {{"{:.1f}".format(r.porcentaje) }}%</span>
                             {% endif %}
                         </td>
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-1">
-                                <a href="{{ url_for('editar_asistencia_personal', id=r.id) }}" class="btn-action-sm" title="Editar">
+                                <a href="{{ url_for('academico.editar_asistencia_personal', id=r.id) }}" class="btn-action-sm" title="Editar">
                                     <i data-lucide="edit-2"></i>
                                 </a>
-                                <a href="{{ url_for('eliminar_asistencia_personal', id=r.id) }}" class="btn-action-sm danger link-eliminar" title="Eliminar">
+                                <button type="button" class="btn-action-sm danger border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#modalEliminarAsistenciaPersonal{{ r.id }}" title="Eliminar">
                                     <i data-lucide="trash-2"></i>
-                                </a>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -264,11 +264,32 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
+            </div>
         </div>
     </div>
-
 </div>
+
+<!-- Modales de Eliminación -->
+{% for r in registros %}
+<div class="modal fade text-start" id="modalEliminarAsistenciaPersonal{{ r.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+            <div class="modal-body p-4 text-start">
+                <h5 style="font-weight:800; color:#ef4444; display:flex; align-items:center; gap:6px;">
+                    <i data-lucide="alert-triangle" style="width:20px;height:20px;"></i> Confirmar eliminación
+                </h5>
+                <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
+                    ¿Estás seguro de que deseas eliminar este registro?<br>Esta acción no se puede deshacer.
+                </p>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
+                <a href="{{ url_for('academico.eliminar_asistencia_personal', id=r.id) }}" class="btn-danger-link w-50 border-0 text-decoration-none" style="display:flex; justify-content:center; align-items:center;">Sí, borrar</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -285,26 +306,7 @@
             });
         }
         
-        document.querySelectorAll('.link-eliminar').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetUrl = this.getAttribute('href');
-                Swal.fire({
-                    title: '¿Estás seguro de eliminar este registro?',
-                    text: 'No podrás revertir esto.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#ef4444',
-                    cancelButtonColor: '#9a9a9a',
-                    confirmButtonText: 'Confirmar',
-                    cancelButtonText: 'Cancelar'
-                }).then((result) => {
-                    if(result.isConfirmed) {
-                        window.location.href = targetUrl;
-                    }
-                });
-            });
-        });
+
     });
 </script>
 {% endblock %}
