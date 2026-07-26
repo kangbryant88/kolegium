@@ -1357,7 +1357,7 @@
                             </button>
                         </h2>
                         <div id="collapseGrado{{ grado.id }}" class="accordion-collapse collapse" aria-labelledby="headingGrado{{ grado.id }}" data-bs-parent="#accordionGrados">
-                            <div class="accordion-body p-4" style="background-color: #1a1f2b; color: #f8f9fa;">
+                            <div class="accordion-body p-4" style="background: var(--surface);">
                                 <div class="row g-4">
                                     <!-- Varones -->
                                     <div class="col-md-6 border-end">
@@ -1366,7 +1366,7 @@
                                             {% set found_varones = namespace(value=false) %}
                                             {% for est in estudiantes if est.grado_id == grado.id and est.genero == 'Masculino' %}
                                             {% set found_varones.value = true %}
-                                            <button type="button" class="btn text-start text-truncate w-100 p-2 rounded student-select-btn mb-2 border-secondary" style="background: rgba(255,255,255,0.05); color: #f8f9fa;" onclick="seleccionarEstudiante({{ est.id }}, '{{ est.nombre_completo|e }}')">
+                                            <button type="button" class="btn text-start text-truncate w-100 p-2 rounded student-select-btn mb-2 border-secondary text-body" style="background: var(--surface-container-high);" onclick="seleccionarEstudiante({{ est.id }}, '{{ est.nombre_completo|e }}')">
                                                 <div class="d-flex align-items-center gap-2">
                                                     <div class="avatar-circle bg-primary bg-opacity-10 text-primary" style="width: 32px; height: 32px; font-size: 0.8rem; flex-shrink: 0;">{{ est.nombre_completo[0] }}</div>
                                                     <span style="font-size: 0.9rem; font-weight: 500;">{{ est.nombre_completo }}</span>
@@ -1386,7 +1386,7 @@
                                             {% set found_hembras = namespace(value=false) %}
                                             {% for est in estudiantes if est.grado_id == grado.id and est.genero == 'Femenino' %}
                                             {% set found_hembras.value = true %}
-                                            <button type="button" class="btn text-start text-truncate w-100 p-2 rounded student-select-btn mb-2 border-secondary" style="background: rgba(255,255,255,0.05); color: #f8f9fa;" onclick="seleccionarEstudiante({{ est.id }}, '{{ est.nombre_completo|e }}')">
+                                            <button type="button" class="btn text-start text-truncate w-100 p-2 rounded student-select-btn mb-2 border-secondary text-body" style="background: var(--surface-container-high);" onclick="seleccionarEstudiante({{ est.id }}, '{{ est.nombre_completo|e }}')">
                                                 <div class="d-flex align-items-center gap-2">
                                                     <div class="avatar-circle bg-danger bg-opacity-10 text-danger" style="width: 32px; height: 32px; font-size: 0.8rem; flex-shrink: 0;">{{ est.nombre_completo[0] }}</div>
                                                     <span style="font-size: 0.9rem; font-weight: 500;">{{ est.nombre_completo }}</span>
