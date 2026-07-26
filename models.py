@@ -143,6 +143,7 @@ class Estudiante(db.Model):
     fecha_registro = db.Column(db.DateTime, default=datetime.now)
     # Relaciones
     grado_id = db.Column(db.Integer, db.ForeignKey('grado.id'))
+    grado = db.relationship('Grado', backref='estudiantes')
     representante_id = db.Column(db.Integer, db.ForeignKey('representante.id'))
 
 class EnlaceTemporal(db.Model):
