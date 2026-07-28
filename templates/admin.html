@@ -292,6 +292,9 @@
             {% else %}
             <div class="d-flex justify-content-end align-items-center gap-2">
                 {% if usuario.id != session_uid %}
+                <button type="button" class="btn-icon-round" style="background: rgba(99,102,241,0.1); color: #8b5cf6;" data-bs-toggle="modal" data-bs-target="#modalResetPw{{ usuario.id }}" title="Resetear contraseña">
+                    <i data-lucide="key-round"></i>
+                </button>
                 <button type="button" class="btn-icon-round danger" data-bs-toggle="modal" data-bs-target="#modalEliminarUsuario{{ usuario.id }}" title="Dar de baja">
                     <i data-lucide="trash-2"></i>
                 </button>
@@ -303,6 +306,32 @@
             </div>
 
             {% if usuario.id != session_uid %}
+            <!-- Modal Resetear Contraseña -->
+            <div class="modal fade" id="modalResetPw{{ usuario.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+                    <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+                        <div class="modal-body p-4 text-start">
+                            <h5 style="font-weight:800; color:#8b5cf6; display:flex; align-items:center; gap:6px;">
+                                <i data-lucide="key-round" style="width:20px;height:20px;"></i> Resetear contraseña
+                            </h5>
+                            <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
+                                Se restablecerá la contraseña de <strong>"{{ usuario.nombre_completo }}"</strong> a la clave temporal <code style="background:rgba(99,102,241,0.15); padding:2px 8px; border-radius:4px; color:#a78bfa;">Kolegium2025</code>
+                            </p>
+                            <p style="color: #f59e0b; font-size:0.78rem; margin-top:8px;">
+                                ⚠️ Notifica al usuario para que cambie su contraseña después.
+                            </p>
+                        </div>
+                        <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                            <form action="{{ url_for('admin.resetear_password', id=usuario.id) }}" method="POST" class="d-flex gap-2 w-100 m-0">
+                                <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn-auth w-50" style="display:flex; justify-content:center; align-items:center;">Confirmar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Eliminar Usuario -->
             <div class="modal fade" id="modalEliminarUsuario{{ usuario.id }}" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
                     <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
@@ -315,7 +344,7 @@
                             </p>
                         </div>
                         <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
-                            <form action="/eliminar_usuario/{{ usuario.id }}" method="POST" class="d-flex gap-2 w-100 m-0">
+                            <form action="{{ url_for('admin.eliminar_usuario', id=usuario.id) }}" method="POST" class="d-flex gap-2 w-100 m-0">
                                 <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
                                 <button type="submit" class="btn-danger-link w-50 border-0" style="display:flex; justify-content:center; align-items:center;">Sí, eliminar</button>
                             </form>

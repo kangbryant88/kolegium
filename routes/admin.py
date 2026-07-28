@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from flask_mail import Message
+from werkzeug.security import generate_password_hash
 from models import db, Usuario, Rol
 
 # Importamos 'mail' desde extensions (patrón Factory)
@@ -131,4 +132,25 @@ def eliminar_usuario(id):
             return redirect(url_for('admin.admin_usuarios'))
         db.session.delete(usuario)
         db.session.commit()
+        flash('Usuario eliminado correctamente.', 'success')
+    return redirect(url_for('admin.admin_usuarios'))
+
+@admin_bp.route('/resetear_password/<int:id>', methods=['POST'])
+def resetear_password(id):
+    if 'admin' not in session.get('permisos', ''):
+        return '🚫 No autorizado.', 403
+    
+    usuario = Usuario.query.get_or_404(id)
+    
+    # Protección: no resetear al creador del sistema
+    if usuario.id == 1:
+        flash("No puedes resetear la contraseña del creador del sistema.", "error")
+        return redirect(url_for('admin.admin_usuarios'))
+    
+    # Establecer contraseña temporal
+    clave_temporal = 'Kolegium2025'
+    usuario.password = generate_password_hash(clave_temporal, method='pbkdf2:sha256')
+    db.session.commit()
+    
+    flash(f'Contraseña de {usuario.nombre_completo} restablecida a la clave temporal.', 'success')
     return redirect(url_for('admin.admin_usuarios'))

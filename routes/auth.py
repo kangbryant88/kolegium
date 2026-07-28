@@ -1,6 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, Usuario, Rol
+from flask_mail import Message
+from models import db, Usuario, Rol, TokenRecuperacion
+from extensions import mail
+from datetime import datetime, timedelta
+import secrets
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -47,3 +51,111 @@ def logout():
 @auth_bp.route('/en_espera')
 def en_espera():
     return render_template('espera.html')
+
+# ==========================================
+# --- RECUPERACIÓN DE CONTRASEÑA ---
+# ==========================================
+
+@auth_bp.route('/recuperar', methods=['GET', 'POST'])
+def recuperar():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        usuario = Usuario.query.filter_by(email=email).first()
+        
+        if usuario:
+            # Invalidar tokens anteriores no usados de este usuario
+            tokens_anteriores = TokenRecuperacion.query.filter_by(
+                usuario_id=usuario.id, usado=False
+            ).all()
+            for t in tokens_anteriores:
+                t.usado = True
+            
+            # Generar nuevo token seguro
+            token = secrets.token_urlsafe(32)
+            nuevo_token = TokenRecuperacion(
+                token=token,
+                usuario_id=usuario.id
+            )
+            db.session.add(nuevo_token)
+            db.session.commit()
+            
+            # Construir enlace de recuperación
+            enlace = request.host_url.rstrip('/') + url_for('auth.restablecer', token=token)
+            
+            # Enviar correo
+            try:
+                msg = Message(
+                    "Kolegium - Recuperación de Contraseña",
+                    sender="eepdanieloleary9@gmail.com",
+                    recipients=[usuario.email]
+                )
+                msg.html = f"""
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); padding: 30px; text-align: center;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">🔐 Recuperación de Contraseña</h1>
+                    </div>
+                    <div style="padding: 40px 30px; color: #333333; background-color: #ffffff;">
+                        <p style="font-size: 16px; line-height: 1.6;">Hola <strong>{usuario.nombre_completo}</strong>,</p>
+                        <p style="font-size: 16px; line-height: 1.6;">Recibimos una solicitud para restablecer tu contraseña en <strong>Kolegium</strong>.</p>
+                        <p style="font-size: 16px; line-height: 1.6;">Haz clic en el siguiente botón para crear una nueva contraseña:</p>
+                        <div style="text-align: center; margin: 35px 0;">
+                            <a href="{enlace}" style="background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Restablecer Contraseña</a>
+                        </div>
+                        <div style="background-color: #fef3c7; padding: 12px 16px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                            <p style="margin: 0; font-size: 14px; color: #92400e;">⏰ Este enlace expira en <strong>30 minutos</strong>. Si no solicitaste este cambio, ignora este correo.</p>
+                        </div>
+                        <p style="font-size: 13px; color: #9ca3af; margin-top: 20px;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br><a href="{enlace}" style="color: #6366f1; word-break: break-all;">{enlace}</a></p>
+                    </div>
+                    <div style="background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #6b7280; border-top: 1px solid #e0e0e0;">
+                        <p style="margin: 0;">Mensaje automático de Kolegium. No responder a este correo.</p>
+                    </div>
+                </div>
+                """
+                mail.send(msg)
+                print(f"✔️ CORREO DE RECUPERACIÓN ENVIADO A: {usuario.email}")
+            except Exception as e:
+                print(f"❌ ERROR ENVIANDO CORREO DE RECUPERACIÓN: {e}")
+        
+        # Siempre mostrar el mismo mensaje (seguridad: no revelar si el email existe)
+        flash('Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.', 'success')
+        return render_template('recuperar.html', enviado=True)
+    
+    return render_template('recuperar.html')
+
+@auth_bp.route('/restablecer/<token>', methods=['GET', 'POST'])
+def restablecer(token):
+    # Buscar token válido
+    token_obj = TokenRecuperacion.query.filter_by(token=token, usado=False).first()
+    
+    if not token_obj:
+        flash('El enlace de recuperación no es válido o ya fue utilizado.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    # Verificar que no haya expirado (30 minutos)
+    tiempo_limite = token_obj.fecha_creacion + timedelta(minutes=30)
+    if datetime.now() > tiempo_limite:
+        token_obj.usado = True
+        db.session.commit()
+        flash('El enlace de recuperación ha expirado. Solicita uno nuevo.', 'error')
+        return redirect(url_for('auth.recuperar'))
+    
+    if request.method == 'POST':
+        nueva_password = request.form.get('password', '')
+        confirmar_password = request.form.get('confirmar_password', '')
+        
+        if len(nueva_password) < 6:
+            return render_template('restablecer.html', token=token, error='La contraseña debe tener al menos 6 caracteres.')
+        
+        if nueva_password != confirmar_password:
+            return render_template('restablecer.html', token=token, error='Las contraseñas no coinciden.')
+        
+        # Actualizar contraseña
+        usuario = Usuario.query.get(token_obj.usuario_id)
+        usuario.password = generate_password_hash(nueva_password, method='pbkdf2:sha256')
+        token_obj.usado = True
+        db.session.commit()
+        
+        flash('¡Contraseña actualizada exitosamente! Ya puedes iniciar sesión.', 'success')
+        return redirect(url_for('auth.login'))
+    
+    return render_template('restablecer.html', token=token)

@@ -234,3 +234,11 @@ class SolicitudDefensoria(db.Model):
     
     estudiante = db.relationship('Estudiante', backref='solicitudes_visita')
     solicitante = db.relationship('Usuario', backref='solicitudes_defensoria_realizadas')
+
+class TokenRecuperacion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(100), unique=True, nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.now)
+    usado = db.Column(db.Boolean, default=False)
+    usuario = db.relationship('Usuario', backref='tokens_recuperacion')
