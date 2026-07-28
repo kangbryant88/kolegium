@@ -497,7 +497,7 @@ def mi_aula():
             
     total_varones = sum(1 for e in estudiantes if e.genero == 'Masculino')
     total_hembras = sum(1 for e in estudiantes if e.genero == 'Femenino')
-    docente_titular = grado_seleccionado.docente_info.nombre_completo if (grado_seleccionado and grado_seleccionado.docente_info) else "Docente no asignado"
+    docente_titular = ", ".join([d.nombre_completo for d in grado_seleccionado.docentes]) if (grado_seleccionado and grado_seleccionado.docentes) else "Docente no asignado"
 
     estado_solicitudes = {}
     if estudiantes:
@@ -573,7 +573,7 @@ def descargar_inscripcion_inicial(grado_id):
     grado = Grado.query.get_or_404(grado_id)
     estudiantes = Estudiante.query.filter_by(grado_id=grado.id).order_by(Estudiante.nombre_completo.asc()).all()
     
-    docente_nombre = grado.docente_info.nombre_completo if grado.docente_info else "No asignado"
+    docente_nombre = ", ".join([d.nombre_completo for d in grado.docentes]) if grado.docentes else "No asignado"
     
     pdf = FPDF(orientation='L', unit='mm', format='Legal')
     pdf.add_page()
