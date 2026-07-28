@@ -206,7 +206,7 @@
         <p class="subtitle">Gestiona los permisos o da de baja a los profesores del plantel.</p>
     </div>
 
-{% set ns = namespace(g=0, d=0, e=0, def=0, p=0) %}
+{% set ns = namespace(g=0, d=0, e=0, def=0, p=0, o=0) %}
 {% for usuario in usuarios %}
     {% set area = (usuario.area_trabajo or '')|string|lower %}
     {% if not usuario.rol_id or not usuario.area_trabajo %}
@@ -219,6 +219,8 @@
         {% set ns.e = ns.e + 1 %}
     {% elif 'defensor' in area %}
         {% set ns.def = ns.def + 1 %}
+    {% elif 'obrero' in area or 'vigilancia' in area or 'cocina' in area %}
+        {% set ns.o = ns.o + 1 %}
     {% else %}
         {% set ns.p = ns.p + 1 %}
     {% endif %}
@@ -236,6 +238,9 @@
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-defensoria" type="button" role="tab">Defensoría <span class="badge ms-1" style="background: rgba(255,255,255,0.2);">{{ ns.def }}</span></button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-operativos" type="button" role="tab">Personal Operativo <span class="badge ms-1" style="background: rgba(255,255,255,0.2);">{{ ns.o }}</span></button>
       </li>
       {% if ns.p > 0 %}
       <li class="nav-item" role="presentation">
@@ -456,7 +461,31 @@
             </div>
         </div>
 
-        <!-- Tab 5: PENDIENTES -->
+        <!-- Tab 5: OPERATIVOS -->
+        <div class="tab-pane fade" id="tab-operativos" role="tabpanel" tabindex="0">
+            <div class="table-card">
+                <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="edu-table">
+                        <thead>
+                            <tr><th>ID</th><th>Nombre Completo</th><th>Usuario (Login)</th><th>Rol Actual</th><th style="text-align:right;">Acciones</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios %}
+                                {% set area = (usuario.area_trabajo or '')|string|lower %}
+                                {% if usuario.rol_id and usuario.area_trabajo %}
+                                    {% if 'obrero' in area or 'vigilancia' in area or 'cocina' in area %}
+                                        {{ render_user_row(usuario, roles, session['usuario_id']) }}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if ns.o == 0 %}<tr><td colspan="5" class="text-center py-5 text-muted"><i data-lucide="users" style="width:32px;height:32px;opacity:0.3;margin-bottom:8px;"></i><br>No hay personal operativo registrado.</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 6: PENDIENTES -->
         {% if ns.p > 0 %}
         <div class="tab-pane fade" id="tab-pendientes" role="tabpanel" tabindex="0">
             <div class="table-card">
@@ -468,7 +497,7 @@
                         <tbody>
                             {% for usuario in usuarios %}
                                 {% set area = (usuario.area_trabajo or '')|string|lower %}
-                                {% if not usuario.rol_id or not usuario.area_trabajo or not ('directivo' in area or 'supremo' in area or ('docente' in area and 'especialista' not in area) or 'especialista' in area or 'defensor' in area) %}
+                                {% if not usuario.rol_id or not usuario.area_trabajo or not ('directivo' in area or 'supremo' in area or ('docente' in area and 'especialista' not in area) or 'especialista' in area or 'defensor' in area or 'obrero' in area or 'vigilancia' in area or 'cocina' in area) %}
                                     {{ render_user_row(usuario, roles, session['usuario_id']) }}
                                 {% endif %}
                             {% endfor %}
