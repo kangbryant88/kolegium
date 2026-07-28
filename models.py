@@ -60,13 +60,18 @@ class PlanificacionDefensoria(db.Model):
     notas_seguimiento = db.Column(db.Text, nullable=True) 
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
 
+grado_docente = db.Table('grado_docente',
+    db.Column('grado_id', db.Integer, db.ForeignKey('grado.id'), primary_key=True),
+    db.Column('usuario_id', db.Integer, db.ForeignKey('usuario.id'), primary_key=True)
+)
+
 class Grado(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(50), nullable=False)
     total_varones = db.Column(db.Integer, default=0)
     total_hembras = db.Column(db.Integer, default=0)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-    docente_info = db.relationship('Usuario', backref='grados_asignados', lazy=True)
+    docentes = db.relationship('Usuario', secondary=grado_docente, lazy='subquery',
+        backref=db.backref('grados_asignados', lazy=True))
 
 class Tema(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -82,7 +82,7 @@ def inyectar_datos_globales():
     )
 
 def obtener_estudiantes_por_docente(usuario_id):
-    grado = Grado.query.filter_by(usuario_id=usuario_id).first()
+    grado = Grado.query.filter(Grado.docentes.any(id=usuario_id)).first()
     if grado:
         return Estudiante.query.filter_by(grado_id=grado.id).order_by(Estudiante.nombre_completo.asc()).all()
     return []
@@ -389,12 +389,15 @@ def configuracion():
     if not session.get('logeado'): return redirect(url_for('auth.login'))
     if request.method == 'POST':
         if 'grado_num' in request.form and 'seccion_letra' in request.form:
-            docente_id = request.form.get('docente_id')
+            docente_ids = request.form.getlist('docente_ids[]')
             nombre_completo = f"{request.form.get('grado_num')} {request.form.get('seccion_letra')}"
-            db.session.add(Grado(nombre=nombre_completo, 
+            nuevo_grado = Grado(nombre=nombre_completo, 
                                  total_varones=int(request.form.get('m_varones') or 0),
-                                 total_hembras=int(request.form.get('m_hembras') or 0), 
-                                 usuario_id=docente_id))
+                                 total_hembras=int(request.form.get('m_hembras') or 0))
+            if docente_ids:
+                docentes_asignados = Usuario.query.filter(Usuario.id.in_(docente_ids)).all()
+                nuevo_grado.docentes.extend(docentes_asignados)
+            db.session.add(nuevo_grado)
         if 'nuevo_tema' in request.form:
             db.session.add(Tema(nombre=request.form['nuevo_tema'], usuario_id=session['usuario_id']))
         db.session.commit(); return redirect(url_for('configuracion'))
@@ -408,8 +411,11 @@ def editar_grado(id):
     if 'grado_num' in request.form and 'seccion_letra' in request.form:
         g.nombre = f"{request.form.get('grado_num')} {request.form.get('seccion_letra')}"
     g.total_varones, g.total_hembras = int(request.form.get('m_varones', 0)), int(request.form.get('m_hembras', 0))
-    if request.form.get('docente_id'):
-        g.usuario_id = int(request.form.get('docente_id'))
+    docente_ids = request.form.getlist('docente_ids[]')
+    if docente_ids:
+        g.docentes = Usuario.query.filter(Usuario.id.in_(docente_ids)).all()
+    else:
+        g.docentes = []
     db.session.commit(); return redirect(url_for('configuracion'))
 
 @app.route('/borrar_grado/<int:id>')

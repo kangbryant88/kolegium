@@ -445,7 +445,7 @@ def mi_aula():
     if rol == 'Docente de Aula':
         if not grado_id:
             usuario_id = session.get('usuario_id')
-            salon = Grado.query.filter_by(usuario_id=usuario_id).first()
+            salon = Grado.query.filter(Grado.docentes.any(id=usuario_id)).first()
             if salon:
                 return redirect(url_for('academico.mi_aula', grado_id=salon.id))
             else:
@@ -453,7 +453,7 @@ def mi_aula():
                 return redirect(url_for('index'))
         else:
             grado_seleccionado = Grado.query.get(grado_id)
-            if grado_seleccionado and grado_seleccionado.usuario_id == session.get('usuario_id'):
+            if grado_seleccionado and session.get('usuario_id') in [d.id for d in grado_seleccionado.docentes]:
                 estudiantes = Estudiante.query.filter_by(grado_id=grado_seleccionado.id).order_by(Estudiante.nombre_completo.asc()).all()
             else:
                 flash("No tienes acceso a este salón.", "danger")
