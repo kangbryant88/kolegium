@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Message
 from models import db, Usuario, Rol, TokenRecuperacion
@@ -63,30 +63,30 @@ def recuperar():
         usuario = Usuario.query.filter_by(email=email).first()
         
         if usuario:
-            # Invalidar tokens anteriores no usados de este usuario
-            tokens_anteriores = TokenRecuperacion.query.filter_by(
-                usuario_id=usuario.id, usado=False
-            ).all()
-            for t in tokens_anteriores:
-                t.usado = True
-            
-            # Generar nuevo token seguro
-            token = secrets.token_urlsafe(32)
-            nuevo_token = TokenRecuperacion(
-                token=token,
-                usuario_id=usuario.id
-            )
-            db.session.add(nuevo_token)
-            db.session.commit()
-            
-            # Construir enlace de recuperación
-            enlace = request.host_url.rstrip('/') + url_for('auth.restablecer', token=token)
-            
-            # Enviar correo
             try:
+                # Invalidar tokens anteriores no usados de este usuario
+                tokens_anteriores = TokenRecuperacion.query.filter_by(
+                    usuario_id=usuario.id, usado=False
+                ).all()
+                for t in tokens_anteriores:
+                    t.usado = True
+                
+                # Generar nuevo token seguro
+                token = secrets.token_urlsafe(32)
+                nuevo_token = TokenRecuperacion(
+                    token=token,
+                    usuario_id=usuario.id
+                )
+                db.session.add(nuevo_token)
+                db.session.commit()
+                
+                # Construir enlace de recuperación
+                enlace = request.host_url.rstrip('/') + url_for('auth.restablecer', token=token)
+                
+                # Enviar correo
                 msg = Message(
                     "Kolegium - Recuperación de Contraseña",
-                    sender="eepdanieloleary9@gmail.com",
+                    sender=current_app.config.get('MAIL_USERNAME', 'eepdanieloleary9@gmail.com'),
                     recipients=[usuario.email]
                 )
                 msg.html = f"""
@@ -114,7 +114,10 @@ def recuperar():
                 mail.send(msg)
                 print(f"✔️ CORREO DE RECUPERACIÓN ENVIADO A: {usuario.email}")
             except Exception as e:
-                print(f"❌ ERROR ENVIANDO CORREO DE RECUPERACIÓN: {e}")
+                db.session.rollback()
+                print(f"❌ ERROR EN RECUPERACIÓN DE CONTRASEÑA: {e}")
+                import traceback
+                traceback.print_exc()
         
         # Siempre mostrar el mismo mensaje (seguridad: no revelar si el email existe)
         flash('Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.', 'success')
