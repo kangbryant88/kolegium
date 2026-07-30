@@ -113,16 +113,17 @@ def recuperar():
                 """
                 mail.send(msg)
                 print(f"✔️ CORREO DE RECUPERACIÓN ENVIADO A: {usuario.email}")
+                flash('Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.', 'success')
+                return render_template('recuperar.html', enviado=True)
             except Exception as e:
                 db.session.rollback()
                 print(f"❌ ERROR EN RECUPERACIÓN DE CONTRASEÑA: {e}")
+                print("💡 DIAGNÓSTICO: Verifica que las variables de entorno MAIL_USER y MAIL_PASS estén configuradas en tu hosting y sean correctas.")
                 import traceback
                 traceback.print_exc()
+                flash('Ocurrió un error en el servidor al intentar enviar el correo. Verifica la configuración en la nube.', 'error')
+                return render_template('recuperar.html')
         
-        # Siempre mostrar el mismo mensaje (seguridad: no revelar si el email existe)
-        flash('Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.', 'success')
-        return render_template('recuperar.html', enviado=True)
-    
     return render_template('recuperar.html')
 
 @auth_bp.route('/restablecer/<token>', methods=['GET', 'POST'])
@@ -162,3 +163,21 @@ def restablecer(token):
         return redirect(url_for('auth.login'))
     
     return render_template('restablecer.html', token=token)
+
+@auth_bp.route('/test-email')
+def test_email_route():
+    try:
+        from extensions import mail
+        from flask_mail import Message
+        msg = Message(
+            "Prueba de configuración de correo",
+            sender=current_app.config.get('MAIL_USERNAME', 'eepdanieloleary9@gmail.com'),
+            recipients=[current_app.config.get('MAIL_USERNAME', 'eepdanieloleary9@gmail.com')]
+        )
+        msg.body = "Si recibes esto, el correo está funcionando correctamente en la nube."
+        mail.send(msg)
+        return "✔️ El correo de prueba se envió correctamente. Revisa la bandeja de entrada del remitente.", 200
+    except Exception as e:
+        import traceback
+        error_info = traceback.format_exc()
+        return f"❌ Error enviando correo: {str(e)}<br><br><b>Detalles para depurar:</b><br><pre>{error_info}</pre>", 500
