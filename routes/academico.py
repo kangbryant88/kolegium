@@ -467,7 +467,7 @@ def mi_aula():
 
     for est in estudiantes:
         total_dias = AsistenciaEstudiante.query.filter_by(estudiante_id=est.id).count() or 0
-        asistencias = AsistenciaEstudiante.query.filter_by(estudiante_id=est.id, asistio=True).count() or 0
+        asistencias = AsistenciaEstudiante.query.filter_by(estudiante_id=est.id, estatus='Presente').count() or 0
         porcentaje = (asistencias / total_dias * 100) if total_dias > 0 else 0.0
         asistencia_porcentaje[est.id] = round(porcentaje, 1)
         
@@ -492,7 +492,7 @@ def mi_aula():
         
         if asist_records:
             total_dias_salon = len(asist_records)
-            asistencias_positivas = sum(1 for a in asist_records if a.asistio)
+            asistencias_positivas = sum(1 for a in asist_records if a.estatus == 'Presente')
             asistencia_promedio_salon = round((asistencias_positivas / total_dias_salon) * 100, 1) if total_dias_salon > 0 else 0.0
             
     total_varones = sum(1 for e in estudiantes if e.genero == 'Masculino')
@@ -532,9 +532,10 @@ def guardar_asistencia_aula():
         vino = request.form.get(f'asistio_{est.id}') == 'on'
         registro = AsistenciaEstudiante.query.filter_by(estudiante_id=est.id, fecha=fecha_hoy).first()
         if registro:
-            registro.asistio = vino
+            registro.estatus = 'Presente' if vino else 'Ausente'
+            registro.grado_id = grado_id
         else:
-            nuevo_registro = AsistenciaEstudiante(fecha=fecha_hoy, asistio=vino, estudiante_id=est.id)
+            nuevo_registro = AsistenciaEstudiante(fecha=fecha_hoy, estatus='Presente' if vino else 'Ausente', estudiante_id=est.id, grado_id=grado_id)
             db.session.add(nuevo_registro)
             
     db.session.commit()
