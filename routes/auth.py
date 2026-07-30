@@ -171,23 +171,50 @@ def restablecer(token):
 
 @auth_bp.route('/test-email')
 def test_email_route():
+    # Diagnóstico: mostrar qué valores tiene Flask-Mail configurados
+    diag = "<h2>🔍 Diagnóstico de Correo</h2>"
+    diag += "<table border='1' cellpadding='8' style='border-collapse:collapse;'>"
+    
+    mail_server = current_app.config.get('MAIL_SERVER')
+    mail_port = current_app.config.get('MAIL_PORT')
+    mail_tls = current_app.config.get('MAIL_USE_TLS')
+    mail_user = current_app.config.get('MAIL_USERNAME')
+    mail_pass = current_app.config.get('MAIL_PASSWORD')
+    mail_sender = current_app.config.get('MAIL_DEFAULT_SENDER')
+    
+    # Mostrar valores (ocultar contraseña parcialmente)
+    pass_display = '***' + mail_pass[-4:] if mail_pass and len(mail_pass) > 4 else ('(vacío)' if not mail_pass else '***')
+    
+    diag += f"<tr><td>MAIL_SERVER</td><td>{mail_server or '(vacío)'}</td></tr>"
+    diag += f"<tr><td>MAIL_PORT</td><td>{mail_port}</td></tr>"
+    diag += f"<tr><td>MAIL_USE_TLS</td><td>{mail_tls}</td></tr>"
+    diag += f"<tr><td>MAIL_USERNAME</td><td>{mail_user or '(vacío)'}</td></tr>"
+    diag += f"<tr><td>MAIL_PASSWORD</td><td>{pass_display}</td></tr>"
+    diag += f"<tr><td>MAIL_DEFAULT_SENDER</td><td>{mail_sender or '(vacío)'}</td></tr>"
+    diag += "</table><br>"
+    
+    # Verificar si .env fue cargado
+    import os
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+    env_exists = os.path.exists(env_path)
+    diag += f"<p>📁 Archivo .env en: {env_path} — {'✅ EXISTE' if env_exists else '❌ NO EXISTE'}</p>"
+    
+    # Intentar enviar
     try:
         from extensions import mail
         from flask_mail import Message
-        
-        remitente = current_app.config.get('MAIL_USERNAME')
-        if not remitente:
-            remitente = 'eepdanieloleary9@gmail.com'
-            
         msg = Message(
             "Prueba de configuración de correo",
-            sender=remitente,
-            recipients=[remitente]
+            sender=mail_sender or mail_user or 'eepdanieloleary9@gmail.com',
+            recipients=[mail_user or 'eepdanieloleary9@gmail.com']
         )
         msg.body = "Si recibes esto, el correo está funcionando correctamente en la nube."
         mail.send(msg)
-        return "✔️ El correo de prueba se envió correctamente. Revisa la bandeja de entrada del remitente.", 200
+        diag += "<h3 style='color:green;'>✔️ ¡Correo enviado exitosamente!</h3>"
+        return diag, 200
     except Exception as e:
         import traceback
         error_info = traceback.format_exc()
-        return f"❌ Error enviando correo: {str(e)}<br><br><b>Detalles para depurar:</b><br><pre>{error_info}</pre>", 500
+        diag += f"<h3 style='color:red;'>❌ Error enviando correo:</h3>"
+        diag += f"<pre>{error_info}</pre>"
+        return diag, 500
