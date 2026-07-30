@@ -1,10 +1,11 @@
 import os
 from dotenv import load_dotenv
 
-# Cargar variables de entorno desde .env antes de cualquier configuración
-load_dotenv()
-
 basedir = os.path.abspath(os.path.dirname(__file__))
+
+# Cargar variables de entorno desde .env con ruta absoluta
+env_path = os.path.join(basedir, '.env')
+load_dotenv(env_path)
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-fallback-key-cambiar-en-produccion')
