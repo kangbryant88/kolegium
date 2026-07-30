@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Alertas de Defensoría - Kolegium{% endblock %}
+{% block header_title %}Alertas de Inasistencia{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alerts-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+    }
+
+    .alerts-header h4 { font-weight: 800; font-size: 1.2rem; margin: 0; letter-spacing: -0.02em; }
+
+    .stat-pills { display: flex; gap: 8px; }
+
+    .stat-pill {
+        padding: 6px 16px; border-radius: 999px; font-size: 0.75rem; font-weight: 700;
+    }
+
+    .stat-pill.pending { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .stat-pill.contacted { background: rgba(59,130,246,0.1); color: #3b82f6; }
+    .stat-pill.visited { background: rgba(16,185,129,0.1); color: #059669; }
+
+    .alert-card {
+        background: var(--surface-container-lowest);
+        border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+        margin-bottom: 12px;
+        overflow: hidden;
+        border-left: 4px solid #ef4444;
+        transition: all 0.2s;
+    }
+
+    .alert-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(15,23,42,0.08); }
+    .alert-card.contacted { border-left-color: #3b82f6; }
+    .alert-card.visited { border-left-color: #059669; }
+
+    .alert-body {
+        padding: 16px 20px;
+        display: flex; justify-content: space-between; align-items: center;
+        gap: 16px; flex-wrap: wrap;
+    }
+
+    .alert-info { flex: 1; min-width: 200px; }
+
+    .alert-student {
+        font-weight: 700; font-size: 0.95rem; margin-bottom: 4px;
+        display: flex; align-items: center; gap: 8px;
+    }
+
+    .alert-student .icon-warning { color: #ef4444; width: 18px; height: 18px; }
+
+    .alert-motivo {
+        font-size: 0.82rem; color: var(--on-surface-variant); line-height: 1.5;
+    }
+
+    .alert-date {
+        font-size: 0.7rem; color: var(--on-surface-variant); margin-top: 6px;
+        display: flex; align-items: center; gap: 4px;
+    }
+
+    .alert-date i { width: 12px; height: 12px; }
+
+    .alert-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    .alert-actions form { margin: 0; }
+
+    .btn-status {
+        padding: 6px 14px; border-radius: 999px; border: none;
+        font-size: 0.72rem; font-weight: 700; cursor: pointer;
+        font-family: 'Inter', sans-serif; transition: all 0.2s;
+    }
+
+    .btn-status.contact { background: rgba(59,130,246,0.1); color: #3b82f6; }
+    .btn-status.contact:hover { background: #3b82f6; color: #fff; }
+    .btn-status.visit { background: rgba(16,185,129,0.1); color: #059669; }
+    .btn-status.visit:hover { background: #059669; color: #fff; }
+
+    .badge-estatus {
+        padding: 4px 12px; border-radius: 999px; font-size: 0.7rem; font-weight: 700;
+        display: inline-flex; align-items: center; gap: 4px;
+    }
+
+    .badge-estatus.pendiente { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .badge-estatus.contactado { background: rgba(59,130,246,0.1); color: #3b82f6; }
+    .badge-estatus.visita { background: rgba(16,185,129,0.1); color: #059669; }
+
+    .empty-alerts {
+        background: var(--surface-container-lowest);
+        border-radius: 16px;
+        padding: 60px 24px; text-align: center;
+        color: var(--on-surface-variant);
+    }
+
+    .empty-alerts i { width: 48px; height: 48px; opacity: 0.3; margin-bottom: 16px; }
+
+    @media (max-width: 575.98px) {
+        .alert-body { flex-direction: column; align-items: flex-start; }
+        .alert-actions { width: 100%; }
+        .btn-status { flex: 1; text-align: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="w-100 px-4 px-md-5">
+
+    <div class="alerts-header">
+        <h4><i data-lucide="bell-ring" style="width:24px;height:24px;vertical-align:middle;color:#ef4444;"></i> Alertas Automáticas de Inasistencia</h4>
+        <div class="stat-pills">
+            {% set pendientes = alertas | selectattr('estatus_atencion', 'equalto', 'Pendiente') | list | length %}
+            {% set contactados = alertas | selectattr('estatus_atencion', 'equalto', 'Contactado') | list | length %}
+            {% set visitas = alertas | selectattr('estatus_atencion', 'equalto', 'Visita Domiciliaria') | list | length %}
+            <span class="stat-pill pending">🔴 {{ pendientes }} Pendientes</span>
+            <span class="stat-pill contacted">📞 {{ contactados }} Contactados</span>
+            <span class="stat-pill visited">🏠 {{ visitas }} Visitas</span>
+        </div>
+    </div>
+
+    {% if alertas %}
+        {% for alerta in alertas %}
+        <div class="alert-card {{ 'contacted' if alerta.estatus_atencion == 'Contactado' else ('visited' if alerta.estatus_atencion == 'Visita Domiciliaria' else '') }}">
+            <div class="alert-body">
+                <div class="alert-info">
+                    <div class="alert-student">
+                        <i data-lucide="alert-triangle" class="icon-warning"></i>
+                        {{ alerta.estudiante.nombre_completo if alerta.estudiante else 'Estudiante no encontrado' }}
+                        <span class="badge-estatus {{ 'pendiente' if alerta.estatus_atencion == 'Pendiente' else ('contactado' if alerta.estatus_atencion == 'Contactado' else 'visita') }}">
+                            {{ alerta.estatus_atencion }}
+                        </span>
+                    </div>
+                    <div class="alert-motivo">{{ alerta.motivo }}</div>
+                    <div class="alert-date">
+                        <i data-lucide="calendar"></i>
+                        Emitida: {{ alerta.fecha_emision.strftime('%d/%m/%Y') if alerta.fecha_emision else 'N/A' }}
+                        {% if alerta.semana_iso %} · Semana {{ alerta.semana_iso }}{% endif %}
+                    </div>
+                </div>
+
+                {% if alerta.estatus_atencion == 'Pendiente' %}
+                <div class="alert-actions">
+                    <form action="{{ url_for('academico.actualizar_alerta', id=alerta.id) }}" method="POST">
+                        <input type="hidden" name="estatus_atencion" value="Contactado">
+                        <button class="btn-status contact" type="submit">📞 Contactado</button>
+                    </form>
+                    <form action="{{ url_for('academico.actualizar_alerta', id=alerta.id) }}" method="POST">
+                        <input type="hidden" name="estatus_atencion" value="Visita Domiciliaria">
+                        <button class="btn-status visit" type="submit">🏠 Visita</button>
+                    </form>
+                </div>
+                {% elif alerta.estatus_atencion == 'Contactado' %}
+                <div class="alert-actions">
+                    <form action="{{ url_for('academico.actualizar_alerta', id=alerta.id) }}" method="POST">
+                        <input type="hidden" name="estatus_atencion" value="Visita Domiciliaria">
+                        <button class="btn-status visit" type="submit">🏠 Escalar a Visita</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-alerts">
+            <i data-lucide="check-circle"></i>
+            <p>No hay alertas de inasistencia registradas. ¡Todo en orden! 🎉</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

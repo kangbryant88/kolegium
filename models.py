@@ -169,9 +169,24 @@ class Incidencia(db.Model):
 
 class AsistenciaEstudiante(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    fecha = db.Column(db.Date, nullable=False)
-    asistio = db.Column(db.Boolean, nullable=False)
     estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+    grado_id = db.Column(db.Integer, db.ForeignKey('grado.id'), nullable=False)
+    fecha = db.Column(db.Date, nullable=False, default=date.today)
+    estatus = db.Column(db.String(20), nullable=False, default='Presente')  # Presente, Ausente, Justificado
+    # Relaciones
+    estudiante = db.relationship('Estudiante', backref='asistencias_detalle')
+    grado = db.relationship('Grado', backref='asistencias_estudiantes')
+
+class AlertaDefensoria(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+    fecha_emision = db.Column(db.Date, nullable=False, default=date.today)
+    motivo = db.Column(db.String(300), nullable=False)
+    estatus_atencion = db.Column(db.String(30), nullable=False, default='Pendiente')  # Pendiente, Contactado, Visita Domiciliaria
+    semana_iso = db.Column(db.String(10), nullable=True)  # Para identificar la semana (ej: '2026-W31')
+    # Relaciones
+    estudiante = db.relationship('Estudiante', backref='alertas_defensoria')
+
 
 estudiante_brigada = db.Table('estudiante_brigada',
     db.Column('estudiante_id', db.Integer, db.ForeignKey('estudiante.id'), primary_key=True),

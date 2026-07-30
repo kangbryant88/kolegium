@@ -7,7 +7,7 @@ from docx import Document
 from fpdf import FPDF
 import urllib.parse
 import uuid
-from models import db, Bitacora, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Estudiante, Representante, Incidencia, AsistenciaEstudiante, EnlaceTemporal, SolicitudEnlace, SolicitudActualizacion
+from models import db, Bitacora, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Estudiante, Representante, Incidencia, AsistenciaEstudiante, AlertaDefensoria, EnlaceTemporal, SolicitudEnlace, SolicitudActualizacion
 
 academico_bp = Blueprint('academico', __name__, url_prefix='/academico')
 
@@ -940,3 +940,188 @@ def rechazar_actualizacion(id):
     return redirect(url_for('index'))
 
 # ==========================================
+# --- ASISTENCIA POR ESTUDIANTE Y ALERTAS ---
+# ==========================================
+
+@academico_bp.route('/asistencia_estudiantes', methods=['GET'])
+def asistencia_estudiantes():
+    """Página principal de asistencia por estudiante."""
+    if not session.get('logeado'):
+        return redirect(url_for('auth.login'))
+    
+    grados = Grado.query.all()
+    fecha_hoy = date.today().strftime('%Y-%m-%d')
+    
+    return render_template('asistencia_estudiantes.html', grados=grados, fecha_hoy=fecha_hoy)
+
+@academico_bp.route('/api/asistencia_estudiantes/<int:grado_id>/<string:fecha>', methods=['GET'])
+def api_asistencia_estudiantes(grado_id, fecha):
+    """API: Devuelve la lista de estudiantes de un grado con su estatus de asistencia para una fecha."""
+    if not session.get('logeado'):
+        return jsonify({'error': 'No autorizado'}), 401
+    
+    try:
+        fecha_obj = datetime.strptime(fecha, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Formato de fecha inválido'}), 400
+    
+    estudiantes = Estudiante.query.filter_by(grado_id=grado_id, estatus='Activo').order_by(Estudiante.nombre_completo.asc()).all()
+    
+    resultado = []
+    for est in estudiantes:
+        # Buscar si ya tiene asistencia registrada para esta fecha
+        asistencia = AsistenciaEstudiante.query.filter_by(
+            estudiante_id=est.id, fecha=fecha_obj
+        ).first()
+        
+        resultado.append({
+            'id': est.id,
+            'nombre_completo': est.nombre_completo,
+            'cedula_escolar': est.cedula_escolar,
+            'genero': est.genero or 'N/A',
+            'estatus': asistencia.estatus if asistencia else None  # None = no registrado aún
+        })
+    
+    return jsonify({'estudiantes': resultado, 'total': len(resultado)})
+
+@academico_bp.route('/guardar_asistencia_estudiantes', methods=['POST'])
+def guardar_asistencia_estudiantes():
+    """Guarda la asistencia de todos los estudiantes de un grado y ejecuta el disparador de alertas."""
+    if not session.get('logeado'):
+        return jsonify({'error': 'No autorizado'}), 401
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No se recibieron datos'}), 400
+    
+    grado_id = data.get('grado_id')
+    fecha_str = data.get('fecha')
+    asistencias = data.get('asistencias', [])  # [{estudiante_id: X, estatus: 'Presente'|'Ausente'|'Justificado'}]
+    
+    if not grado_id or not fecha_str or not asistencias:
+        return jsonify({'error': 'Faltan datos requeridos'}), 400
+    
+    try:
+        fecha_obj = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'Formato de fecha inválido'}), 400
+    
+    try:
+        # Insertar o actualizar asistencia de cada estudiante
+        for registro in asistencias:
+            est_id = registro.get('estudiante_id')
+            estatus = registro.get('estatus', 'Presente')
+            
+            # Validar estatus
+            if estatus not in ('Presente', 'Ausente', 'Justificado'):
+                estatus = 'Presente'
+            
+            # Buscar registro existente para esta fecha y estudiante
+            existente = AsistenciaEstudiante.query.filter_by(
+                estudiante_id=est_id, fecha=fecha_obj
+            ).first()
+            
+            if existente:
+                existente.estatus = estatus
+                existente.grado_id = grado_id
+            else:
+                nuevo = AsistenciaEstudiante(
+                    estudiante_id=est_id,
+                    grado_id=grado_id,
+                    fecha=fecha_obj,
+                    estatus=estatus
+                )
+                db.session.add(nuevo)
+        
+        db.session.flush()  # Aplicar cambios antes de verificar alertas
+        
+        # =============================================
+        # DISPARADOR: Verificar alertas de Defensoría
+        # =============================================
+        alertas_generadas = 0
+        
+        # Calcular rango de la semana (lunes a viernes) de la fecha dada
+        dia_semana = fecha_obj.weekday()  # 0=Lunes, 6=Domingo
+        lunes = fecha_obj - timedelta(days=dia_semana)
+        viernes = lunes + timedelta(days=4)
+        semana_iso = fecha_obj.strftime('%G-W%V')  # Ej: '2026-W31'
+        
+        # Solo verificar estudiantes marcados como Ausentes
+        ausentes_ids = [r['estudiante_id'] for r in asistencias if r.get('estatus') == 'Ausente']
+        
+        for est_id in ausentes_ids:
+            # Contar inasistencias en la semana actual
+            conteo_ausencias = AsistenciaEstudiante.query.filter(
+                AsistenciaEstudiante.estudiante_id == est_id,
+                AsistenciaEstudiante.estatus == 'Ausente',
+                AsistenciaEstudiante.fecha >= lunes,
+                AsistenciaEstudiante.fecha <= viernes
+            ).count()
+            
+            if conteo_ausencias >= 3:
+                # Verificar si ya existe alerta pendiente para esta semana
+                alerta_existente = AlertaDefensoria.query.filter_by(
+                    estudiante_id=est_id,
+                    semana_iso=semana_iso
+                ).first()
+                
+                if not alerta_existente:
+                    estudiante = Estudiante.query.get(est_id)
+                    nombre = estudiante.nombre_completo if estudiante else f'ID {est_id}'
+                    grado = Grado.query.get(grado_id)
+                    grado_nombre = grado.nombre if grado else ''
+                    
+                    nueva_alerta = AlertaDefensoria(
+                        estudiante_id=est_id,
+                        fecha_emision=date.today(),
+                        motivo=f'El estudiante {nombre} ({grado_nombre}) acumula {conteo_ausencias} inasistencias en la semana del {lunes.strftime("%d/%m/%Y")} al {viernes.strftime("%d/%m/%Y")}.',
+                        estatus_atencion='Pendiente',
+                        semana_iso=semana_iso
+                    )
+                    db.session.add(nueva_alerta)
+                    alertas_generadas += 1
+        
+        db.session.commit()
+        
+        mensaje = f'Asistencia guardada correctamente para {len(asistencias)} estudiantes.'
+        if alertas_generadas > 0:
+            mensaje += f' ⚠️ Se generaron {alertas_generadas} alerta(s) para Defensoría.'
+        
+        return jsonify({'success': True, 'message': mensaje, 'alertas_generadas': alertas_generadas})
+    
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Error al guardar: {str(e)}'}), 500
+
+@academico_bp.route('/alertas_defensoria')
+def alertas_defensoria():
+    """Vista de alertas generadas para Defensoría."""
+    if not session.get('logeado'):
+        return redirect(url_for('auth.login'))
+    
+    # Solo Defensoría, Directivo o Admin pueden ver
+    rol = session.get('nombre_rol', '')
+    if rol not in ['Defensoría Estudiantil', 'Equipo Directivo', 'Administrador Supremo']:
+        flash('No tienes permisos para acceder a esta sección.', 'error')
+        return redirect(url_for('index'))
+    
+    alertas = AlertaDefensoria.query.order_by(AlertaDefensoria.fecha_emision.desc()).all()
+    return render_template('alertas_defensoria.html', alertas=alertas)
+
+@academico_bp.route('/actualizar_alerta/<int:id>', methods=['POST'])
+def actualizar_alerta(id):
+    """Actualiza el estatus de atención de una alerta."""
+    if not session.get('logeado'):
+        return jsonify({'error': 'No autorizado'}), 401
+    
+    alerta = AlertaDefensoria.query.get_or_404(id)
+    nuevo_estatus = request.form.get('estatus_atencion', request.json.get('estatus_atencion') if request.is_json else None)
+    
+    if nuevo_estatus in ('Pendiente', 'Contactado', 'Visita Domiciliaria'):
+        alerta.estatus_atencion = nuevo_estatus
+        db.session.commit()
+        flash(f'Alerta actualizada a: {nuevo_estatus}', 'success')
+    
+    return redirect(url_for('academico.alertas_defensoria'))

@@ -16,7 +16,7 @@ import urllib.parse
 from dotenv import load_dotenv
 
 from config import Config
-from models import db, Rol, Usuario, Anuncio, Bitacora, PlanificacionDefensoria, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Representante, Estudiante, EnlaceTemporal, Incidencia, AsistenciaEstudiante, Brigada, Acta, SolicitudEnlace, SolicitudActualizacion, SolicitudDefensoria, TokenRecuperacion
+from models import db, Rol, Usuario, Anuncio, Bitacora, PlanificacionDefensoria, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Representante, Estudiante, EnlaceTemporal, Incidencia, AsistenciaEstudiante, AlertaDefensoria, Brigada, Acta, SolicitudEnlace, SolicitudActualizacion, SolicitudDefensoria, TokenRecuperacion
 
 app = Flask(__name__)
 app.config.from_object(Config)
