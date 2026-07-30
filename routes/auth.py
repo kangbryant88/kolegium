@@ -83,10 +83,15 @@ def recuperar():
                 # Construir enlace de recuperación
                 enlace = request.host_url.rstrip('/') + url_for('auth.restablecer', token=token)
                 
+                # Obtener remitente asegurando que no sea None
+                remitente = current_app.config.get('MAIL_USERNAME')
+                if not remitente:
+                    remitente = 'eepdanieloleary9@gmail.com'
+                
                 # Enviar correo
                 msg = Message(
                     "Kolegium - Recuperación de Contraseña",
-                    sender=current_app.config.get('MAIL_USERNAME', 'eepdanieloleary9@gmail.com'),
+                    sender=remitente,
                     recipients=[usuario.email]
                 )
                 msg.html = f"""
@@ -169,10 +174,15 @@ def test_email_route():
     try:
         from extensions import mail
         from flask_mail import Message
+        
+        remitente = current_app.config.get('MAIL_USERNAME')
+        if not remitente:
+            remitente = 'eepdanieloleary9@gmail.com'
+            
         msg = Message(
             "Prueba de configuración de correo",
-            sender=current_app.config.get('MAIL_USERNAME', 'eepdanieloleary9@gmail.com'),
-            recipients=[current_app.config.get('MAIL_USERNAME', 'eepdanieloleary9@gmail.com')]
+            sender=remitente,
+            recipients=[remitente]
         )
         msg.body = "Si recibes esto, el correo está funcionando correctamente en la nube."
         mail.send(msg)
