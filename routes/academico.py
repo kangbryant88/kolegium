@@ -116,7 +116,34 @@ def asistencia():
         regs = AsistenciaDiaria.query.order_by(AsistenciaDiaria.fecha.desc()).all()
     else:
         regs = AsistenciaDiaria.query.filter_by(usuario_id=session['usuario_id']).order_by(AsistenciaDiaria.fecha.desc()).all()
-    return render_template('asistencia.html', registros=regs, grados=Grado.query.all(), hoy=datetime.now().strftime('%Y-%m-%d'))
+        
+    from collections import OrderedDict
+    
+    meses_es = {1:'Enero', 2:'Febrero', 3:'Marzo', 4:'Abril', 5:'Mayo', 6:'Junio', 
+                7:'Julio', 8:'Agosto', 9:'Septiembre', 10:'Octubre', 11:'Noviembre', 12:'Diciembre'}
+    dias_es = {0:'Lunes', 1:'Martes', 2:'Miércoles', 3:'Jueves', 4:'Viernes', 5:'Sábado', 6:'Domingo'}
+
+    def formato_fecha_es(fecha_obj):
+        return f"{dias_es[fecha_obj.weekday()]}, {fecha_obj.day} de {meses_es[fecha_obj.month]} de {fecha_obj.year}"
+
+    semanas = OrderedDict()
+    
+    for r in regs:
+        dt = r.fecha
+        lunes = dt - timedelta(days=dt.weekday())
+        viernes = lunes + timedelta(days=4)
+        semana_key = f"Semana del {lunes.strftime('%d/%m/%Y')} al {viernes.strftime('%d/%m/%Y')}"
+        
+        if semana_key not in semanas:
+            semanas[semana_key] = OrderedDict()
+            
+        fecha_str = formato_fecha_es(dt)
+        if fecha_str not in semanas[semana_key]:
+            semanas[semana_key][fecha_str] = []
+            
+        semanas[semana_key][fecha_str].append(r)
+
+    return render_template('asistencia.html', registros=regs, semanas=semanas, grados=Grado.query.all(), hoy=datetime.now().strftime('%Y-%m-%d'))
 
 @academico_bp.route('/eliminar_asistencia/<int:id>', methods=['POST'])
 def eliminar_asistencia(id):
@@ -508,11 +535,44 @@ def mi_aula():
             if sol.estudiante_id not in estado_solicitudes:
                 estado_solicitudes[sol.estudiante_id] = sol
 
+    # Nuevas métricas: Gráfica mensual y Alertas de Defensoría
+    datos_mensuales = {}
+    alertas_activas = {}
+    
+    if estudiantes:
+        hoy = date.today()
+        # Obtener asistencias del mes actual para todos los estudiantes
+        asistencias_mes = AsistenciaEstudiante.query.filter(
+            AsistenciaEstudiante.estudiante_id.in_([e.id for e in estudiantes])
+        ).all()
+        
+        for est in estudiantes:
+            datos_mensuales[est.id] = {'Presente': 0, 'Ausente': 0, 'Justificado': 0}
+            alertas_activas[est.id] = False
+            
+        for a in asistencias_mes:
+            if a.fecha.month == hoy.month and a.fecha.year == hoy.year:
+                if a.estatus in datos_mensuales[a.estudiante_id]:
+                    datos_mensuales[a.estudiante_id][a.estatus] += 1
+                    
+        # Buscar Alertas de Defensoría activas (Pendiente) para estos estudiantes
+        alertas = AlertaDefensoria.query.filter(
+            AlertaDefensoria.estudiante_id.in_([e.id for e in estudiantes]),
+            AlertaDefensoria.estatus_atencion == 'Pendiente'
+        ).all()
+        
+        for alerta in alertas:
+            # Simplificar el motivo para mostrarlo en el badge
+            tipo_alerta = "Inasistencia" if "inasistencia" in alerta.motivo.lower() else "Incidencia"
+            alertas_activas[alerta.estudiante_id] = {'tipo': tipo_alerta, 'id': alerta.id}
+
     return render_template('mi_aula.html', 
                            grado=grado_seleccionado, 
                            grados=grados, 
                            estudiantes=estudiantes, 
                            asistencia_porcentaje=asistencia_porcentaje,
+                           datos_mensuales_estudiantes=datos_mensuales,
+                           alertas_estudiantes=alertas_activas,
                            total_matricula=total_matricula,
                            total_varones=total_varones,
                            total_hembras=total_hembras,
@@ -1072,16 +1132,71 @@ def guardar_asistencia_estudiantes():
                     grado = Grado.query.get(grado_id)
                     grado_nombre = grado.nombre if grado else ''
                     
+                    # Escalación automática: si el estudiante ya tiene 2+ alertas previas
+                    # de semanas distintas, escalar directamente a Visita Domiciliaria
+                    alertas_previas = AlertaDefensoria.query.filter(
+                        AlertaDefensoria.estudiante_id == est_id,
+                        AlertaDefensoria.semana_iso != semana_iso
+                    ).count()
+                    
+                    if alertas_previas >= 2:
+                        estatus_auto = 'Visita Domiciliaria'
+                        motivo_texto = f'⚠️ ESCALADA AUTOMÁTICA: El estudiante {nombre} ({grado_nombre}) acumula {conteo_ausencias} inasistencias en la semana del {lunes.strftime("%d/%m/%Y")} al {viernes.strftime("%d/%m/%Y")}. Este estudiante tiene {alertas_previas} alertas previas de semanas anteriores.'
+                    else:
+                        estatus_auto = 'Pendiente'
+                        motivo_texto = f'El estudiante {nombre} ({grado_nombre}) acumula {conteo_ausencias} inasistencias en la semana del {lunes.strftime("%d/%m/%Y")} al {viernes.strftime("%d/%m/%Y")}.'
+                    
                     nueva_alerta = AlertaDefensoria(
                         estudiante_id=est_id,
                         fecha_emision=date.today(),
-                        motivo=f'El estudiante {nombre} ({grado_nombre}) acumula {conteo_ausencias} inasistencias en la semana del {lunes.strftime("%d/%m/%Y")} al {viernes.strftime("%d/%m/%Y")}.',
-                        estatus_atencion='Pendiente',
+                        motivo=motivo_texto,
+                        estatus_atencion=estatus_auto,
                         semana_iso=semana_iso
                     )
                     db.session.add(nueva_alerta)
                     alertas_generadas += 1
         
+        # =============================================
+        # ACTUALIZAR REGISTRO DIARIO (AsistenciaDiaria)
+        # =============================================
+        grado = Grado.query.get(grado_id)
+        if grado:
+            varones_asist = 0
+            hembras_asist = 0
+            
+            for registro in asistencias:
+                if registro.get('estatus') in ('Presente', 'Justificado'):
+                    est = Estudiante.query.get(registro.get('estudiante_id'))
+                    if est:
+                        genero_est = (est.genero or '').upper()
+                        if genero_est.startswith('M') or genero_est == 'VARON' or genero_est == 'NIÑO':
+                            varones_asist += 1
+                        else:
+                            hembras_asist += 1
+                            
+            mat_total = grado.total_varones + grado.total_hembras
+            asist_total = varones_asist + hembras_asist
+            porc = round((asist_total / mat_total) * 100, 2) if mat_total > 0 else 0
+            
+            reg_diario = AsistenciaDiaria.query.filter_by(fecha=fecha_obj, grado_seccion=grado.nombre).first()
+            if reg_diario:
+                reg_diario.varones = varones_asist
+                reg_diario.hembras = hembras_asist
+                reg_diario.asistentes = asist_total
+                reg_diario.porcentaje = porc
+            else:
+                nuevo_diario = AsistenciaDiaria(
+                    fecha=fecha_obj,
+                    grado_seccion=grado.nombre,
+                    matricula_total=mat_total,
+                    varones=varones_asist,
+                    hembras=hembras_asist,
+                    asistentes=asist_total,
+                    porcentaje=porc,
+                    usuario_id=session.get('usuario_id', 1)
+                )
+                db.session.add(nuevo_diario)
+
         db.session.commit()
         
         mensaje = f'Asistencia guardada correctamente para {len(asistencias)} estudiantes.'
@@ -1123,6 +1238,45 @@ def actualizar_alerta(id):
     if nuevo_estatus in ('Pendiente', 'Contactado', 'Visita Domiciliaria'):
         alerta.estatus_atencion = nuevo_estatus
         db.session.commit()
-        flash(f'Alerta actualizada a: {nuevo_estatus}', 'success')
+        # No usamos flash() aquí para evitar que los mensajes se acumulen y salgan en otros módulos
     
+    referer = request.headers.get("Referer")
+    if referer and "defensoria" in referer and "alertas_defensoria" not in referer:
+        return redirect(url_for('defensoria'))
+    return redirect(url_for('academico.alertas_defensoria'))
+
+@academico_bp.route('/enterado_alerta/<int:id>', methods=['POST'])
+def enterado_alerta(id):
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+    rol = session.get('nombre_rol')
+    if rol not in ['Administrador Supremo', 'Equipo Directivo', 'Docente de Aula']:
+        return "Acceso Denegado", 403
+    alerta = AlertaDefensoria.query.get_or_404(id)
+    # Simplemente eliminamos la alerta de incidencia para que ya no aparezca
+    db.session.delete(alerta)
+    db.session.commit()
+    
+    grado_id = request.args.get('grado_id')
+    return redirect(url_for('academico.mi_aula', grado_id=grado_id))
+
+@academico_bp.route('/eliminar_alerta/<int:id>', methods=['POST'])
+def eliminar_alerta(id):
+    """Elimina una alerta de defensoría permanentemente."""
+    if not session.get('logeado'):
+        return jsonify({'error': 'No autorizado'}), 401
+    
+    # Solo Defensoría, Directivo o Admin pueden borrar
+    rol = session.get('nombre_rol', '')
+    if rol not in ['Defensoría Estudiantil', 'Equipo Directivo', 'Administrador Supremo']:
+        return redirect(url_for('index'))
+        
+    alerta = AlertaDefensoria.query.get_or_404(id)
+    db.session.delete(alerta)
+    db.session.commit()
+    # No usamos flash() para evitar mensajes huérfanos en portal_trabajador
+    
+    # Redirect back to where they came from (defensoria or alertas_defensoria)
+    referer = request.headers.get("Referer")
+    if referer and "defensoria" in referer and "alertas_defensoria" not in referer:
+        return redirect(url_for('defensoria'))
     return redirect(url_for('academico.alertas_defensoria'))

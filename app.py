@@ -211,8 +211,8 @@ def defensoria():
     actas = Acta.query.order_by(Acta.fecha.desc()).all()
     solicitudes = SolicitudDefensoria.query.order_by(SolicitudDefensoria.fecha_solicitud.desc()).all()
     grados = Grado.query.order_by(Grado.nombre).all()
-    
-    return render_template('defensoria.html', planificaciones=planes, estudiantes=estudiantes, brigadas=brigadas, actas=actas, solicitudes=solicitudes, grados=grados)
+    alertas = AlertaDefensoria.query.order_by(AlertaDefensoria.fecha_emision.desc()).all()
+    return render_template('defensoria.html', planificaciones=planes, estudiantes=estudiantes, brigadas=brigadas, actas=actas, solicitudes=solicitudes, grados=grados, alertas=alertas)
 
 @app.route('/editar_defensoria/<int:id>', methods=['POST'])
 def editar_defensoria(id):
@@ -251,6 +251,20 @@ def eliminar_solicitud_def(id):
     db.session.delete(solicitud)
     db.session.commit()
     flash("Solicitud eliminada correctamente.", "success")
+    return redirect(url_for('defensoria'))
+
+@app.route('/defensoria/alertar_docente/<int:id>', methods=['POST'])
+def alertar_docente_incidencia(id):
+    if not auth_defensoria(): return "Acceso Denegado", 403
+    solicitud = SolicitudDefensoria.query.get_or_404(id)
+    nueva_alerta = AlertaDefensoria(
+        estudiante_id=solicitud.estudiante_id,
+        motivo=f"Defensoría Incidencia: {solicitud.motivo}",
+        estatus_atencion='Pendiente'
+    )
+    db.session.add(nueva_alerta)
+    db.session.commit()
+    flash("Alerta enviada al docente exitosamente.", "success")
     return redirect(url_for('defensoria'))
 
 @app.route('/defensoria/descargar_ficha_pdf/<int:id>')

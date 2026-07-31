@@ -671,9 +671,14 @@
             <h3 class="title">Planificación de Defensoría</h3>
             <p class="subtitle mb-0">Gestión de Charlas y Actividades Fuera de Aula</p>
         </div>
-        <button class="btn-excel" data-bs-toggle="modal" data-bs-target="#modalCargaAutomatica">
-            <i data-lucide="file-spreadsheet"></i> Carga Automática (Excel)
-        </button>
+        <div class="d-flex gap-2">
+            <button type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAlertas" class="btn-excel" style="background: linear-gradient(135deg, #ef4444, #dc2626); text-decoration: none;">
+                <i data-lucide="shield-alert"></i> Panel de Alertas
+            </button>
+            <button class="btn-excel" data-bs-toggle="modal" data-bs-target="#modalCargaAutomatica">
+                <i data-lucide="file-spreadsheet"></i> Carga Automática (Excel)
+            </button>
+        </div>
     </div>
 
     <!-- PESTAÑAS (TABS) -->
@@ -1183,6 +1188,11 @@
                                         <a href="{{ url_for('descargar_ficha_pdf', id=solicitud.id) }}" target="_blank" class="btn w-100 fw-bold d-flex align-items-center justify-content-center gap-2 text-white shadow-sm btn-submit-def text-decoration-none" style="background: linear-gradient(135deg, #059669, #10b981);">
                                             <i data-lucide="file-down"></i> Descargar Ficha de Visita (PDF)
                                         </a>
+                                        
+                                        <button type="button" class="btn w-100 fw-bold d-flex align-items-center justify-content-center gap-2 text-white shadow-sm btn-submit-def mt-2" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none;" onclick="abrirModalAlertarDocente('{{ solicitud.id }}')">
+                                            <i data-lucide="bell-ring" style="width: 18px; height: 18px;"></i> Alertar al Docente
+                                        </button>
+                                        <form id="form-alertar-{{ solicitud.id }}" action="/defensoria/alertar_docente/{{ solicitud.id }}" method="POST" style="display: none;"></form>
                                     </div>
                                 </div>
                                 {% elif solicitud.estado == 'Rechazada' %}
@@ -1295,6 +1305,27 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Confirmar Alertar Docente -->
+<div class="modal fade" id="modalConfirmarAlertarDocente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+            <div class="modal-body p-4 text-start">
+                <h5 style="font-weight:800; color:#f59e0b; display:flex; align-items:center; gap:6px;">
+                    <i data-lucide="bell-ring" style="width:20px;height:20px;"></i> Enviar Alerta
+                </h5>
+                <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
+                    ¿Estás seguro de que deseas enviar una alerta de Incidencia al docente? El docente recibirá una notificación en su panel de Mi Aula.
+                </p>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                <button type="button" class="btn-cancel-modal w-50" onclick="cerrarModalAlertarDocente()">Cancelar</button>
+                <button type="button" class="btn-danger-link w-50 border-0 text-white" style="background: #f59e0b; display:flex; justify-content:center; align-items:center;" onclick="ejecutarAlertarDocente()">Sí, alertar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Ver Acta Detalle -->
 <div class="modal fade modal-edu" id="modalVerActaDetalle" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
@@ -1493,6 +1524,30 @@
         }
     });
 
+    let idParaEliminarAlerta = null;
+    let modalEliminarAlertaInstance = null;
+
+    function abrirModalEliminarAlerta(id) {
+        idParaEliminarAlerta = 'form-eliminar-alerta-' + id;
+        const modalEl = document.getElementById('modalConfirmarEliminacionAlerta');
+        if (!modalEliminarAlertaInstance) {
+            modalEliminarAlertaInstance = new bootstrap.Modal(modalEl);
+        }
+        modalEliminarAlertaInstance.show();
+    }
+
+    function cerrarModalEliminarAlerta() {
+        if (modalEliminarAlertaInstance) {
+            modalEliminarAlertaInstance.hide();
+        }
+    }
+
+    function ejecutarEliminacionAlerta() {
+        if (idParaEliminarAlerta) {
+            document.getElementById(idParaEliminarAlerta).submit();
+        }
+    }
+
     // Funciones para Visualizar Actas en Modal (Historial)
     function abrirModalVerActa(btn) {
         document.getElementById('mva-tipo').textContent = btn.getAttribute('data-tipo');
@@ -1596,6 +1651,186 @@
         if (idParaEliminar) {
             document.getElementById('form-eliminar-' + idParaEliminar).submit();
         }
+    }
+
+    let idParaAlertar = null;
+    let modalAlertarInstance = null;
+
+    function abrirModalAlertarDocente(id) {
+        idParaAlertar = 'form-alertar-' + id;
+        const modalEl = document.getElementById('modalConfirmarAlertarDocente');
+        if (!modalAlertarInstance) {
+            modalAlertarInstance = new bootstrap.Modal(modalEl);
+        }
+        modalAlertarInstance.show();
+    }
+
+    function cerrarModalAlertarDocente() {
+        if (modalAlertarInstance) {
+            modalAlertarInstance.hide();
+        }
+    }
+
+    function ejecutarAlertarDocente() {
+        if (idParaAlertar) {
+            document.getElementById(idParaAlertar).submit();
+        }
+    }
+</script>
+
+<!-- Offcanvas Panel de Alertas -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAlertas" aria-labelledby="offcanvasAlertasLabel" style="width: 520px; max-width: 100vw; background: var(--surface);">
+    <div class="offcanvas-header border-bottom border-secondary border-opacity-25">
+        <h5 class="offcanvas-title fw-bold d-flex align-items-center gap-2" id="offcanvasAlertasLabel">
+            <i data-lucide="bell-ring" class="text-danger"></i> Alertas de Inasistencia
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body" style="padding-bottom: 3rem;">
+        <div class="stat-pills d-flex flex-wrap gap-2 mb-4">
+            {% set pendientes = alertas | selectattr('estatus_atencion', 'equalto', 'Pendiente') | list | length %}
+            {% set contactados = alertas | selectattr('estatus_atencion', 'equalto', 'Contactado') | list | length %}
+            {% set visitas = alertas | selectattr('estatus_atencion', 'equalto', 'Visita Domiciliaria') | list | length %}
+            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 border border-danger border-opacity-25"><i data-lucide="circle-alert" style="width: 14px; height: 14px; margin-right: 4px;"></i> {{ pendientes }} Pendientes</span>
+            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 border border-primary border-opacity-25"><i data-lucide="phone-call" style="width: 14px; height: 14px; margin-right: 4px;"></i> {{ contactados }} Contactados</span>
+            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 border border-success border-opacity-25"><i data-lucide="home" style="width: 14px; height: 14px; margin-right: 4px;"></i> {{ visitas }} Visitas</span>
+        </div>
+
+        {% if alertas %}
+            {% for alerta in alertas %}
+            {% set est = alerta.estudiante %}
+            {% set rep = est.representante_info if est else none %}
+            {% set tel_rep = rep.telefono if rep and rep.telefono else '' %}
+            {% set nombre_rep = rep.nombre_completo if rep else 'No registrado' %}
+            {% set nombre_est = est.nombre_completo if est else 'Desconocido' %}
+            {% set grado_est = est.grado.nombre if est and est.grado else '' %}
+            {% set es_escalada = alerta.motivo.startswith('⚠️ ESCALADA') %}
+            
+            <div class="card border-0 shadow-sm mb-3" style="background: var(--surface-container-lowest); border-left: 4px solid {% if alerta.estatus_atencion == 'Contactado' %}#3b82f6{% elif alerta.estatus_atencion == 'Visita Domiciliaria' %}#059669{% else %}#ef4444{% endif %} !important; border-radius: 16px;">
+                <div class="card-body p-3">
+                    <!-- Encabezado: Nombre + Badge + Borrar -->
+                    <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
+                        <div>
+                            <div class="fw-bold d-flex align-items-center gap-2 flex-wrap" style="font-size: 0.95rem;">
+                                <i data-lucide="alert-triangle" class="text-danger" style="width: 16px;"></i>
+                                {{ nombre_est }}
+                                {% if es_escalada %}
+                                <span class="badge rounded-pill px-2 py-1" style="background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px;"><i data-lucide="siren" style="width: 10px; height: 10px; margin-right: 2px;"></i> ESCALADA</span>
+                                {% endif %}
+                            </div>
+                            {% if grado_est %}
+                            <div class="text-muted" style="font-size: 0.75rem; margin-top: 2px;">{{ grado_est }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge rounded-pill flex-shrink-0" style="font-size: 0.7rem; background: {% if alerta.estatus_atencion == 'Contactado' %}rgba(59,130,246,0.1); color: #3b82f6{% elif alerta.estatus_atencion == 'Visita Domiciliaria' %}rgba(16,185,129,0.1); color: #059669{% else %}rgba(239,68,68,0.1); color: #ef4444{% endif %};">
+                                {{ alerta.estatus_atencion }}
+                            </span>
+                            <form id="form-eliminar-alerta-{{ alerta.id }}" action="{{ url_for('academico.eliminar_alerta', id=alerta.id) }}" method="POST" style="margin: 0;">
+                                <button type="button" class="btn btn-sm d-flex align-items-center justify-content-center btn-delete-alert" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border-radius: 8px; padding: 4px 8px; border: none; transition: all 0.2s;" title="Eliminar Alerta" onclick="abrirModalEliminarAlerta('{{ alerta.id }}')" onmouseover="this.style.background='#ef4444'; this.style.color='white';" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)'; this.style.color='#ef4444';">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Datos del Representante -->
+                    <div class="p-2 rounded-3 mb-2" style="background: rgba(70,72,212,0.04); border: 1px solid rgba(70,72,212,0.1);">
+                        <div class="d-flex align-items-center gap-2 mb-1" style="font-size: 0.78rem;">
+                            <i data-lucide="user" style="width: 13px; height: 13px; color: var(--primary);"></i>
+                            <span class="fw-bold" style="color: var(--primary);">Representante:</span>
+                            <span>{{ nombre_rep }}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2" style="font-size: 0.78rem;">
+                            <i data-lucide="phone" style="width: 13px; height: 13px; color: var(--primary);"></i>
+                            <span class="fw-bold" style="color: var(--primary);">Teléfono:</span>
+                            <span>{{ tel_rep if tel_rep else 'No registrado' }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Motivo -->
+                    <p class="text-muted small mb-2" style="line-height: 1.4;">{{ alerta.motivo }}</p>
+                    <div class="text-muted mb-3" style="font-size: 0.75rem;">
+                        <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
+                        Emitida: {{ alerta.fecha_emision.strftime('%d/%m/%Y') if alerta.fecha_emision else 'N/A' }}
+                        {% if alerta.semana_iso %} · Semana {{ alerta.semana_iso }}{% endif %}
+                    </div>
+
+                    <!-- Botones WhatsApp (Siempre muestran ambos) -->
+                    {% if tel_rep %}
+                    {% set tel_limpio = tel_rep | replace(' ', '') | replace('-', '') | replace('(', '') | replace(')', '') | replace('+', '') %}
+                    {% if not tel_limpio.startswith('58') and tel_limpio.startswith('0') %}
+                        {% set tel_limpio = '58' ~ tel_limpio[1:] %}
+                    {% endif %}
+                    
+                    {% set msg_whatsapp_1 = "🏫 *CITATORIO INSTITUCIONAL (1er Aviso) — Institución Educativa*%0A%0AEstimado/a representante de *" ~ nombre_est ~ "*,%0A%0ALa Defensoría Estudiantil le informa que su representado/a ha acumulado inasistencias consecutivas injustificadas. Según el Art. 54 de la LOPNNA, es su obligación indeclinable garantizar la educación y asistencia regular del menor.%0A%0ALe instamos a comparecer con carácter de URGENCIA ante la Dirección del plantel para justificar esta situación. Evite medidas administrativas y proteja los derechos de su representado/a.%0A%0AAtentamente, *Defensoría Estudiantil.*" %}
+                    
+                    {% set msg_whatsapp_2 = "🚨 *CITATORIO LEGAL Y ADVERTENCIA (2do Aviso) — Institución Educativa*%0A%0ARepresentante de *" ~ nombre_est ~ "*:%0A%0AAnte su incomparecencia al primer llamado y la continua inasistencia del menor, emitimos este SEGUNDO AVISO. La omisión de sus deberes constituye una vulneración al Derecho a la Educación, tipificada como negligencia en la LOPNNA.%0A%0ASe le exige su presencia INMEDIATA en la institución. Le notificamos formalmente que, de no asistir y requerirse un tercer citatorio, el caso será remitido de forma automática al Consejo de Protección del Niño, Niña y Adolescente (CPNNA) y a los órganos policiales competentes para proceder con su comparecencia forzosa y determinar las responsabilidades legales a las que haya lugar.%0A%0AAtentamente, *Dirección y Defensoría Estudiantil.*" %}
+
+                    <div class="d-flex flex-column gap-2 mb-3">
+                        <a href="https://api.whatsapp.com/send?phone={{ tel_limpio }}&text={{ msg_whatsapp_1 }}" 
+                           target="_blank" 
+                           class="btn btn-sm w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 text-white text-decoration-none"
+                           style="background: #25D366; border: none; padding: 8px;">
+                            <i data-lucide="message-circle" style="width: 16px; height: 16px;"></i>
+                            Enviar 1er Citatorio Institucional
+                        </a>
+                        <a href="https://api.whatsapp.com/send?phone={{ tel_limpio }}&text={{ msg_whatsapp_2 }}" 
+                           target="_blank" 
+                           class="btn btn-sm w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 text-white text-decoration-none"
+                           style="background: #ef4444; border: none; padding: 8px;">
+                            <i data-lucide="siren" style="width: 16px; height: 16px;"></i>
+                            Enviar 2do Citatorio (Advertencia Legal)
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted small py-2 mb-3 rounded-3" style="background: rgba(148,163,184,0.08); border: 1px dashed var(--border-color);">
+                        <i data-lucide="phone-off" style="width: 14px; height: 14px;" class="me-1"></i>
+                        Sin teléfono registrado — No se puede notificar por WhatsApp
+                    </div>
+                    {% endif %}
+
+                    <!-- Botones de Estatus Interno -->
+                    <div class="border-top pt-2 mt-1">
+                        <div class="text-muted small fw-bold mb-2">Estatus Interno:</div>
+                        {% if alerta.estatus_atencion == 'Pendiente' %}
+                        <div class="d-flex gap-2">
+                            <form action="{{ url_for('academico.actualizar_alerta', id=alerta.id) }}" method="POST" class="flex-grow-1 m-0">
+                                <input type="hidden" name="estatus_atencion" value="Contactado">
+                                <button type="submit" class="btn btn-sm w-100 rounded-pill fw-bold" style="background: rgba(59,130,246,0.1); color: #3b82f6;"><i data-lucide="phone-call" style="width: 12px; height: 12px;"></i> Marcar Contactado</button>
+                            </form>
+                            <form action="{{ url_for('academico.actualizar_alerta', id=alerta.id) }}" method="POST" class="flex-grow-1 m-0">
+                                <input type="hidden" name="estatus_atencion" value="Visita Domiciliaria">
+                                <button type="submit" class="btn btn-sm w-100 rounded-pill fw-bold" style="background: rgba(16,185,129,0.1); color: #059669;"><i data-lucide="home" style="width: 12px; height: 12px;"></i> Marcar Visita</button>
+                            </form>
+                        </div>
+                        {% elif alerta.estatus_atencion == 'Contactado' %}
+                        <form action="{{ url_for('academico.actualizar_alerta', id=alerta.id) }}" method="POST" class="m-0">
+                            <input type="hidden" name="estatus_atencion" value="Visita Domiciliaria">
+                            <button type="submit" class="btn btn-sm w-100 rounded-pill fw-bold" style="background: rgba(16,185,129,0.1); color: #059669;"><i data-lucide="home" style="width: 12px; height: 12px;"></i> Escalar a Visita Domiciliaria</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center text-muted py-5">
+                <i data-lucide="check-circle" style="width: 48px; height: 48px; opacity: 0.5; margin-bottom: 16px;"></i>
+                <p>No hay alertas de inasistencia registradas. ¡Todo en orden!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function abrirModalEliminarAlerta(id) {
+        idParaEliminar = 'alerta-' + id;
+        const modalEl = document.getElementById('modalConfirmarEliminacion');
+        if (!modalConfirmInstance) {
+            modalConfirmInstance = new bootstrap.Modal(modalEl);
+        }
+        modalConfirmInstance.show();
     }
 </script>
 {% endblock %}

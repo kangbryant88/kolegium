@@ -109,8 +109,12 @@
                 </div>
             </div>
             
-            <form action="{{ url_for('academico.guardar_asistencia_aula') }}" method="POST">
-                <input type="hidden" name="grado_id" value="{{ grado.id }}">
+            <div class="d-flex justify-content-between align-items-center mb-4 px-4">
+                            <h5 class="fw-bold m-0" style="color: var(--on-surface);">Lista de Estudiantes</h5>
+                            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 border border-primary border-opacity-25" style="font-size: 0.85rem;">
+                                <i data-lucide="users" style="width:14px; height:14px; margin-right:4px;"></i> Total: {{ grado.estudiantes|length }}
+                            </span>
+                        </div>
                 
                 <div class="card-body p-0 mt-3">
                     <div class="table-responsive border-0 shadow-sm rounded" style="max-height: 60vh; overflow-y: auto;">
@@ -119,7 +123,6 @@
                                 <tr>
                                     <th class="px-4 py-3 text-muted fw-semibold" style="font-size: 0.85rem; letter-spacing: 0.5px;">ESTUDIANTE (C.I Escolar)</th>
                                     <th class="py-3 text-center text-muted fw-semibold" style="font-size: 0.85rem;">STATUS</th>
-                                    <th class="py-3 text-center text-muted fw-semibold" style="font-size: 0.85rem;">ASISTENCIA HOY</th>
                                     <th class="px-4 py-3 text-end text-muted fw-semibold" style="font-size: 0.85rem;">ACCIONES RÁPIDAS</th>
                                 </tr>
                             </thead>
@@ -132,7 +135,19 @@
                                                 {{ est.nombre_completo[0]|upper }}
                                             </div>
                                             <div>
-                                                <div class="fw-bold" style="font-size: 0.95rem;">{{ est.nombre_completo }}</div>
+                                                <div class="fw-bold d-flex align-items-center gap-2" style="font-size: 0.95rem;">
+                                                    {{ est.nombre_completo }}
+                                                    {% set alerta_data = alertas_estudiantes.get(est.id) %}
+                                                    {% if alerta_data %}
+                                                    <span class="badge bg-danger rounded-pill shadow-sm d-flex align-items-center gap-1" data-bs-toggle="tooltip" title="Alerta Activa: {{ alerta_data.tipo }}">
+                                                        <i data-lucide="alert-triangle" style="width:12px;height:12px;"></i> Defensoría ({{ alerta_data.tipo }})
+                                                        {% if alerta_data.tipo == 'Incidencia' %}
+                                                        <form id="form-revisar-alerta-{{ alerta_data.id }}" action="/academico/enterado_alerta/{{ alerta_data.id }}?grado_id={{ grado.id }}" method="POST" style="display: none;"></form>
+                                                        <button type="button" class="btn btn-sm p-0 text-white ms-1" style="line-height: 1;" title="Marcar como revisado" onclick="abrirModalRevisarAlerta('{{ alerta_data.id }}')"><i data-lucide="x" style="width: 12px; height: 12px;"></i></button>
+                                                        {% endif %}
+                                                    </span>
+                                                    {% endif %}
+                                                </div>
                                                 <div class="text-muted small">{{ est.cedula_escolar }}</div>
                                             </div>
                                         </div>
@@ -148,13 +163,6 @@
                                             {% else %}
                                                 <span class="badge rounded-circle p-2 bg-danger  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="alert-circle" style="width:16px;"></i></span>
                                             {% endif %}
-                                        </div>
-                                    </td>
-                                    
-                                    <td class="text-center py-3">
-                                        <div class="form-check form-switch d-flex justify-content-center mt-1 scale-125" style="transform: scale(1.2);">
-                                            <input class="form-check-input" type="checkbox" name="asistio_{{ est.id }}" id="asistio_{{ est.id }}" checked>
-                                            <label class="form-check-label d-none" for="asistio_{{ est.id }}"></label>
                                         </div>
                                     </td>
                                     
@@ -182,6 +190,9 @@
                                             <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalFicha_{{ est.id }}">
                                                 <i data-lucide="activity" class="me-1" style="width:14px;height:14px;"></i> Ficha Médica
                                             </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalHistorialAsist_{{ est.id }}">
+                                                <i data-lucide="pie-chart" class="me-1" style="width:14px;height:14px;"></i> Historial Asist.
+                                            </button>
                                             <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalNota_{{ est.id }}">
                                                 <i data-lucide="file-plus" class="me-1" style="width:14px;height:14px;"></i> Añadir Nota
                                             </button>
@@ -199,11 +210,10 @@
                 </div>
                 
                 <div class="card-footer border-top-0 p-4 text-center">
-                    <button type="submit" class="btn btn-primary px-5 py-2 fw-bold  shadow-sm rounded-pill" style="font-size: 1.05rem; letter-spacing: 0.5px;">
-                        <i data-lucide="save" class="me-2" style="width:18px;"></i> Guardar Asistencia del Día
+                    <button type="button" class="btn btn-primary px-5 py-2 fw-bold shadow-sm rounded-pill" style="font-size: 1.05rem; letter-spacing: 0.5px;" data-bs-toggle="offcanvas" data-bs-target="#offcanvasPaseLista" onclick="abrirPaseLista()">
+                        <i data-lucide="clipboard-list" class="me-2" style="width:18px;"></i> Pase de Lista
                     </button>
                 </div>
-            </form>
         </div>
     </div>
 </div>
@@ -386,7 +396,93 @@
     </div>
 </div>
 
+<!-- Modal Historial de Asistencia -->
+<div class="modal fade" id="modalHistorialAsist_{{ est.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-secondary bg-opacity-10 text-secondary p-2 rounded-3 me-3">
+                        <i data-lucide="pie-chart" style="width:24px;height:24px;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold">Gráfica Asistencial</h5>
+                        <p class="text-muted small mb-0">{{ est.nombre_completo }} - Mes Actual</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-4 d-flex justify-content-center">
+                {% set datos_mes = datos_mensuales_estudiantes.get(est.id, {'Presente': 0, 'Ausente': 0, 'Justificado': 0}) %}
+                {% if datos_mes['Presente'] == 0 and datos_mes['Ausente'] == 0 and datos_mes['Justificado'] == 0 %}
+                    <div class="text-center text-muted p-4">
+                        <i data-lucide="inbox" style="width:48px;height:48px;color:var(--text-muted);margin-bottom:12px;"></i>
+                        <p>No hay registros de asistencia en el mes actual.</p>
+                    </div>
+                {% else %}
+                    <div style="position: relative; width: 220px; height: 220px;">
+                        <canvas id="chartAsist_{{ est.id }}"></canvas>
+                    </div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const modal = document.getElementById('modalHistorialAsist_{{ est.id }}');
+                            let chartInstance = null;
+                            
+                            modal.addEventListener('shown.bs.modal', function () {
+                                if (chartInstance) { chartInstance.destroy(); }
+                                const ctx = document.getElementById('chartAsist_{{ est.id }}').getContext('2d');
+                                chartInstance = new Chart(ctx, {
+                                    type: 'doughnut',
+                                    data: {
+                                        labels: ['Presente', 'Ausente', 'Justificado'],
+                                        datasets: [{
+                                            data: [{{ datos_mes['Presente'] }}, {{ datos_mes['Ausente'] }}, {{ datos_mes['Justificado'] }}],
+                                            backgroundColor: ['#22c55e', '#ef4444', '#f59e0b'],
+                                            borderWidth: 0,
+                                            cutout: '70%'
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: { 
+                                            legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15 } }
+                                        }
+                                    }
+                                });
+                            });
+                        });
+                    </script>
+                {% endif %}
+            </div>
+            <div class="modal-footer px-4 py-3 bg-light rounded-bottom-4 border-top-0">
+                <button type="button" class="btn btn-outline-secondary fw-semibold rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endfor %}
+
+<!-- Modal Confirmar Revisar Alerta -->
+<div class="modal fade" id="modalConfirmarRevisarAlerta" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+            <div class="modal-body p-4 text-start">
+                <h5 style="font-weight:800; color:#ef4444; display:flex; align-items:center; gap:6px;">
+                    <i data-lucide="alert-triangle" style="width:20px;height:20px;"></i> Confirmar revisión
+                </h5>
+                <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
+                    ¿Marcar esta alerta de incidencia como revisada?<br>Desaparecerá de tu vista.
+                </p>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                <button type="button" class="btn w-50" style="background: #f1f5f9; color: #64748b; border-radius: 8px; padding: 8px; border: none; font-weight: 600;" onclick="cerrarModalRevisarAlerta()">Cancelar</button>
+                <button type="button" class="btn w-50 border-0" style="background: #ef4444; color: white; border-radius: 8px; padding: 8px; font-weight: 600; display:flex; justify-content:center; align-items:center;" onclick="ejecutarRevisarAlerta()">Sí, marcar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal Nuevo Ingreso -->
 <div class="modal fade" id="modalNuevoIngreso" tabindex="-1" aria-hidden="true">
@@ -424,6 +520,18 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        if(typeof flatpickr !== 'undefined') {
+            flatpickr("#inputFechaLista", {
+                locale: "es",
+                altInput: true,
+                altFormat: "F j, Y",
+                dateFormat: "Y-m-d",
+                onChange: function(selectedDates, dateStr, instance) {
+                    cargarEstudiantesLista();
+                }
+            });
+        }
+
         const asist = {{ asistencia_promedio_salon | default(0) }};
         const ctxA = document.getElementById('chartAsistencia');
         if(ctxA) {
@@ -472,6 +580,234 @@
             });
         }
     });
+</script>
+<!-- Offcanvas Pase de Lista -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasPaseLista" aria-labelledby="offcanvasPaseListaLabel" style="width: 500px; max-width: 100vw; background: var(--surface);">
+    <div class="offcanvas-header border-bottom border-secondary border-opacity-25">
+        <h5 class="offcanvas-title fw-bold d-flex align-items-center gap-2" id="offcanvasPaseListaLabel">
+            <i data-lucide="clipboard-list" class="text-primary"></i> Pase de Lista
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column" style="padding: 0;">
+        
+        <div class="p-4 border-bottom" style="background: var(--surface-container-lowest);">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h6 class="fw-bold mb-1">{{ grado.nombre }}</h6>
+                    <div class="text-muted small" id="fechaDisplayLista"></div>
+                </div>
+                <div class="input-group input-group-sm w-auto shadow-sm" style="min-width: 150px; flex-wrap: nowrap;">
+                    <span class="input-group-text bg-primary text-white border-primary" style="cursor: pointer;" onclick="document.getElementById('inputFechaLista')._flatpickr.open()"><i data-lucide="calendar" style="width: 16px; height: 16px;"></i></span>
+                    <input type="text" id="inputFechaLista" class="form-control form-control-sm" value="{{ fecha_hoy }}" style="background-color: var(--surface); color: var(--text-main); border-color: var(--border-color); text-align: center; cursor: pointer;">
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="d-flex gap-2">
+                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1" id="countPresentLista">✓ 0</span>
+                    <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1" id="countAbsentLista">✗ 0</span>
+                    <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2 py-1" id="countJustifiedLista">⊘ 0</span>
+                </div>
+                <button class="btn btn-sm btn-outline-success rounded-pill fw-bold" style="font-size: 0.7rem;" onclick="marcarTodosLista('Presente')">✓ Todos Presentes</button>
+            </div>
+        </div>
+
+        <ul class="list-group list-group-flush flex-grow-1 overflow-auto" id="studentListLista" style="max-height: calc(100vh - 250px);">
+            <!-- Students loaded via JS -->
+            <div class="text-center py-5 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                <div>Cargando estudiantes...</div>
+            </div>
+        </ul>
+
+        <div class="p-3 border-top mt-auto" style="background: var(--surface-container-lowest);">
+            <button class="btn btn-primary w-100 rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2" id="btnGuardarLista" onclick="guardarAsistenciaLista()">
+                <i data-lucide="save" style="width:18px;"></i> Guardar Asistencia
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .status-btn-lista {
+        padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border-color);
+        background: transparent; font-size: 0.7rem; font-weight: 700;
+        cursor: pointer; transition: all 0.2s; color: var(--on-surface-variant);
+    }
+    .status-btn-lista.active-present { background: #059669; color: #fff; border-color: #059669; }
+    .status-btn-lista.active-absent { background: #ef4444; color: #fff; border-color: #ef4444; }
+    .status-btn-lista.active-justified { background: #d97706; color: #fff; border-color: #d97706; }
+</style>
+
+<script>
+let idParaRevisarAlerta = null;
+let modalRevisarAlertaInstance = null;
+
+function abrirModalRevisarAlerta(id) {
+    idParaRevisarAlerta = 'form-revisar-alerta-' + id;
+    const modalEl = document.getElementById('modalConfirmarRevisarAlerta');
+    if (!modalRevisarAlertaInstance) {
+        modalRevisarAlertaInstance = new bootstrap.Modal(modalEl);
+    }
+    modalRevisarAlertaInstance.show();
+}
+
+function cerrarModalRevisarAlerta() {
+    if (modalRevisarAlertaInstance) {
+        modalRevisarAlertaInstance.hide();
+    }
+}
+
+function ejecutarRevisarAlerta() {
+    if (idParaRevisarAlerta) {
+        document.getElementById(idParaRevisarAlerta).submit();
+    }
+}
+
+let estudiantesListaData = [];
+const gradoIdActual = "{{ grado.id }}";
+
+function abrirPaseLista() {
+    const inputFecha = document.getElementById('inputFechaLista');
+    if(!inputFecha.value) {
+        inputFecha.value = new Date().toISOString().split('T')[0];
+    }
+    document.getElementById('fechaDisplayLista').textContent = inputFecha.value;
+    cargarEstudiantesLista();
+}
+
+function cargarEstudiantesLista() {
+    const fecha = document.getElementById('inputFechaLista').value;
+    document.getElementById('fechaDisplayLista').textContent = fecha;
+    const list = document.getElementById('studentListLista');
+    list.innerHTML = '<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary mb-2"></div><div>Cargando estudiantes...</div></div>';
+    
+    fetch(`/academico/api/asistencia_estudiantes/${gradoIdActual}/${fecha}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                list.innerHTML = `<div class="text-center py-5 text-danger">${data.error}</div>`;
+                return;
+            }
+            estudiantesListaData = data.estudiantes.map(est => ({
+                ...est,
+                estatus: est.estatus || 'Presente'
+            }));
+            renderListaAlumnos();
+        })
+        .catch(err => {
+            list.innerHTML = `<div class="text-center py-5 text-danger">Error al cargar la lista.</div>`;
+        });
+}
+
+function renderListaAlumnos() {
+    const list = document.getElementById('studentListLista');
+    list.innerHTML = '';
+    
+    if(estudiantesListaData.length === 0) {
+        list.innerHTML = '<div class="text-center py-5 text-muted">No hay estudiantes.</div>';
+        updateCountersLista();
+        return;
+    }
+
+    estudiantesListaData.forEach((est, idx) => {
+        const initial = est.nombre_completo ? est.nombre_completo[0].toUpperCase() : '?';
+        const isFemale = (est.genero || '').toLowerCase().startsWith('f');
+        const bg = isFemale ? 'linear-gradient(135deg, #ec4899, #f472b6)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)';
+        
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex flex-column gap-2 py-3 px-4 border-bottom';
+        li.style.background = 'transparent';
+        
+        li.innerHTML = `
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 36px; height: 36px; background: ${bg}; font-size: 0.85rem;">
+                    ${initial}
+                </div>
+                <div>
+                    <div class="fw-bold" style="font-size: 0.9rem;">${est.nombre_completo}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">${est.cedula_escolar || ''}</div>
+                </div>
+            </div>
+            <div class="d-flex gap-1 mt-1 justify-content-end">
+                <button class="status-btn-lista ${est.estatus === 'Presente' ? 'active-present' : ''}" onclick="setEstatusLista(${idx}, 'Presente')">Presente</button>
+                <button class="status-btn-lista ${est.estatus === 'Ausente' ? 'active-absent' : ''}" onclick="setEstatusLista(${idx}, 'Ausente')">Ausente</button>
+                <button class="status-btn-lista ${est.estatus === 'Justificado' ? 'active-justified' : ''}" onclick="setEstatusLista(${idx}, 'Justificado')">Justificado</button>
+            </div>
+        `;
+        list.appendChild(li);
+    });
+    
+    updateCountersLista();
+}
+
+function setEstatusLista(idx, estatus) {
+    estudiantesListaData[idx].estatus = estatus;
+    renderListaAlumnos();
+}
+
+function marcarTodosLista(estatus) {
+    estudiantesListaData.forEach(est => est.estatus = estatus);
+    renderListaAlumnos();
+}
+
+function updateCountersLista() {
+    const present = estudiantesListaData.filter(e => e.estatus === 'Presente').length;
+    const absent = estudiantesListaData.filter(e => e.estatus === 'Ausente').length;
+    const justified = estudiantesListaData.filter(e => e.estatus === 'Justificado').length;
+
+    document.getElementById('countPresentLista').textContent = `✓ ${present}`;
+    document.getElementById('countAbsentLista').textContent = `✗ ${absent}`;
+    document.getElementById('countJustifiedLista').textContent = `⊘ ${justified}`;
+}
+
+function guardarAsistenciaLista() {
+    const fecha = document.getElementById('inputFechaLista').value;
+    const btn = document.getElementById('btnGuardarLista');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...';
+
+    const payload = {
+        grado_id: parseInt(gradoIdActual),
+        fecha: fecha,
+        asistencias: estudiantesListaData.map(est => ({
+            estudiante_id: est.id,
+            estatus: est.estatus
+        }))
+    };
+
+    fetch('/academico/guardar_asistencia_estudiantes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="save" style="width:18px;"></i> Guardar Asistencia';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        
+        if (data.success) {
+            // Close offcanvas
+            const offcanvasEl = document.getElementById('offcanvasPaseLista');
+            const offcanvasInstance = bootstrap.Offcanvas.getInstance(offcanvasEl);
+            if (offcanvasInstance) offcanvasInstance.hide();
+            
+            // Reload page to reflect new attendance metrics
+            window.location.reload();
+        } else {
+            alert(data.error || 'Error al guardar.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error de conexión.');
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="save" style="width:18px;"></i> Guardar Asistencia';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+}
 </script>
 {% endif %}
 {% endblock %}
