@@ -168,6 +168,11 @@ def index():
                            solicitudes_defensoria=solicitudes_defensoria,
                            actividades_recientes=actividades_recientes)
 
+@app.route('/modulo_construccion')
+def modulo_construccion():
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+    return render_template('construccion.html')
+
 @app.route('/dashboard_general')
 def ver_dashboard_general():
     if not session.get('logeado'): return redirect(url_for('auth.login'))
