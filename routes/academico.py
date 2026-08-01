@@ -508,7 +508,7 @@ def mi_aula():
         
         incidencias_salon = Incidencia.query.filter(Incidencia.estudiante_id.in_(estudiante_ids)).all()
         for inc in incidencias_salon:
-            if inc.fecha.month == mes_actual and inc.categoria in datos_incidencias:
+            if inc.fecha and inc.fecha.month == mes_actual and inc.categoria in datos_incidencias:
                 datos_incidencias[inc.categoria] += 1
                 
         treinta_dias_atras = date.today() - timedelta(days=30)
@@ -551,7 +551,7 @@ def mi_aula():
             alertas_activas[est.id] = False
             
         for a in asistencias_mes:
-            if a.fecha.month == hoy.month and a.fecha.year == hoy.year:
+            if a.fecha and a.fecha.month == hoy.month and a.fecha.year == hoy.year:
                 if a.estatus in datos_mensuales[a.estudiante_id]:
                     datos_mensuales[a.estudiante_id][a.estatus] += 1
                     
@@ -563,7 +563,7 @@ def mi_aula():
         
         for alerta in alertas:
             # Simplificar el motivo para mostrarlo en el badge
-            tipo_alerta = "Inasistencia" if "inasistencia" in alerta.motivo.lower() else "Incidencia"
+            tipo_alerta = "Inasistencia" if alerta.motivo and "inasistencia" in alerta.motivo.lower() else "Incidencia"
             alertas_activas[alerta.estudiante_id] = {'tipo': tipo_alerta, 'id': alerta.id}
 
     return render_template('mi_aula.html', 
