@@ -129,10 +129,11 @@ def index():
     if 'dashboard' not in permisos.split(','):
         if session.get('nombre_rol') in ['Obrero', 'Personal de Vigilancia', 'Personal de Cocina']:
             return redirect(url_for('portal_trabajador'))
+        config_inst = ConfiguracionInstitucional.query.first()
         return render_template('dashboard_general.html', fecha_full=fecha_hoy_esp,
                                matricula_hoy=mat_hoy, asistentes_hoy=asist_hoy, 
                                porcentaje_hoy=porc_hoy, anuncios=ultimos_anuncios,
-                               total_v=total_v, total_h=total_h)
+                               total_v=total_v, total_h=total_h, config_inst=config_inst)
 
     registros_pers_hoy = AsistenciaPersonal.query.filter_by(fecha=date.today()).all()
     mat_pers_hoy = sum(r.matricula_base for r in registros_pers_hoy)
