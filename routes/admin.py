@@ -201,7 +201,7 @@ def modificar_usuario(id):
                 usuario.username = nuevo_username_clean
                 cambios_realizados.append(f"Usuario cambiado de '{old_username}' a '{nuevo_username_clean}'")
 
-    if nuevo_departamento is not None and 'Administrativo' in (usuario.area_trabajo or ''):
+    if nuevo_departamento is not None and ('Administrativo' in (usuario.area_trabajo or '') or 'Especialista' in (usuario.area_trabajo or '')):
         # Even if it's an empty string (Ninguno), we save it (or None)
         depto = nuevo_departamento if nuevo_departamento != "" else None
         if usuario.departamento_asignado != depto:

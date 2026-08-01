@@ -262,7 +262,7 @@
             const deptoSelect = document.getElementById('departamento-select');
 
             areaSelect.addEventListener('change', function() {
-                if (this.value === 'Administrativo') {
+                if (this.value === 'Administrativo' || this.value === 'Especialista (Robótica / Deportes)') {
                     deptoContainer.style.display = 'block';
                 } else {
                     deptoContainer.style.display = 'none';

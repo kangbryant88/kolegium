@@ -44,7 +44,7 @@ def registro():
             return render_template('registro.html', error="El usuario o el correo ya están registrados.")
         area_trab = request.form['area_trabajo']
         depto_asignado = request.form.get('departamento_asignado', None)
-        if area_trab != 'Administrativo' or not depto_asignado:
+        if area_trab not in ['Administrativo', 'Especialista (Robótica / Deportes)'] or not depto_asignado:
             depto_asignado = None
 
         nuevo = Usuario(nombre_completo=request.form['nombre_completo'], username=u_name, email=e_mail,

@@ -359,8 +359,8 @@
                                 <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Nombre de Usuario</label>
                                 <input type="text" name="username" value="{{ usuario.username }}" class="edu-input mb-3" style="width: 100%;" required placeholder="Nuevo usuario">
                                 
-                                {% if 'Administrativo' in (usuario.area_trabajo or '') %}
-                                <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Departamento Asignado (Solo Administrativos)</label>
+                                {% if 'Administrativo' in (usuario.area_trabajo or '') or 'Especialista' in (usuario.area_trabajo or '') %}
+                                <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Departamento Asignado</label>
                                 <select name="departamento_asignado" class="edu-select mb-3" style="width: 100%;">
                                     <option value="" {% if not usuario.departamento_asignado %}selected{% endif %}>Ninguno</option>
                                     <option value="Defensoría" {% if usuario.departamento_asignado == 'Defensoría' %}selected{% endif %}>Defensoría</option>
