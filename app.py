@@ -16,7 +16,7 @@ import urllib.parse
 from dotenv import load_dotenv
 
 from config import Config
-from models import db, Rol, Usuario, Anuncio, Bitacora, PlanificacionDefensoria, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Representante, Estudiante, EnlaceTemporal, Incidencia, AsistenciaEstudiante, AlertaDefensoria, Brigada, Acta, SolicitudEnlace, SolicitudActualizacion, SolicitudDefensoria, TokenRecuperacion
+from models import db, Rol, Usuario, Anuncio, Bitacora, PlanificacionDefensoria, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Representante, Estudiante, EnlaceTemporal, Incidencia, AsistenciaEstudiante, AlertaDefensoria, Brigada, Acta, SolicitudEnlace, SolicitudActualizacion, SolicitudDefensoria, TokenRecuperacion, ConfiguracionInstitucional
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -50,6 +50,7 @@ with app.app_context():
     PERMISOS_POR_ROL = {
         'Administrador Supremo': 'dashboard,planificador,asistencia,defensoria,configuracion,admin,anuncios',
         'Equipo Directivo': 'dashboard,asistencia,configuracion,admin,anuncios',
+        'Coordinador / Administrativo': 'dashboard_general,asistencia,anuncios,planificador',
         'Docente de Aula': 'planificador,asistencia,anuncios',
         'Docente Especialista': 'planificador,asistencia,anuncios',
         'Defensoría Estudiantil': 'defensoria,anuncios',
@@ -89,8 +90,17 @@ def obtener_estudiantes_por_docente(usuario_id):
 
 def auth_defensoria():
     if not session.get('logeado'): return False
-    rol_permitido = session.get('nombre_rol') in ['Defensoría Estudiantil', 'Equipo Directivo', 'Administrador Supremo']
-    return rol_permitido
+    
+    nombre_rol = session.get('nombre_rol')
+    depto = session.get('departamento_asignado')
+    
+    if nombre_rol in ['Defensoría Estudiantil', 'Equipo Directivo', 'Administrador Supremo']:
+        return True
+        
+    if nombre_rol == 'Coordinador / Administrativo' and depto == 'Defensoría':
+        return True
+        
+    return False
 
 # ==========================================
 # --- 3. DASHBOARD Y AUTENTICACIÓN ---
@@ -100,13 +110,6 @@ def auth_defensoria():
 def index():
     if not session.get('logeado'): return render_template('landing.html')
     permisos = session.get('permisos', '')
-    if 'dashboard' not in permisos:
-        if session.get('nombre_rol') in ['Obrero', 'Personal de Vigilancia', 'Personal de Cocina']:
-            return redirect(url_for('portal_trabajador'))
-        if 'planificador' in permisos: return redirect(url_for('academico.planificador'))
-        if 'defensoria' in permisos: return redirect(url_for('defensoria'))
-        if 'asistencia' in permisos: return redirect(url_for('academico.asistencia'))
-        return redirect(url_for('auth.en_espera'))
 
     ahora = datetime.now()
     dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
@@ -117,6 +120,19 @@ def index():
     mat_hoy = sum(r.matricula_total for r in registros_hoy)
     asist_hoy = sum(r.asistentes for r in registros_hoy)
     porc_hoy = round((asist_hoy / mat_hoy) * 100, 1) if mat_hoy > 0 else 0.0
+
+    total_v = sum(g.total_varones for g in Grado.query.all())
+    total_h = sum(g.total_hembras for g in Grado.query.all())
+    ultimos_anuncios = Anuncio.query.order_by(Anuncio.fecha.desc()).limit(3).all()
+
+    # Si NO tiene el permiso EXACTO de 'dashboard'
+    if 'dashboard' not in permisos.split(','):
+        if session.get('nombre_rol') in ['Obrero', 'Personal de Vigilancia', 'Personal de Cocina']:
+            return redirect(url_for('portal_trabajador'))
+        return render_template('dashboard_general.html', fecha_full=fecha_hoy_esp,
+                               matricula_hoy=mat_hoy, asistentes_hoy=asist_hoy, 
+                               porcentaje_hoy=porc_hoy, anuncios=ultimos_anuncios,
+                               total_v=total_v, total_h=total_h)
 
     registros_pers_hoy = AsistenciaPersonal.query.filter_by(fecha=date.today()).all()
     mat_pers_hoy = sum(r.matricula_base for r in registros_pers_hoy)
@@ -140,7 +156,6 @@ def index():
     actualizaciones_pendientes = SolicitudActualizacion.query.filter_by(estado='Pendiente').all()
     solicitudes_defensoria = SolicitudDefensoria.query.filter_by(estado='Pendiente').order_by(SolicitudDefensoria.fecha_solicitud.asc()).all()
     actividades_recientes = Bitacora.query.order_by(Bitacora.fecha.desc()).limit(4).all()
-
     return render_template('index.html', fecha_full=fecha_hoy_esp, matricula_hoy=mat_hoy, 
                            asistentes_hoy=asist_hoy, porcentaje_hoy=porc_hoy,
                            total_v=total_v, total_h=total_h, anuncios=ultimos_anuncios,
@@ -151,6 +166,31 @@ def index():
                            actualizaciones_pendientes=actualizaciones_pendientes, 
                            solicitudes_defensoria=solicitudes_defensoria,
                            actividades_recientes=actividades_recientes)
+
+@app.route('/dashboard_general')
+def ver_dashboard_general():
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+    
+    ahora = datetime.now()
+    dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+    fecha_hoy_esp = f"{dias[ahora.weekday()]}, {ahora.day} de {meses[ahora.month-1]} de {ahora.year}"
+
+    registros_hoy = AsistenciaDiaria.query.filter_by(fecha=ahora.date()).all()
+    mat_hoy = sum(r.matricula_total for r in registros_hoy)
+    asist_hoy = sum(r.asistentes for r in registros_hoy)
+    porc_hoy = round((asist_hoy / mat_hoy) * 100, 1) if mat_hoy > 0 else 0.0
+
+    total_v = sum(g.total_varones for g in Grado.query.all())
+    total_h = sum(g.total_hembras for g in Grado.query.all())
+    ultimos_anuncios = Anuncio.query.order_by(Anuncio.fecha.desc()).limit(3).all()
+
+    config_inst = ConfiguracionInstitucional.query.first()
+    
+    return render_template('dashboard_general.html', fecha_full=fecha_hoy_esp,
+                           matricula_hoy=mat_hoy, asistentes_hoy=asist_hoy, 
+                           porcentaje_hoy=porc_hoy, anuncios=ultimos_anuncios,
+                           total_v=total_v, total_h=total_h, config_inst=config_inst)
 
 @app.route('/dashboard/aprobar_solicitud/<int:id>', methods=['POST'])
 def aprobar_solicitud(id):
@@ -414,10 +454,37 @@ def configuracion():
             db.session.add(nuevo_grado)
         if 'nuevo_tema' in request.form:
             db.session.add(Tema(nombre=request.form['nuevo_tema'], usuario_id=session['usuario_id']))
+        if 'config_inst' in request.form:
+            conf = ConfiguracionInstitucional.query.first()
+            if not conf:
+                conf = ConfiguracionInstitucional()
+                db.session.add(conf)
+            conf.nombre_escuela = request.form.get('nombre_escuela')
+            conf.director = request.form.get('director')
+            conf.telefono_director = request.form.get('telefono_director')
+            conf.correo_director = request.form.get('correo_director')
+            conf.codigo_estadistico = request.form.get('codigo_estadistico')
+            conf.codigo_dea = request.form.get('codigo_dea')
+            conf.codigo_administrativo = request.form.get('codigo_administrativo')
+            conf.codigo_dependencia = request.form.get('codigo_dependencia')
+            conf.codigo_sunagro = request.form.get('codigo_sunagro')
+            conf.rif_escuela = request.form.get('rif_escuela')
+            conf.rif_consejo = request.form.get('rif_consejo')
+            conf.dependencia = request.form.get('dependencia')
+            conf.ubicacion_geografica = request.form.get('ubicacion_geografica')
+            conf.clase_plantel = request.form.get('clase_plantel')
+            conf.ano_fundacion = request.form.get('ano_fundacion')
+            conf.telefono_escuela = request.form.get('telefono_escuela')
+            conf.correo_escuela = request.form.get('correo_escuela')
+            conf.supervisora = request.form.get('supervisora')
+            conf.direccion = request.form.get('direccion')
+            conf.circuito = request.form.get('circuito')
+
         db.session.commit(); return redirect(url_for('configuracion'))
         
     docentes = Usuario.query.join(Rol).filter(Rol.nombre == 'Docente de Aula').all()
-    return render_template('configuracion.html', grados=Grado.query.all(), temas=Tema.query.all(), docentes=docentes)
+    config_inst = ConfiguracionInstitucional.query.first()
+    return render_template('configuracion.html', grados=Grado.query.all(), temas=Tema.query.all(), docentes=docentes, config_inst=config_inst)
 
 @app.route('/editar_grado/<int:id>', methods=['POST'])
 def editar_grado(id):

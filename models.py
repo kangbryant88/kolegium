@@ -13,6 +13,29 @@ class Rol(db.Model):
     permisos = db.Column(db.String(500), nullable=False, default="")
     usuarios = db.relationship('Usuario', backref='rol_info', lazy=True)
 
+class ConfiguracionInstitucional(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre_escuela = db.Column(db.String(150), nullable=True)
+    director = db.Column(db.String(100), nullable=True)
+    telefono_director = db.Column(db.String(50), nullable=True)
+    correo_director = db.Column(db.String(100), nullable=True)
+    codigo_estadistico = db.Column(db.String(50), nullable=True)
+    codigo_dea = db.Column(db.String(50), nullable=True)
+    codigo_administrativo = db.Column(db.String(50), nullable=True)
+    codigo_dependencia = db.Column(db.String(50), nullable=True)
+    codigo_sunagro = db.Column(db.String(50), nullable=True)
+    rif_escuela = db.Column(db.String(50), nullable=True)
+    rif_consejo = db.Column(db.String(50), nullable=True)
+    dependencia = db.Column(db.String(50), nullable=True)
+    ubicacion_geografica = db.Column(db.String(50), nullable=True)
+    clase_plantel = db.Column(db.String(50), nullable=True)
+    ano_fundacion = db.Column(db.String(10), nullable=True)
+    telefono_escuela = db.Column(db.String(50), nullable=True)
+    correo_escuela = db.Column(db.String(100), nullable=True)
+    supervisora = db.Column(db.String(100), nullable=True)
+    direccion = db.Column(db.Text, nullable=True)
+    circuito = db.Column(db.String(50), nullable=True)
+
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -21,6 +44,7 @@ class Usuario(db.Model):
     area_trabajo = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String(200), nullable=False)
     rol_id = db.Column(db.Integer, db.ForeignKey('rol.id'), nullable=True)
+    departamento_asignado = db.Column(db.String(50), nullable=True)
     # Autogestión MPPE y Expediente Digital
     usuario_autogestion = db.Column(db.String(100), nullable=True)
     clave_autogestion = db.Column(db.String(100), nullable=True)

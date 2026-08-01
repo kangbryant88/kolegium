@@ -11,12 +11,14 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        u = Usuario.query.filter_by(username=request.form['username']).first()
+        username_limpio = request.form['username'].strip().lower()
+        u = Usuario.query.filter_by(username=username_limpio).first()
         if u and check_password_hash(u.password, request.form['password']):
             session.update({
                 'logeado': True, 'usuario_id': u.id, 'username': u.username, 
                 'nombre_completo': u.nombre_completo, 'area_trabajo': u.area_trabajo,
-                'rol_id': u.rol_id, 'foto_perfil_path': u.foto_perfil_path
+                'rol_id': u.rol_id, 'foto_perfil_path': u.foto_perfil_path,
+                'departamento_asignado': u.departamento_asignado
             })
             if u.rol_info:
                 session['permisos'], session['nombre_rol'] = u.rol_info.permisos, u.rol_info.nombre
@@ -31,11 +33,22 @@ def login():
 @auth_bp.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
-        u_name, e_mail = request.form['username'], request.form['email']
+        u_name_raw = request.form['username']
+        if ' ' in u_name_raw:
+            return render_template('registro.html', error="El nombre de usuario no puede contener espacios. Intente con un formato continuo como 'mariaperez' o 'mperez'.")
+            
+        u_name = u_name_raw.strip().lower()
+        e_mail = request.form['email']
+        
         if Usuario.query.filter((Usuario.username == u_name) | (Usuario.email == e_mail)).first():
             return render_template('registro.html', error="El usuario o el correo ya están registrados.")
+        area_trab = request.form['area_trabajo']
+        depto_asignado = request.form.get('departamento_asignado', None)
+        if area_trab != 'Coordinador / Administrativo' or not depto_asignado:
+            depto_asignado = None
+
         nuevo = Usuario(nombre_completo=request.form['nombre_completo'], username=u_name, email=e_mail,
-                        area_trabajo=request.form['area_trabajo'],
+                        area_trabajo=area_trab, departamento_asignado=depto_asignado,
                         password=generate_password_hash(request.form['password'], method='pbkdf2:sha256'))
         db.session.add(nuevo); db.session.commit()
         if Usuario.query.count() == 1:

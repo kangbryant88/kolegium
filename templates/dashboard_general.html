@@ -1,0 +1,326 @@
+{% extends"base.html" %}
+
+{% block title %}Dashboard General - Kolegium{% endblock %}
+{% block header_title %}Dashboard Institucional{% endblock %}
+
+{% block extra_css %}
+<style>
+    .welcome-card {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+    .welcome-card::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        background: linear-gradient(180deg, var(--primary), var(--primary-container));
+        border-radius: 16px 0 0 16px;
+    }
+    .welcome-title {
+        font-size: 1.65rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        background: linear-gradient(135deg, var(--text-main), var(--primary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 4px;
+    }
+    .metric-card {
+        border-radius: 20px;
+        padding: 24px;
+        color: #fff;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 15px 35px rgba(15, 23, 42, 0.12);
+    }
+    .metric-card.blue { background: linear-gradient(135deg, var(--primary), var(--primary-container)); }
+    .metric-card.green { background: linear-gradient(135deg, #059669, #10b981); }
+    .metric-card.purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .metric-icon-bg {
+        position: absolute;
+        top: -15px;
+        right: -15px;
+        width: 110px;
+        height: 110px;
+        opacity: 0.15;
+        transform: rotate(-10deg);
+        pointer-events: none;
+    }
+    .metric-card .label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.85;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+    .metric-card .value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1;
+        margin-bottom: 6px;
+    }
+    .metric-card .detail {
+        font-size: 0.8rem;
+        font-weight: 600;
+        opacity: 0.9;
+    }
+    .info-card {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        height: 100%;
+    }
+    .info-card .card-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--on-surface-variant);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+    .info-item {
+        margin-bottom: 12px;
+    }
+    .info-item span {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+    .info-item strong {
+        font-size: 0.9rem;
+        color: var(--text-main);
+    }
+    .feed-card {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .feed-item {
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .feed-item:last-child {
+        border-bottom: none;
+    }
+    .feed-item h6 {
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        color: var(--text-main);
+    }
+    .inst-section {
+        background: var(--surface-container);
+        padding: 1.5rem;
+        border-radius: 12px;
+        height: 100%;
+        border: 1px solid var(--border-color);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .inst-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .inst-section-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 1.2rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .inst-data {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 12px;
+        letter-spacing: 0.5px;
+    }
+    .inst-data strong {
+        color: var(--text-main);
+        font-size: 0.9rem;
+        font-weight: 700;
+        display: block;
+        margin-top: 4px;
+        text-transform: none;
+        letter-spacing: 0;
+    }
+    .inst-data:last-child {
+        margin-bottom: 0;
+    }
+    .feed-item p {
+        font-size: 0.8rem;
+        color: var(--on-surface-variant);
+        margin: 0;
+    }
+    @media (max-width: 768px) {
+        .welcome-card { padding: 20px; }
+        .welcome-title { font-size: 1.3rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="w-100 px-4 px-md-5">
+
+    <div class="welcome-card d-flex flex-column flex-md-row justify-content-between align-items-center">
+        <div class="text-center text-md-start">
+            <h1 class="welcome-title">¡Bienvenido, {{ session['nombre_completo'] }}!</h1>
+            <p style="color: var(--on-surface-variant); font-size: 0.9rem; margin: 0;">
+                <i data-lucide="calendar" style="width:15px;height:15px;vertical-align:-2px;margin-right:4px;"></i>
+                {{ fecha_full }}
+            </p>
+        </div>
+        <div class="d-none d-lg-flex align-items-center gap-3">
+            {% if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo'] %}
+            <a href="/" class="btn-return-admin" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: #059669; font-size: 0.8rem; font-weight: 700; transition: all 0.2s;">
+                <i data-lucide="arrow-left" style="width:16px; height:16px;"></i>
+                Volver al Panel Directivo
+            </a>
+            {% endif %}
+            <div class="server-chip" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 12px; background: rgba(70, 72, 212, 0.06); font-size: 0.8rem; font-weight: 600;">
+                <i data-lucide="rocket"></i>
+                <span style="color: var(--primary);">Estado del Servidor</span>
+                <span class="status-dot" style="width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981;"></span>
+                <span style="color: #10b981; font-size: 0.75rem;">Activo</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6">
+            <div class="metric-card blue">
+                <i data-lucide="users" class="metric-icon-bg"></i>
+                <div class="label"><i data-lucide="graduation-cap"></i> ESTUDIANTES MATRICULADOS</div>
+                <div class="value">{{ total_v + total_h }}</div>
+                <div class="detail"><i data-lucide="user"></i> {{ total_v }} Varones | {{ total_h }} Hembras</div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6">
+            <div class="metric-card green">
+                <i data-lucide="check-circle" class="metric-icon-bg"></i>
+                <div class="label"><i data-lucide="user-check"></i> ASISTENCIA GLOBAL</div>
+                <div class="value">{{ porcentaje_hoy }}%</div>
+                <div class="detail"><i data-lucide="users"></i> {{ asistentes_hoy }} presentes hoy en toda la institución</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="info-card">
+                <div class="card-label mb-4" style="font-size: 1rem;"><i data-lucide="building" style="color: var(--primary); width:18px; height:18px;"></i> {{ config_inst.nombre_escuela if config_inst and config_inst.nombre_escuela else "DATOS INSTITUCIONALES" }}</div>
+                
+                <div class="row g-3">
+                    <!-- Equipo y Supervisión -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="inst-section">
+                            <div class="inst-section-title"><i data-lucide="users" style="width:16px;height:16px;"></i> Equipo y Supervisión</div>
+                            <div class="inst-data">Director(a) <strong>{{ config_inst.director if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">Teléfono Director <strong>{{ config_inst.telefono_director if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">Correo Director <strong>{{ config_inst.correo_director if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">Supervisora <strong>{{ config_inst.supervisora if config_inst else 'No definido' }}</strong></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Identificación Legal -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="inst-section">
+                            <div class="inst-section-title"><i data-lucide="shield" style="width:16px;height:16px;"></i> Identificación Legal</div>
+                            <div class="inst-data">Código DEA <strong>{{ config_inst.codigo_dea if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">Código Estadístico <strong>{{ config_inst.codigo_estadistico if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">Cód. Administrativo <strong>{{ config_inst.codigo_administrativo if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">Cód. Dependencia <strong>{{ config_inst.codigo_dependencia if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">Código SUNAGRO <strong>{{ config_inst.codigo_sunagro if config_inst else 'No definido' }}</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Registro y Estatus -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="inst-section">
+                            <div class="inst-section-title"><i data-lucide="file-text" style="width:16px;height:16px;"></i> Registro y Estatus</div>
+                            <div class="inst-data">RIF Escuela <strong>{{ config_inst.rif_escuela if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">RIF Consejo Edu. <strong>{{ config_inst.rif_consejo if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">Dependencia <strong>{{ config_inst.dependencia if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">Circuito <strong>{{ config_inst.circuito if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">Año de Fundación <strong>{{ config_inst.ano_fundacion if config_inst else 'No definido' }}</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Ubicación y Contacto -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="inst-section">
+                            <div class="inst-section-title"><i data-lucide="map-pin" style="width:16px;height:16px;"></i> Ubicación y Contacto</div>
+                            <div class="inst-data">Teléfono Escuela <strong>{{ config_inst.telefono_escuela if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">Correo Escuela <strong>{{ config_inst.correo_escuela if config_inst else 'No definido' }}</strong></div>
+                            <div class="inst-data">Ubicación / Clase <strong>{{ config_inst.ubicacion_geografica if config_inst else '' }} / {{ config_inst.clase_plantel if config_inst else '' }}</strong></div>
+                            <div class="inst-data">Dirección <strong style="font-size:0.8rem;">{{ config_inst.direccion if config_inst else 'No definido' }}</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="feed-card flex-grow-1 d-flex flex-column">
+                <div class="card-label"><i data-lucide="bell" style="color: var(--primary); width:16px; height:16px;"></i> ÚLTIMOS ANUNCIOS</div>
+                <div style="flex:1; overflow-y: auto;">
+                    {% for a in anuncios %}
+                    <div class="feed-item">
+                        <h6>{{ a.titulo }}</h6>
+                        <p>{{ a.mensaje }}</p>
+                        <small style="font-size: 0.7rem; color: var(--text-muted);">Publicado: {{ a.fecha.strftime('%d/%m/%Y') }}</small>
+                    </div>
+                    {% else %}
+                    <div class="empty-feed" style="text-align:center; padding: 2rem 0; opacity:0.5;">
+                        <i data-lucide="inbox" style="width:32px; height:32px; margin-bottom:8px;"></i>
+                        <p style="font-size: 0.8rem;">No hay anuncios recientes.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

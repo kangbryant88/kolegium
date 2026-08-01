@@ -64,7 +64,12 @@
             <nav class="sidebar-nav">
                 <div class="nav-section-label">Módulos</div>
 
-                {% if 'dashboard' in mis_permisos %}
+                {% if 'dashboard' in mis_permisos.split(',') %}
+                <a href="/" class="sidebar-link {% if request.path == '/' %}active{% endif %}">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span class="link-label">Dashboard</span>
+                </a>
+                {% elif session.get('nombre_rol') not in ['Obrero', 'Personal de Vigilancia', 'Personal de Cocina', 'Espera', 'Pendiente', 'Sin Rol'] %}
                 <a href="/" class="sidebar-link {% if request.path == '/' %}active{% endif %}">
                     <i data-lucide="layout-dashboard"></i>
                     <span class="link-label">Dashboard</span>

@@ -101,6 +101,11 @@
     .btn-save-sm i { width: 14px; height: 14px; }
 
     .modal-form-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--on-surface-variant); margin-bottom: 6px; display: block; }
+
+    .config-section-title { font-size: 0.8rem; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-top: 1.5rem; margin-bottom: 1.5rem; }
+    .config-section-title i { width: 16px; height: 16px; }
+    
+    .inst-row { margin-bottom: 1.5rem; }
 </style>
 {% endblock %}
 
@@ -284,6 +289,117 @@
     </div>
     
     <div class="row g-3">
+        <div class="col-12 mb-4">
+            <div class="config-card">
+                <div class="card-top"><i data-lucide="building"></i> Datos Institucionales (Dashboard General)</div>
+                <div class="card-inner">
+                    <form action="/configuracion" method="POST" class="form-area">
+                        <input type="hidden" name="config_inst" value="1">
+                        
+                        <h6 class="config-section-title mt-0"><i data-lucide="users"></i> Equipo Directivo y Supervisión</h6>
+                        <div class="row g-3 inst-row">
+                            <div class="col-md-3">
+                                <label class="modal-form-label">Director(a)</label>
+                                <input type="text" name="director" class="edu-input" value="{{ config_inst.director if config_inst else '' }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="modal-form-label">Teléfono Director</label>
+                                <input type="text" name="telefono_director" class="edu-input" value="{{ config_inst.telefono_director if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="modal-form-label">Correo Director</label>
+                                <input type="email" name="correo_director" class="edu-input" value="{{ config_inst.correo_director if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="modal-form-label">Supervisora</label>
+                                <input type="text" name="supervisora" class="edu-input" value="{{ config_inst.supervisora if config_inst else '' }}">
+                            </div>
+                        </div>
+
+                        <h6 class="config-section-title"><i data-lucide="shield"></i> Identificación Legal y Códigos</h6>
+                        <div class="row g-3 inst-row">
+                            <div class="col-md-4">
+                                <label class="modal-form-label">Código DEA</label>
+                                <input type="text" name="codigo_dea" class="edu-input" value="{{ config_inst.codigo_dea if config_inst else '' }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="modal-form-label">Código Estadístico</label>
+                                <input type="text" name="codigo_estadistico" class="edu-input" value="{{ config_inst.codigo_estadistico if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="modal-form-label">Código Administrativo</label>
+                                <input type="text" name="codigo_administrativo" class="edu-input" value="{{ config_inst.codigo_administrativo if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="modal-form-label">Código Dependencia</label>
+                                <input type="text" name="codigo_dependencia" class="edu-input" value="{{ config_inst.codigo_dependencia if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="modal-form-label">Código SUNAGRO</label>
+                                <input type="text" name="codigo_sunagro" class="edu-input" value="{{ config_inst.codigo_sunagro if config_inst else '' }}">
+                            </div>
+                        </div>
+
+                        <h6 class="config-section-title"><i data-lucide="file-text"></i> Registro y Estatus</h6>
+                        <div class="row g-3 inst-row">
+                            <div class="col-md-12">
+                                <label class="modal-form-label">Nombre de la Escuela</label>
+                                <input type="text" name="nombre_escuela" class="edu-input" value="{{ config_inst.nombre_escuela if config_inst else '' }}" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="modal-form-label">RIF Escuela</label>
+                                <input type="text" name="rif_escuela" class="edu-input" value="{{ config_inst.rif_escuela if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="modal-form-label">RIF Consejo Educativo</label>
+                                <input type="text" name="rif_consejo" class="edu-input" value="{{ config_inst.rif_consejo if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="modal-form-label">Dependencia</label>
+                                <input type="text" name="dependencia" class="edu-input" value="{{ config_inst.dependencia if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="modal-form-label">Circuito</label>
+                                <input type="text" name="circuito" class="edu-input" value="{{ config_inst.circuito if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="modal-form-label">Año de Fundación</label>
+                                <input type="text" name="ano_fundacion" class="edu-input" value="{{ config_inst.ano_fundacion if config_inst else '' }}">
+                            </div>
+                        </div>
+
+                        <h6 class="config-section-title"><i data-lucide="map-pin"></i> Ubicación y Contacto</h6>
+                        <div class="row g-3 inst-row">
+                            <div class="col-md-3">
+                                <label class="modal-form-label">Teléfono Escuela</label>
+                                <input type="text" name="telefono_escuela" class="edu-input" value="{{ config_inst.telefono_escuela if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="modal-form-label">Correo Escuela</label>
+                                <input type="email" name="correo_escuela" class="edu-input" value="{{ config_inst.correo_escuela if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="modal-form-label">Ubicación Geográfica</label>
+                                <input type="text" name="ubicacion_geografica" class="edu-input" value="{{ config_inst.ubicacion_geografica if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="modal-form-label">Clase de Plantel</label>
+                                <input type="text" name="clase_plantel" class="edu-input" value="{{ config_inst.clase_plantel if config_inst else '' }}">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="modal-form-label">Dirección</label>
+                                <input type="text" name="direccion" class="edu-input" value="{{ config_inst.direccion if config_inst else '' }}">
+                            </div>
+                        </div>
+
+                        <div class="text-end mt-4">
+                            <button type="submit" class="btn-save-sm"><i data-lucide="save"></i> Guardar Datos Institucionales</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
         <div class="col-12">
             <div class="config-card mb-4" style="border: 1px solid rgba(239, 68, 68, 0.2);">
                 <div class="card-top" style="color: #ef4444;"><i data-lucide="chevrons-up" style="color: #ef4444;"></i> Transición de Ciclo Escolar</div>

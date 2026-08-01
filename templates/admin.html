@@ -206,13 +206,15 @@
         <p class="subtitle">Gestiona los permisos o da de baja a los profesores del plantel.</p>
     </div>
 
-{% set ns = namespace(g=0, d=0, e=0, def=0, p=0, o=0) %}
+{% set ns = namespace(g=0, c=0, d=0, e=0, def=0, p=0, o=0) %}
 {% for usuario in usuarios %}
     {% set area = (usuario.area_trabajo or '')|string|lower %}
     {% if not usuario.rol_id or not usuario.area_trabajo %}
         {% set ns.p = ns.p + 1 %}
     {% elif 'directivo' in area or 'supremo' in area %}
         {% set ns.g = ns.g + 1 %}
+    {% elif 'coordinador' in area or 'administrativo' in area %}
+        {% set ns.c = ns.c + 1 %}
     {% elif 'docente' in area and 'especialista' not in area %}
         {% set ns.d = ns.d + 1 %}
     {% elif 'especialista' in area %}
@@ -229,6 +231,9 @@
     <ul class="nav nav-pills mb-4" id="rolesTab" role="tablist" style="gap: 8px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px;">
       <li class="nav-item" role="presentation">
         <button class="nav-link active text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-gestion" type="button" role="tab">Gestión <span class="badge ms-1" style="background: rgba(255,255,255,0.2);">{{ ns.g }}</span></button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-coordinadores" type="button" role="tab">Administrativos <span class="badge ms-1" style="background: rgba(255,255,255,0.2);">{{ ns.c }}</span></button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link text-nowrap" data-bs-toggle="pill" data-bs-target="#tab-docentes" type="button" role="tab">Docentes <span class="badge ms-1" style="background: rgba(255,255,255,0.2);">{{ ns.d }}</span></button>
@@ -267,6 +272,9 @@
         </td>
         <td>
             <span class="badge-role area">{{ usuario.area_trabajo }}</span><br>
+            {% if usuario.departamento_asignado %}
+            <small style="color:var(--primary); font-weight:700; font-size:0.7rem;">Depto: {{ usuario.departamento_asignado }}</small><br>
+            {% endif %}
             <small class="user-cell username">@{{ usuario.username }}</small>
         </td>
         <td>
@@ -297,6 +305,9 @@
             {% else %}
             <div class="d-flex justify-content-end align-items-center gap-2">
                 {% if usuario.id != session_uid %}
+                <button type="button" class="btn-icon-round" style="background: rgba(16, 185, 129, 0.1); color: #10b981;" data-bs-toggle="modal" data-bs-target="#modalEditUsername{{ usuario.id }}" title="Modificar usuario">
+                    <i data-lucide="user-cog"></i>
+                </button>
                 <button type="button" class="btn-icon-round" style="background: rgba(99,102,241,0.1); color: #8b5cf6;" data-bs-toggle="modal" data-bs-target="#modalResetPw{{ usuario.id }}" title="Resetear contraseña">
                     <i data-lucide="key-round"></i>
                 </button>
@@ -331,6 +342,39 @@
                                 <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
                                 <button type="submit" class="btn-auth w-50" style="display:flex; justify-content:center; align-items:center;">Confirmar</button>
                             </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Modificar Usuario -->
+            <div class="modal fade" id="modalEditUsername{{ usuario.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+                    <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+                        <div class="modal-body p-4 text-start">
+                            <h5 style="font-weight:800; color:#10b981; display:flex; align-items:center; gap:6px;">
+                                <i data-lucide="user-cog" style="width:20px;height:20px;"></i> Modificar Usuario
+                            </h5>
+                            <form action="{{ url_for('admin.modificar_usuario', id=usuario.id) }}" method="POST" id="formEditUser{{ usuario.id }}">
+                                <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Nombre de Usuario</label>
+                                <input type="text" name="username" value="{{ usuario.username }}" class="edu-input mb-3" style="width: 100%;" required placeholder="Nuevo usuario">
+                                
+                                {% if 'Coordinador' in (usuario.area_trabajo or '') %}
+                                <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Departamento Asignado (Solo Administrativos)</label>
+                                <select name="departamento_asignado" class="edu-select mb-3" style="width: 100%;">
+                                    <option value="" {% if not usuario.departamento_asignado %}selected{% endif %}>Ninguno</option>
+                                    <option value="Defensoría" {% if usuario.departamento_asignado == 'Defensoría' %}selected{% endif %}>Defensoría</option>
+                                    <option value="CRA" {% if usuario.departamento_asignado == 'CRA' %}selected{% endif %}>CRA</option>
+                                    <option value="Pedagógica" {% if usuario.departamento_asignado == 'Pedagógica' %}selected{% endif %}>Pedagógica</option>
+                                    <option value="Educación Física" {% if usuario.departamento_asignado == 'Educación Física' %}selected{% endif %}>Educación Física</option>
+                                    <option value="Aulas Integradas" {% if usuario.departamento_asignado == 'Aulas Integradas' %}selected{% endif %}>Aulas Integradas</option>
+                                </select>
+                                {% endif %}
+                            </form>
+                        </div>
+                        <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                            <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" form="formEditUser{{ usuario.id }}" class="btn-auth w-50" style="display:flex; justify-content:center; align-items:center; background: linear-gradient(135deg, #10b981, #059669); border:none;">Guardar</button>
                         </div>
                     </div>
                 </div>
@@ -383,6 +427,30 @@
                                 {% endif %}
                             {% endfor %}
                             {% if ns.g == 0 %}<tr><td colspan="5" class="text-center py-5 text-muted"><i data-lucide="users" style="width:32px;height:32px;opacity:0.3;margin-bottom:8px;"></i><br>No hay personal de gestión encontrado.</td></tr>{% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 1.5: COORDINADORES ADMINISTRATIVOS -->
+        <div class="tab-pane fade" id="tab-coordinadores" role="tabpanel" tabindex="0">
+            <div class="table-card">
+                <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table class="edu-table">
+                        <thead>
+                            <tr><th>ID</th><th>Nombre Completo</th><th>Usuario (Login)</th><th>Rol Actual</th><th style="text-align:right;">Acciones</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for usuario in usuarios %}
+                                {% set area = (usuario.area_trabajo or '')|string|lower %}
+                                {% if usuario.rol_id and usuario.area_trabajo %}
+                                    {% if 'coordinador' in area or 'administrativo' in area %}
+                                        {{ render_user_row(usuario, roles, session['usuario_id']) }}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if ns.c == 0 %}<tr><td colspan="5" class="text-center py-5 text-muted"><i data-lucide="users" style="width:32px;height:32px;opacity:0.3;margin-bottom:8px;"></i><br>No hay personal administrativo registrado.</td></tr>{% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -497,7 +565,7 @@
                         <tbody>
                             {% for usuario in usuarios %}
                                 {% set area = (usuario.area_trabajo or '')|string|lower %}
-                                {% if not usuario.rol_id or not usuario.area_trabajo or not ('directivo' in area or 'supremo' in area or ('docente' in area and 'especialista' not in area) or 'especialista' in area or 'defensor' in area or 'obrero' in area or 'vigilancia' in area or 'cocina' in area) %}
+                                {% if not usuario.rol_id or not usuario.area_trabajo or not ('directivo' in area or 'supremo' in area or 'coordinador' in area or 'administrativo' in area or ('docente' in area and 'especialista' not in area) or 'especialista' in area or 'defensor' in area or 'obrero' in area or 'vigilancia' in area or 'cocina' in area) %}
                                     {{ render_user_row(usuario, roles, session['usuario_id']) }}
                                 {% endif %}
                             {% endfor %}

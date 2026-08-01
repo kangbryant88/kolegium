@@ -214,15 +214,27 @@
             </div>
             <div class="mb-3">
                 <label class="field-label">¿A qué área perteneces?</label>
-                <select name="area_trabajo" class="edu-select" required>
+                <select name="area_trabajo" class="edu-select" id="area-select" required>
                     <option value="" disabled selected>Selecciona tu área...</option>
                     <option value="Docente de Aula (1ro a 6to)">Docente de Aula (1ro a 6to)</option>
                     <option value="Especialista (Robótica / Deportes)">Especialista (Robótica / Deportes)</option>
                     <option value="Defensoría Estudiantil">Defensoría Estudiantil</option>
-                    <option value="Equipo Directivo / Administrativo">Equipo Directivo / Administrativo</option>
+                    <option value="Equipo Directivo">Equipo Directivo</option>
+                    <option value="Coordinador / Administrativo">Coordinador / Administrativo</option>
                     <option value="Obrero">Obrero</option>
                     <option value="Personal de Vigilancia">Personal de Vigilancia</option>
                     <option value="Personal de Cocina">Personal de Cocina</option>
+                </select>
+            </div>
+            <div class="mb-3" id="departamento-container" style="display: none;">
+                <label class="field-label">Departamento Asignado</label>
+                <select name="departamento_asignado" class="edu-select" id="departamento-select">
+                    <option value="" selected>Ninguno</option>
+                    <option value="Defensoría">Defensoría</option>
+                    <option value="CRA">CRA</option>
+                    <option value="Pedagógica">Pedagógica</option>
+                    <option value="Educación Física">Educación Física</option>
+                    <option value="Aulas Integradas">Aulas Integradas</option>
                 </select>
             </div>
             <div class="row-fields mb-2">
@@ -243,5 +255,21 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const areaSelect = document.getElementById('area-select');
+            const deptoContainer = document.getElementById('departamento-container');
+            const deptoSelect = document.getElementById('departamento-select');
+
+            areaSelect.addEventListener('change', function() {
+                if (this.value === 'Coordinador / Administrativo') {
+                    deptoContainer.style.display = 'block';
+                } else {
+                    deptoContainer.style.display = 'none';
+                    deptoSelect.value = '';
+                }
+            });
+        });
+    </script>
 </body>
 </html>

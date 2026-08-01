@@ -40,6 +40,23 @@ def cambiar_rol(id):
     rol_obj = Rol.query.get(usuario.rol_id)
     nombre_del_rol = rol_obj.nombre
 
+    # Auto-actualizar el área de trabajo para que coincida con el rol
+    MAPEO_REVERSO_CARGOS = {
+        'Docente de Aula': 'Docente de Aula (1ro a 6to)',
+        'Docente Especialista': 'Especialista (Robótica / Deportes)',
+        'Defensoría Estudiantil': 'Defensoría Estudiantil',
+        'Equipo Directivo': 'Equipo Directivo',
+        'Coordinador / Administrativo': 'Coordinador / Administrativo',
+        'Administrador Supremo': 'Administrador Supremo',
+        'Obrero': 'Obrero',
+        'Personal de Vigilancia': 'Personal de Vigilancia',
+        'Personal de Cocina': 'Personal de Cocina'
+    }
+    
+    if nombre_del_rol in MAPEO_REVERSO_CARGOS:
+        usuario.area_trabajo = MAPEO_REVERSO_CARGOS[nombre_del_rol]
+        db.session.commit()
+
     # 4. Enviar correo de notificación (Si no lo están devolviendo a Espera)
     if nombre_del_rol not in ['Espera', 'Pendiente']:
         try:
@@ -90,7 +107,8 @@ def aprobar_cambio(id):
         'Docente de Aula (1ro a 6to)': 'Docente de Aula',
         'Especialista (Robótica / Deportes)': 'Docente Especialista',
         'Defensoría Estudiantil': 'Defensoría Estudiantil',
-        'Equipo Directivo / Administrativo': 'Equipo Directivo',
+        'Equipo Directivo': 'Equipo Directivo',
+        'Coordinador / Administrativo': 'Coordinador / Administrativo',
         'Obrero': 'Obrero',
         'Personal de Vigilancia': 'Personal de Vigilancia',
         'Personal de Cocina': 'Personal de Cocina'
@@ -153,4 +171,47 @@ def resetear_password(id):
     db.session.commit()
     
     flash(f'Contraseña de {usuario.nombre_completo} restablecida a la clave temporal.', 'success')
+    return redirect(url_for('admin.admin_usuarios'))
+
+@admin_bp.route('/modificar_usuario/<int:id>', methods=['POST'])
+def modificar_usuario(id):
+    if 'admin' not in session.get('permisos', ''):
+        return '🚫 No autorizado.', 403
+    
+    usuario = Usuario.query.get_or_404(id)
+    nuevo_username = request.form.get('username')
+    nuevo_departamento = request.form.get('departamento_asignado')
+    
+    cambios_realizados = []
+    
+    if nuevo_username:
+        nuevo_username_raw = nuevo_username
+        if ' ' in nuevo_username_raw:
+            flash("El nombre de usuario no puede contener espacios.", "error")
+            return redirect(url_for('admin.admin_usuarios'))
+            
+        nuevo_username_clean = nuevo_username_raw.strip().lower()
+        existente = Usuario.query.filter_by(username=nuevo_username_clean).first()
+        
+        if existente and existente.id != usuario.id:
+            flash("Ese nombre de usuario ya está en uso.", "error")
+        else:
+            old_username = usuario.username
+            if old_username != nuevo_username_clean:
+                usuario.username = nuevo_username_clean
+                cambios_realizados.append(f"Usuario cambiado de '{old_username}' a '{nuevo_username_clean}'")
+
+    if nuevo_departamento is not None and 'Coordinador' in (usuario.area_trabajo or ''):
+        # Even if it's an empty string (Ninguno), we save it (or None)
+        depto = nuevo_departamento if nuevo_departamento != "" else None
+        if usuario.departamento_asignado != depto:
+            old_depto = usuario.departamento_asignado or 'Ninguno'
+            new_depto = depto or 'Ninguno'
+            usuario.departamento_asignado = depto
+            cambios_realizados.append(f"Depto cambiado de '{old_depto}' a '{new_depto}'")
+
+    if cambios_realizados:
+        db.session.commit()
+        flash(" | ".join(cambios_realizados), "success")
+            
     return redirect(url_for('admin.admin_usuarios'))
