@@ -46,7 +46,7 @@ def cambiar_rol(id):
         'Docente Especialista': 'Especialista (Robótica / Deportes)',
         'Defensoría Estudiantil': 'Defensoría Estudiantil',
         'Equipo Directivo': 'Equipo Directivo',
-        'Coordinador / Administrativo': 'Coordinador / Administrativo',
+        'Administrativo': 'Administrativo',
         'Administrador Supremo': 'Administrador Supremo',
         'Obrero': 'Obrero',
         'Personal de Vigilancia': 'Personal de Vigilancia',
@@ -108,7 +108,7 @@ def aprobar_cambio(id):
         'Especialista (Robótica / Deportes)': 'Docente Especialista',
         'Defensoría Estudiantil': 'Defensoría Estudiantil',
         'Equipo Directivo': 'Equipo Directivo',
-        'Coordinador / Administrativo': 'Coordinador / Administrativo',
+        'Administrativo': 'Administrativo',
         'Obrero': 'Obrero',
         'Personal de Vigilancia': 'Personal de Vigilancia',
         'Personal de Cocina': 'Personal de Cocina'
@@ -201,7 +201,7 @@ def modificar_usuario(id):
                 usuario.username = nuevo_username_clean
                 cambios_realizados.append(f"Usuario cambiado de '{old_username}' a '{nuevo_username_clean}'")
 
-    if nuevo_departamento is not None and 'Coordinador' in (usuario.area_trabajo or ''):
+    if nuevo_departamento is not None and 'Administrativo' in (usuario.area_trabajo or ''):
         # Even if it's an empty string (Ninguno), we save it (or None)
         depto = nuevo_departamento if nuevo_departamento != "" else None
         if usuario.departamento_asignado != depto:

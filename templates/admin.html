@@ -213,7 +213,7 @@
         {% set ns.p = ns.p + 1 %}
     {% elif 'directivo' in area or 'supremo' in area %}
         {% set ns.g = ns.g + 1 %}
-    {% elif 'coordinador' in area or 'administrativo' in area %}
+    {% elif 'administrativo' in area %}
         {% set ns.c = ns.c + 1 %}
     {% elif 'docente' in area and 'especialista' not in area %}
         {% set ns.d = ns.d + 1 %}
@@ -359,7 +359,7 @@
                                 <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Nombre de Usuario</label>
                                 <input type="text" name="username" value="{{ usuario.username }}" class="edu-input mb-3" style="width: 100%;" required placeholder="Nuevo usuario">
                                 
-                                {% if 'Coordinador' in (usuario.area_trabajo or '') %}
+                                {% if 'Administrativo' in (usuario.area_trabajo or '') %}
                                 <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Departamento Asignado (Solo Administrativos)</label>
                                 <select name="departamento_asignado" class="edu-select mb-3" style="width: 100%;">
                                     <option value="" {% if not usuario.departamento_asignado %}selected{% endif %}>Ninguno</option>
@@ -433,7 +433,7 @@
             </div>
         </div>
 
-        <!-- Tab 1.5: COORDINADORES ADMINISTRATIVOS -->
+        <!-- Tab 1.5: ADMINISTRATIVOS -->
         <div class="tab-pane fade" id="tab-coordinadores" role="tabpanel" tabindex="0">
             <div class="table-card">
                 <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
@@ -445,7 +445,7 @@
                             {% for usuario in usuarios %}
                                 {% set area = (usuario.area_trabajo or '')|string|lower %}
                                 {% if usuario.rol_id and usuario.area_trabajo %}
-                                    {% if ('coordinador' in area or 'administrativo' in area) and 'directivo' not in area and 'supremo' not in area %}
+                                    {% if 'administrativo' in area and 'directivo' not in area and 'supremo' not in area %}
                                         {{ render_user_row(usuario, roles, session['usuario_id']) }}
                                     {% endif %}
                                 {% endif %}
@@ -565,7 +565,7 @@
                         <tbody>
                             {% for usuario in usuarios %}
                                 {% set area = (usuario.area_trabajo or '')|string|lower %}
-                                {% if not usuario.rol_id or not usuario.area_trabajo or not ('directivo' in area or 'supremo' in area or 'coordinador' in area or 'administrativo' in area or ('docente' in area and 'especialista' not in area) or 'especialista' in area or 'defensor' in area or 'obrero' in area or 'vigilancia' in area or 'cocina' in area) %}
+                                {% if not usuario.rol_id or not usuario.area_trabajo or not ('directivo' in area or 'supremo' in area or 'administrativo' in area or ('docente' in area and 'especialista' not in area) or 'especialista' in area or 'defensor' in area or 'obrero' in area or 'vigilancia' in area or 'cocina' in area) %}
                                     {{ render_user_row(usuario, roles, session['usuario_id']) }}
                                 {% endif %}
                             {% endfor %}

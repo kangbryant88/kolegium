@@ -50,7 +50,7 @@ with app.app_context():
     PERMISOS_POR_ROL = {
         'Administrador Supremo': 'dashboard,planificador,asistencia,defensoria,configuracion,admin,anuncios',
         'Equipo Directivo': 'dashboard,asistencia,configuracion,admin,anuncios',
-        'Coordinador / Administrativo': 'dashboard_general,asistencia,anuncios,planificador',
+        'Administrativo': 'dashboard_general,asistencia,anuncios,planificador',
         'Docente de Aula': 'planificador,asistencia,anuncios',
         'Docente Especialista': 'planificador,asistencia,anuncios',
         'Defensoría Estudiantil': 'defensoria,anuncios',
@@ -97,7 +97,7 @@ def auth_defensoria():
     if nombre_rol in ['Defensoría Estudiantil', 'Equipo Directivo', 'Administrador Supremo']:
         return True
         
-    if nombre_rol == 'Coordinador / Administrativo' and depto == 'Defensoría':
+    if nombre_rol == 'Administrativo' and depto == 'Defensoría':
         return True
         
     return False
