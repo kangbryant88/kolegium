@@ -138,12 +138,24 @@
                 </a>
                 {% endif %}
 
-                {% set depto_actual = session.get('departamento_asignado') %}
-                {% if depto_actual in ['CRA', 'Coord. Pedagógica', 'Educación Física', 'Aulas Integradas', 'Cultura', 'Orientación', 'PTMS', 'Robótica', 'Formación Permanente'] %}
-                <a href="/modulo_construccion" class="sidebar-link {% if request.path == '/modulo_construccion' %}active{% endif %}">
-                    <i data-lucide="wrench"></i>
-                    <span class="link-label">{{ depto_actual }}</span>
-                </a>
+                {% set modulos_nuevos = ['CRA', 'Coord. Pedagógica', 'Educación Física', 'Aulas Integradas', 'Cultura', 'Orientación', 'PTMS', 'Robótica', 'Formación Permanente'] %}
+                {% if session.get('nombre_rol') == 'Administrador Supremo' %}
+                    <div class="sidebar-divider"></div>
+                    <div class="nav-section-label">Módulos en Construcción</div>
+                    {% for depto in modulos_nuevos %}
+                    <a href="/modulo_construccion" class="sidebar-link {% if request.path == '/modulo_construccion' %}active{% endif %}">
+                        <i data-lucide="wrench"></i>
+                        <span class="link-label">{{ depto }}</span>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    {% set depto_actual = session.get('departamento_asignado') %}
+                    {% if depto_actual in modulos_nuevos %}
+                    <a href="/modulo_construccion" class="sidebar-link {% if request.path == '/modulo_construccion' %}active{% endif %}">
+                        <i data-lucide="wrench"></i>
+                        <span class="link-label">{{ depto_actual }}</span>
+                    </a>
+                    {% endif %}
                 {% endif %}
 
                 {% if 'configuracion' in mis_permisos %}
