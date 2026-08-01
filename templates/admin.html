@@ -445,7 +445,7 @@
                             {% for usuario in usuarios %}
                                 {% set area = (usuario.area_trabajo or '')|string|lower %}
                                 {% if usuario.rol_id and usuario.area_trabajo %}
-                                    {% if 'coordinador' in area or 'administrativo' in area %}
+                                    {% if ('coordinador' in area or 'administrativo' in area) and 'directivo' not in area and 'supremo' not in area %}
                                         {{ render_user_row(usuario, roles, session['usuario_id']) }}
                                     {% endif %}
                                 {% endif %}
