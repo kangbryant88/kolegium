@@ -365,9 +365,12 @@
                                     <option value="" {% if not usuario.departamento_asignado %}selected{% endif %}>Ninguno</option>
                                     <option value="Defensoría" {% if usuario.departamento_asignado == 'Defensoría' %}selected{% endif %}>Defensoría</option>
                                     <option value="CRA" {% if usuario.departamento_asignado == 'CRA' %}selected{% endif %}>CRA</option>
-                                    <option value="Pedagógica" {% if usuario.departamento_asignado == 'Pedagógica' %}selected{% endif %}>Pedagógica</option>
+                                    <option value="Coord. Pedagógica" {% if usuario.departamento_asignado == 'Coord. Pedagógica' or usuario.departamento_asignado == 'Pedagógica' %}selected{% endif %}>Coord. Pedagógica</option>
                                     <option value="Educación Física" {% if usuario.departamento_asignado == 'Educación Física' %}selected{% endif %}>Educación Física</option>
                                     <option value="Aulas Integradas" {% if usuario.departamento_asignado == 'Aulas Integradas' %}selected{% endif %}>Aulas Integradas</option>
+                                    <option value="Cultura" {% if usuario.departamento_asignado == 'Cultura' %}selected{% endif %}>Cultura</option>
+                                    <option value="Orientación" {% if usuario.departamento_asignado == 'Orientación' %}selected{% endif %}>Orientación</option>
+                                    <option value="PTMS" {% if usuario.departamento_asignado == 'PTMS' %}selected{% endif %}>PTMS</option>
                                 </select>
                                 {% endif %}
                             </form>
