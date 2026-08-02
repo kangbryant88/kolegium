@@ -24,12 +24,10 @@ def login():
                 session['permisos'], session['nombre_rol'] = u.rol_info.permisos, u.rol_info.nombre
                 
                 # Ajustes dinámicos por departamento
-                if u.rol_info.nombre == 'Docente Especialista' and u.departamento_asignado == 'Defensoría':
-                    session['permisos'] = 'dashboard_general,planificador,asistencia'
-                elif u.rol_info.nombre == 'Docente Especialista' and u.departamento_asignado == 'CRA':
+                if u.rol_info.nombre == 'Docente Especialista' and u.departamento_asignado == 'CRA':
                     session['permisos'] = 'dashboard_general,planificador,asistencia,cra'
                 elif u.rol_info.nombre == 'Administrativo' and u.departamento_asignado == 'Defensoría':
-                    session['permisos'] = 'dashboard_general,planificador,asistencia'
+                    session['permisos'] = 'dashboard_general,planificador,asistencia,defensoria'
 
                 if u.rol_info.nombre in ['Obrero', 'Personal de Cocina']:
                     return redirect(url_for('portal_trabajador'))

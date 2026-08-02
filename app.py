@@ -54,9 +54,9 @@ with app.app_context():
         'Docente de Aula': 'planificador,asistencia,anuncios',
         'Docente Especialista': 'planificador,asistencia,anuncios',
         'Defensoría Estudiantil': 'dashboard_general,defensoria',
-        'Obrero': '',
+        'Obrero': 'dashboard_general',
         'Personal de Vigilancia': 'dashboard_general',
-        'Personal de Cocina': '',
+        'Personal de Cocina': 'dashboard_general',
     }
 
     if not Rol.query.first():
@@ -126,8 +126,6 @@ def index():
     ultimos_anuncios = Anuncio.query.order_by(Anuncio.fecha.desc()).limit(3).all()
 
     if 'dashboard' not in permisos.split(','):
-        if session.get('nombre_rol') in ['Obrero', 'Personal de Cocina']:
-            return redirect(url_for('portal_trabajador'))
         config_inst = ConfiguracionInstitucional.query.first()
         return render_template('dashboard_general.html', fecha_full=fecha_hoy_esp,
                                matricula_hoy=mat_hoy, asistentes_hoy=asist_hoy, 
