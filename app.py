@@ -71,6 +71,23 @@ with app.app_context():
                 rol.permisos = permisos
             else:
                 db.session.add(Rol(nombre=nombre, permisos=permisos))
+                
+        # Limpiar rol duplicado "Vigilante" si existe
+        rol_vig = Rol.query.filter_by(nombre='Vigilante').first()
+        rol_pv = Rol.query.filter_by(nombre='Personal de Vigilancia').first()
+        if rol_vig and rol_pv:
+            for u in Usuario.query.filter_by(rol_id=rol_vig.id).all():
+                u.rol_id = rol_pv.id
+            db.session.delete(rol_vig)
+            
+        # Limpiar rol obsoleto "Coordinador / Administrativo" si existe
+        rol_coord = Rol.query.filter_by(nombre='Coordinador / Administrativo').first()
+        rol_admin = Rol.query.filter_by(nombre='Administrativo').first()
+        if rol_coord and rol_admin:
+            for u in Usuario.query.filter_by(rol_id=rol_coord.id).all():
+                u.rol_id = rol_admin.id
+            db.session.delete(rol_coord)
+            
         db.session.commit()
 
 @app.context_processor
