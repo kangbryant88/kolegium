@@ -53,9 +53,9 @@ with app.app_context():
         'Administrativo': 'dashboard_general,asistencia,anuncios,planificador',
         'Docente de Aula': 'planificador,asistencia,anuncios',
         'Docente Especialista': 'planificador,asistencia,anuncios',
-        'Defensoría Estudiantil': 'defensoria,anuncios',
+        'Defensoría Estudiantil': 'dashboard_general,defensoria',
         'Obrero': '',
-        'Personal de Vigilancia': '',
+        'Personal de Vigilancia': 'dashboard_general',
         'Personal de Cocina': '',
     }
 
@@ -125,9 +125,8 @@ def index():
     total_h = sum(g.total_hembras for g in Grado.query.all())
     ultimos_anuncios = Anuncio.query.order_by(Anuncio.fecha.desc()).limit(3).all()
 
-    # Si NO tiene el permiso EXACTO de 'dashboard'
     if 'dashboard' not in permisos.split(','):
-        if session.get('nombre_rol') in ['Obrero', 'Personal de Vigilancia', 'Personal de Cocina']:
+        if session.get('nombre_rol') in ['Obrero', 'Personal de Cocina']:
             return redirect(url_for('portal_trabajador'))
         config_inst = ConfiguracionInstitucional.query.first()
         return render_template('dashboard_general.html', fecha_full=fecha_hoy_esp,

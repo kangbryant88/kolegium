@@ -22,7 +22,16 @@ def login():
             })
             if u.rol_info:
                 session['permisos'], session['nombre_rol'] = u.rol_info.permisos, u.rol_info.nombre
-                if u.rol_info.nombre in ['Obrero', 'Personal de Vigilancia', 'Personal de Cocina']:
+                
+                # Ajustes dinámicos por departamento
+                if u.rol_info.nombre == 'Docente Especialista' and u.departamento_asignado == 'Defensoría':
+                    session['permisos'] = 'dashboard_general,planificador,asistencia'
+                elif u.rol_info.nombre == 'Docente Especialista' and u.departamento_asignado == 'CRA':
+                    session['permisos'] = 'dashboard_general,planificador,asistencia,cra'
+                elif u.rol_info.nombre == 'Administrativo' and u.departamento_asignado == 'Defensoría':
+                    session['permisos'] = 'dashboard_general,planificador,asistencia'
+
+                if u.rol_info.nombre in ['Obrero', 'Personal de Cocina']:
                     return redirect(url_for('portal_trabajador'))
                 return redirect(url_for('index'))
             session['permisos'], session['nombre_rol'] = '', 'En Espera'
