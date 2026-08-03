@@ -49,7 +49,7 @@ with app.app_context():
     # Mapa maestro de permisos por rol
     PERMISOS_POR_ROL = {
         'Administrador Supremo': 'dashboard,planificador,asistencia,defensoria,configuracion,admin,anuncios',
-        'Equipo Directivo': 'dashboard,asistencia,configuracion,admin,anuncios',
+        'Equipo Directivo': 'dashboard,asistencia,configuracion,anuncios',
         'Administrativo': 'dashboard_general,asistencia,anuncios,planificador',
         'Docente de Aula': 'planificador,asistencia,anuncios',
         'Docente Especialista': 'planificador,asistencia,anuncios',
