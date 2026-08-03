@@ -118,7 +118,7 @@
                 {% endif %}
                 {% endif %}
 
-                {% if session.get('rol_id') in [1, 2] %}
+                {% if session.get('rol_id') in [1, 2] or (session.get('nombre_rol') == 'Administrativo' and session.get('departamento_asignado') == 'Dirección') %}
                 <a href="{{ url_for('academico.historial_global') }}"
                     class="sidebar-link {% if request.path == '/academico/historial_global' %}active{% endif %}">
                     <i data-lucide="history"></i>

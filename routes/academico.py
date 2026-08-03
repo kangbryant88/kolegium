@@ -216,7 +216,11 @@ def editar_asistencia_personal(id):
 @academico_bp.route('/historial_global')
 def historial_global():
     if not session.get('logeado'): return redirect(url_for('auth.login'))
-    if session.get('rol_id') not in [1, 2]:
+    tiene_acceso = (
+        session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)'] or 
+        (session.get('nombre_rol') == 'Administrativo' and session.get('departamento_asignado') == 'Dirección')
+    )
+    if not tiene_acceso:
         return redirect(url_for('index'))
     
     fecha_str = request.args.get('fecha')
