@@ -460,7 +460,7 @@ def mi_aula():
     if not session.get('logeado'): return redirect(url_for('auth.login'))
     
     rol = session.get('nombre_rol')
-    if rol not in ['Administrador Supremo', 'Equipo Directivo', 'Docente de Aula']:
+    if rol not in ['Administrador Supremo', 'Equipo Directivo (Dirección)', 'Docente de Aula']:
         return redirect(url_for('index'))
         
     grados = []
@@ -600,7 +600,7 @@ def guardar_asistencia_aula():
             
     db.session.commit()
     url = url_for('academico.mi_aula')
-    if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo'] and grado_id:
+    if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)'] and grado_id:
         url = url_for('academico.mi_aula', grado_id=grado_id)
     return redirect(url)
 
@@ -623,7 +623,7 @@ def agregar_incidencia():
         db.session.commit()
         
     url = url_for('academico.mi_aula')
-    if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo'] and grado_id:
+    if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)'] and grado_id:
         url = url_for('academico.mi_aula', grado_id=grado_id)
     return redirect(url)
 
@@ -761,7 +761,7 @@ def generar_enlace(id):
 
 @academico_bp.route('/aprobar_solicitud/<int:id>', methods=['POST', 'GET'])
 def aprobar_solicitud(id):
-    if session.get('nombre_rol') not in ['Administrador Supremo', 'Equipo Directivo']:
+    if session.get('nombre_rol') not in ['Administrador Supremo', 'Equipo Directivo (Dirección)']:
         flash("No tiene permisos para realizar esta acción.", "danger")
         return redirect(url_for('index'))
         
@@ -775,7 +775,7 @@ def aprobar_solicitud(id):
 
 @academico_bp.route('/rechazar_solicitud/<int:id>', methods=['POST', 'GET'])
 def rechazar_solicitud(id):
-    if session.get('nombre_rol') not in ['Administrador Supremo', 'Equipo Directivo']:
+    if session.get('nombre_rol') not in ['Administrador Supremo', 'Equipo Directivo (Dirección)']:
         flash("No tiene permisos para realizar esta acción.", "danger")
         return redirect(url_for('index'))
         
@@ -962,7 +962,7 @@ def actualizar_estudiante_rapido(id):
 
 @academico_bp.route('/aprobar_actualizacion/<int:id>', methods=['POST', 'GET'])
 def aprobar_actualizacion(id):
-    if session.get('nombre_rol') not in ['Administrador Supremo', 'Equipo Directivo']:
+    if session.get('nombre_rol') not in ['Administrador Supremo', 'Equipo Directivo (Dirección)']:
         flash("No tiene permisos para realizar esta acción.", "danger")
         return redirect(url_for('index'))
         
@@ -989,7 +989,7 @@ def aprobar_actualizacion(id):
 
 @academico_bp.route('/rechazar_actualizacion/<int:id>', methods=['POST', 'GET'])
 def rechazar_actualizacion(id):
-    if session.get('nombre_rol') not in ['Administrador Supremo', 'Equipo Directivo']:
+    if session.get('nombre_rol') not in ['Administrador Supremo', 'Equipo Directivo (Dirección)']:
         flash("No tiene permisos para realizar esta acción.", "danger")
         return redirect(url_for('index'))
         
@@ -1219,7 +1219,7 @@ def alertas_defensoria():
     
     # Solo Defensoría, Directivo o Admin pueden ver
     rol = session.get('nombre_rol', '')
-    if rol not in ['Defensoría Estudiantil', 'Equipo Directivo', 'Administrador Supremo']:
+    if rol not in ['Defensoría Estudiantil', 'Equipo Directivo (Dirección)', 'Administrador Supremo']:
         flash('No tienes permisos para acceder a esta sección.', 'error')
         return redirect(url_for('index'))
     
@@ -1249,7 +1249,7 @@ def actualizar_alerta(id):
 def enterado_alerta(id):
     if not session.get('logeado'): return redirect(url_for('auth.login'))
     rol = session.get('nombre_rol')
-    if rol not in ['Administrador Supremo', 'Equipo Directivo', 'Docente de Aula']:
+    if rol not in ['Administrador Supremo', 'Equipo Directivo (Dirección)', 'Docente de Aula']:
         return "Acceso Denegado", 403
     alerta = AlertaDefensoria.query.get_or_404(id)
     # Simplemente eliminamos la alerta de incidencia para que ya no aparezca
@@ -1267,7 +1267,7 @@ def eliminar_alerta(id):
     
     # Solo Defensoría, Directivo o Admin pueden borrar
     rol = session.get('nombre_rol', '')
-    if rol not in ['Defensoría Estudiantil', 'Equipo Directivo', 'Administrador Supremo']:
+    if rol not in ['Defensoría Estudiantil', 'Equipo Directivo (Dirección)', 'Administrador Supremo']:
         return redirect(url_for('index'))
         
     alerta = AlertaDefensoria.query.get_or_404(id)

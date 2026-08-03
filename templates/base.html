@@ -104,7 +104,7 @@
                     <i data-lucide="clipboard-check"></i>
                     <span class="link-label">Asistencia</span>
                 </a>
-                {% if 'admin' in mis_permisos or session.get('nombre_rol') == 'Equipo Directivo "Dirección"' or (session.get('nombre_rol') == 'Administrativo' and session.get('departamento_asignado') == 'Dirección') %}
+                {% if 'admin' in mis_permisos or session.get('nombre_rol') == 'Equipo Directivo (Dirección)' or (session.get('nombre_rol') == 'Administrativo' and session.get('departamento_asignado') == 'Dirección') %}
                 <a href="{{ url_for('academico.asistencia_personal') }}"
                     class="sidebar-link {% if request.path == '/academico/asistencia_personal' %}active{% endif %}">
                     <i data-lucide="users"></i>
