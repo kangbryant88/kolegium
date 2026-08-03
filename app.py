@@ -619,7 +619,7 @@ def eliminar_anuncio(id):
 
 @app.route('/gestion_personal')
 def gestion_personal():
-    if not session.get('logeado') or 'admin' not in session.get('permisos', []):
+    if not session.get('logeado') or ('admin' not in session.get('permisos', '') and session.get('nombre_rol') != 'Equipo Directivo'):
         return redirect(url_for('auth.login'))
         
     personal = Usuario.query.all()
