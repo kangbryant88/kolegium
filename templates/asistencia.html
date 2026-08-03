@@ -226,7 +226,7 @@
 
         <!-- Pestaña 2: Consolidado Estudiantil -->
         <div class="tab-pane fade" id="consolidado" role="tabpanel" tabindex="0">
-            {% if 'admin' in mis_permisos or session.get('nombre_rol') == 'Equipo Directivo' %}
+            {% if 'admin' in mis_permisos or session.get('nombre_rol') == 'Equipo Directivo "Dirección"' or (session.get('nombre_rol') == 'Administrativo' and session.get('departamento_asignado') == 'Dirección') %}
                 <div class="pe-2 custom-scrollbar" style="max-height: 65vh; overflow-y: auto; overflow-x: hidden;">
                     <div class="row g-4 justify-content-center w-100 m-                    {% if semanas %}
                         <div class="accordion w-100" id="accordionSemanas">
@@ -410,7 +410,7 @@
 
         <!-- Pestaña 3: Asistencia de Personal -->
         <div class="tab-pane fade" id="personal" role="tabpanel" tabindex="0">
-            {% if 'admin' in mis_permisos or session.get('nombre_rol') == 'Equipo Directivo' %}
+            {% if 'admin' in mis_permisos or session.get('nombre_rol') == 'Equipo Directivo "Dirección"' or (session.get('nombre_rol') == 'Administrativo' and session.get('departamento_asignado') == 'Dirección') %}
                 <!-- Tabla de Personal irá aquí -->
             {% else %}
                 <div class="d-flex flex-column align-items-center justify-content-center py-5">

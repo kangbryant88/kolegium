@@ -28,6 +28,9 @@ def login():
                     session['permisos'] = 'dashboard_general,planificador,asistencia,cra'
                 elif u.rol_info.nombre == 'Administrativo' and u.departamento_asignado == 'Defensoría':
                     session['permisos'] = 'dashboard_general,planificador,asistencia,defensoria'
+                elif u.rol_info.nombre == 'Administrativo' and u.departamento_asignado == 'Dirección':
+                    # Dirección admin gets specific limited base permissions (gestion_personal is handled explicitly in templates)
+                    session['permisos'] = 'dashboard_general,asistencia'
 
                 if u.rol_info.nombre in ['Obrero', 'Personal de Cocina']:
                     return redirect(url_for('portal_trabajador'))

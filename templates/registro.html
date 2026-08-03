@@ -219,7 +219,7 @@
                     <option value="Docente de Aula (1ro a 6to)">Docente de Aula (1ro a 6to)</option>
                     <option value="Especialista (Robótica / Deportes)">Especialista (Robótica / Deportes)</option>
                     <option value="Defensoría Estudiantil">Defensoría Estudiantil</option>
-                    <option value="Equipo Directivo">Equipo Directivo</option>
+                    <option value="Equipo Directivo &quot;Dirección&quot;">Equipo Directivo "Dirección"</option>
                     <option value="Administrativo">Administrativo</option>
                     <option value="Obrero">Obrero</option>
                     <option value="Personal de Vigilancia">Personal de Vigilancia</option>
@@ -230,6 +230,7 @@
                 <label class="field-label">Departamento Asignado</label>
                 <select name="departamento_asignado" class="edu-select" id="departamento-select">
                     <option value="" disabled selected>-- Seleccione un Departamento --</option>
+                    <option value="Dirección" id="opt-direccion">Dirección</option>
                     <option value="Defensoría" id="opt-defensoria">Defensoría</option>
                     <option value="CRA">CRA</option>
                     <option value="Coord. Pedagógica">Coord. Pedagógica</option>
@@ -268,16 +269,21 @@
 
             areaSelect.addEventListener('change', function() {
                 const optDefensoria = document.getElementById('opt-defensoria');
+                const optDireccion = document.getElementById('opt-direccion');
                 if (this.value === 'Administrativo' || this.value === 'Especialista (Robótica / Deportes)') {
                     deptoContainer.style.display = 'block';
                     
                     if (this.value === 'Administrativo') {
                         optDefensoria.style.display = '';
                         optDefensoria.disabled = false;
+                        optDireccion.style.display = '';
+                        optDireccion.disabled = false;
                     } else {
                         optDefensoria.style.display = 'none';
                         optDefensoria.disabled = true;
-                        if (deptoSelect.value === 'Defensoría') deptoSelect.value = '';
+                        optDireccion.style.display = 'none';
+                        optDireccion.disabled = true;
+                        if (deptoSelect.value === 'Defensoría' || deptoSelect.value === 'Dirección') deptoSelect.value = '';
                     }
                 } else {
                     deptoContainer.style.display = 'none';

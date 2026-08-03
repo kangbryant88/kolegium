@@ -363,6 +363,7 @@
                                 <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Departamento Asignado</label>
                                 <select name="departamento_asignado" class="edu-select mb-3" style="width: 100%;">
                                     <option value="" {% if not usuario.departamento_asignado %}selected{% endif %}>Ninguno</option>
+                                    <option value="Dirección" {% if usuario.departamento_asignado == 'Dirección' %}selected{% endif %}>Dirección</option>
                                     <option value="Defensoría" {% if usuario.departamento_asignado == 'Defensoría' %}selected{% endif %}>Defensoría</option>
                                     <option value="CRA" {% if usuario.departamento_asignado == 'CRA' %}selected{% endif %}>CRA</option>
                                     <option value="Coord. Pedagógica" {% if usuario.departamento_asignado == 'Coord. Pedagógica' or usuario.departamento_asignado == 'Pedagógica' %}selected{% endif %}>Coord. Pedagógica</option>

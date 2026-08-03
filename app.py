@@ -49,7 +49,7 @@ with app.app_context():
     # Mapa maestro de permisos por rol
     PERMISOS_POR_ROL = {
         'Administrador Supremo': 'dashboard,planificador,asistencia,defensoria,configuracion,admin,anuncios',
-        'Equipo Directivo': 'dashboard,asistencia,configuracion,anuncios',
+        'Equipo Directivo "Dirección"': 'dashboard,asistencia,configuracion,anuncios',
         'Administrativo': 'dashboard_general,asistencia,anuncios,planificador',
         'Docente de Aula': 'planificador,asistencia,anuncios',
         'Docente Especialista': 'planificador,asistencia,anuncios',
@@ -64,6 +64,12 @@ with app.app_context():
             db.session.add(Rol(nombre=nombre, permisos=permisos))
         db.session.commit()
     else:
+        # Migrar nombre de Equipo Directivo si es necesario
+        rol_ed = Rol.query.filter_by(nombre='Equipo Directivo').first()
+        if rol_ed:
+            rol_ed.nombre = 'Equipo Directivo "Dirección"'
+            db.session.commit()
+            
         # Migración: sincronizar permisos de roles existentes y crear faltantes
         for nombre, permisos in PERMISOS_POR_ROL.items():
             rol = Rol.query.filter_by(nombre=nombre).first()
@@ -619,7 +625,12 @@ def eliminar_anuncio(id):
 
 @app.route('/gestion_personal')
 def gestion_personal():
-    if not session.get('logeado') or ('admin' not in session.get('permisos', '') and session.get('nombre_rol') != 'Equipo Directivo'):
+    tiene_acceso = (
+        'admin' in session.get('permisos', '') or 
+        session.get('nombre_rol') == 'Equipo Directivo "Dirección"' or 
+        (session.get('nombre_rol') == 'Administrativo' and session.get('departamento_asignado') == 'Dirección')
+    )
+    if not session.get('logeado') or not tiene_acceso:
         return redirect(url_for('auth.login'))
         
     personal = Usuario.query.all()
