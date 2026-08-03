@@ -64,10 +64,20 @@ with app.app_context():
             db.session.add(Rol(nombre=nombre, permisos=permisos))
         db.session.commit()
     else:
-        # Migrar nombre de Equipo Directivo si es necesario
-        rol_ed = Rol.query.filter(Rol.nombre.in_(['Equipo Directivo', 'Equipo Directivo "Dirección"'])).first()
-        if rol_ed:
-            rol_ed.nombre = 'Equipo Directivo (Dirección)'
+        # Limpieza agresiva de roles "Equipo Directivo" duplicados
+        roles_ed = Rol.query.filter(Rol.nombre.in_(['Equipo Directivo', 'Equipo Directivo "Dirección"', 'Equipo Directivo (Dirección)'])).all()
+        if roles_ed:
+            # Mantener solo uno y renombrarlo, reasignar usuarios y borrar el resto
+            rol_principal = roles_ed[0]
+            rol_principal.nombre = 'Equipo Directivo (Dirección)'
+            
+            for rol_dup in roles_ed[1:]:
+                # Reasignar usuarios al rol principal
+                usuarios_afectados = Usuario.query.filter_by(rol_id=rol_dup.id).all()
+                for u in usuarios_afectados:
+                    u.rol_id = rol_principal.id
+                db.session.delete(rol_dup)
+                
             db.session.commit()
             
         # Migración: sincronizar permisos de roles existentes y crear faltantes
@@ -93,6 +103,11 @@ with app.app_context():
             for u in Usuario.query.filter_by(rol_id=rol_coord.id).all():
                 u.rol_id = rol_admin.id
             db.session.delete(rol_coord)
+            
+        # Limpiar texto de area_trabajo en usuarios
+        usuarios_ed = Usuario.query.filter(Usuario.area_trabajo.in_(['Equipo Directivo', 'Equipo Directivo "Dirección"'])).all()
+        for u in usuarios_ed:
+            u.area_trabajo = 'Equipo Directivo (Dirección)'
             
         db.session.commit()
 
