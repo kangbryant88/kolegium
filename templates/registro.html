@@ -230,6 +230,7 @@
                 <label class="field-label">Departamento Asignado</label>
                 <select name="departamento_asignado" class="edu-select" id="departamento-select">
                     <option value="" disabled selected>-- Seleccione un Departamento --</option>
+                    <option value="Defensoría" id="opt-defensoria">Defensoría</option>
                     <option value="CRA">CRA</option>
                     <option value="Coord. Pedagógica">Coord. Pedagógica</option>
                     <option value="Educación Física">Educación Física</option>
@@ -266,8 +267,18 @@
             const deptoSelect = document.getElementById('departamento-select');
 
             areaSelect.addEventListener('change', function() {
+                const optDefensoria = document.getElementById('opt-defensoria');
                 if (this.value === 'Administrativo' || this.value === 'Especialista (Robótica / Deportes)') {
                     deptoContainer.style.display = 'block';
+                    
+                    if (this.value === 'Administrativo') {
+                        optDefensoria.style.display = '';
+                        optDefensoria.disabled = false;
+                    } else {
+                        optDefensoria.style.display = 'none';
+                        optDefensoria.disabled = true;
+                        if (deptoSelect.value === 'Defensoría') deptoSelect.value = '';
+                    }
                 } else {
                     deptoContainer.style.display = 'none';
                     deptoSelect.value = '';
