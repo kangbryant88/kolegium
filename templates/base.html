@@ -84,7 +84,7 @@
                 </a>
                 {% endif %}
 
-                {% if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo', 'Docente de Aula'] %}
+                {% if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)', 'Docente de Aula'] %}
                 <a href="{{ url_for('academico.mi_aula') }}"
                     class="sidebar-link {% if request.path == '/academico/mi_aula' %}active{% endif %}">
                     <i data-lucide="book-open"></i>

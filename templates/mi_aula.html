@@ -12,7 +12,7 @@
         <p class="text-muted mb-0">Gestión de asistencia e incidencias diarias</p>
     </div>
 
-    {% if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo'] %}
+    {% if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)'] %}
     <div class="w-100" style="max-width: 300px;">
         <form action="{{ url_for('academico.mi_aula') }}" method="GET" class="d-flex align-items-center w-100">
             <select name="grado_id" class="form-select border-primary shadow-sm w-100" onchange="this.form.submit()">
@@ -31,7 +31,7 @@
 {% if not grado %}
 <div class="row">
     <div class="col-12">
-        {% if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo'] %}
+        {% if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)'] %}
         <div class="card border-0 shadow-sm rounded-4 text-center py-5" style="background-color: var(--surface);">
             <div class="card-body">
                 <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex mx-auto align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">

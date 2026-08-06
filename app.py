@@ -65,7 +65,7 @@ with app.app_context():
         db.session.commit()
     else:
         # Limpieza agresiva de roles "Equipo Directivo" duplicados
-        roles_ed = Rol.query.filter(Rol.nombre.in_(['Equipo Directivo', 'Equipo Directivo "Dirección"', 'Equipo Directivo (Dirección)'])).all()
+        roles_ed = Rol.query.filter(Rol.nombre.in_(['Equipo Directivo', 'Equipo Directivo "Dirección"', 'Equipo Directivo / Administrativo', 'Equipo Directivo (Dirección)'])).all()
         if roles_ed:
             # Mantener solo uno y renombrarlo, reasignar usuarios y borrar el resto
             rol_principal = roles_ed[0]
@@ -96,19 +96,35 @@ with app.app_context():
                 u.rol_id = rol_pv.id
             db.session.delete(rol_vig)
             
-        # Limpiar rol obsoleto "Coordinador / Administrativo" si existe
-        rol_coord = Rol.query.filter_by(nombre='Coordinador / Administrativo').first()
+        # Limpiar roles obsoletos "Coordinador Administrativo" / "Coordinador / Administrativo" si existen
+        nombres_coord_obsoletos = ['Coordinador / Administrativo', 'Coordinador Administrativo', 'Coordinador/Administrativo']
+        roles_coord = Rol.query.filter(Rol.nombre.in_(nombres_coord_obsoletos)).all()
         rol_admin = Rol.query.filter_by(nombre='Administrativo').first()
-        if rol_coord and rol_admin:
-            for u in Usuario.query.filter_by(rol_id=rol_coord.id).all():
-                u.rol_id = rol_admin.id
-            db.session.delete(rol_coord)
-            
-        # Limpiar texto de area_trabajo en usuarios
-        usuarios_ed = Usuario.query.filter(Usuario.area_trabajo.in_(['Equipo Directivo', 'Equipo Directivo "Dirección"'])).all()
+        if roles_coord and rol_admin:
+            for rol_coord in roles_coord:
+                for u in Usuario.query.filter_by(rol_id=rol_coord.id).all():
+                    u.rol_id = rol_admin.id
+                db.session.delete(rol_coord)
+
+        # Limpiar texto de area_trabajo y cargo_solicitado en usuarios (roles de Dirección)
+        nombres_ed_legacy = ['Equipo Directivo', 'Equipo Directivo "Dirección"', 'Equipo Directivo / Administrativo']
+        usuarios_ed = Usuario.query.filter(Usuario.area_trabajo.in_(nombres_ed_legacy)).all()
         for u in usuarios_ed:
             u.area_trabajo = 'Equipo Directivo (Dirección)'
-            
+
+        # Limpiar texto de area_trabajo y cargo_solicitado en usuarios (rol Administrativo)
+        usuarios_admin_legacy = Usuario.query.filter(Usuario.area_trabajo.in_(nombres_coord_obsoletos)).all()
+        for u in usuarios_admin_legacy:
+            u.area_trabajo = 'Administrativo'
+
+        cargos_ed_legacy = Usuario.query.filter(Usuario.cargo_solicitado.in_(nombres_ed_legacy)).all()
+        for u in cargos_ed_legacy:
+            u.cargo_solicitado = 'Equipo Directivo (Dirección)'
+
+        cargos_admin_legacy = Usuario.query.filter(Usuario.cargo_solicitado.in_(nombres_coord_obsoletos)).all()
+        for u in cargos_admin_legacy:
+            u.cargo_solicitado = 'Administrativo'
+
         db.session.commit()
 
 @app.context_processor
@@ -132,7 +148,7 @@ def auth_defensoria():
     nombre_rol = session.get('nombre_rol')
     depto = session.get('departamento_asignado')
     
-    if nombre_rol in ['Defensoría Estudiantil', 'Equipo Directivo', 'Administrador Supremo']:
+    if nombre_rol in ['Defensoría Estudiantil', 'Equipo Directivo (Dirección)', 'Administrador Supremo']:
         return True
         
     if nombre_rol == 'Administrativo' and depto == 'Defensoría':
@@ -552,7 +568,7 @@ def borrar_tema(id):
 
 @app.route('/configuracion/promover_ano', methods=['POST'])
 def promover_ano():
-    if not session.get('logeado') or session.get('nombre_rol') not in ['Administrador Supremo', 'Equipo Directivo']:
+    if not session.get('logeado') or session.get('nombre_rol') not in ['Administrador Supremo', 'Equipo Directivo (Dirección)']:
         return redirect(url_for('index'))
         
     estudiantes_activos = Estudiante.query.filter_by(estatus='Activo').all()
@@ -661,7 +677,7 @@ def gestion_personal():
     }
     
     macro_docentes = ['Docente de Aula (1ro a 6to)', 'Especialista (Robótica / Deportes)', 'Defensoría Estudiantil']
-    macro_directivos = ['Equipo Directivo / Administrativo', 'Administrador Supremo']
+    macro_directivos = ['Equipo Directivo (Dirección)', 'Administrador Supremo']
     macro_operativos = ['Obrero', 'Personal de Vigilancia', 'Personal de Cocina']
     
     for t in personal:
