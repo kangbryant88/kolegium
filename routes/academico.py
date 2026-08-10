@@ -964,6 +964,35 @@ def actualizar_estudiante_rapido(id):
     flash(f"Solicitud de actualización para {estudiante.nombre_completo} enviada a Dirección para su revisión.", "info")
     return redirect(request.referrer or url_for('academico.mi_aula'))
 
+@academico_bp.route('/actualizar_medidas/<int:id>', methods=['POST'])
+def actualizar_medidas(id):
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    estudiante = Estudiante.query.get_or_404(id)
+    grado_id = request.form.get('grado_id')
+
+    def _a_float(valor):
+        try:
+            return float(valor) if valor not in (None, '') else None
+        except ValueError:
+            return None
+
+    # Guardado directo: a diferencia de "Actualizar" (contacto/ficha médica),
+    # las medidas físicas no pasan por aprobación de Dirección.
+    estudiante.peso = _a_float(request.form.get('peso'))
+    estudiante.talla = _a_float(request.form.get('talla'))
+    estudiante.talla_camisa = request.form.get('talla_camisa')
+    estudiante.talla_pantalon = request.form.get('talla_pantalon')
+    estudiante.calzado = request.form.get('calzado')
+
+    db.session.commit()
+    flash(f"Medidas de {estudiante.nombre_completo} actualizadas correctamente.", "success")
+
+    url = url_for('academico.mi_aula')
+    if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)'] and grado_id:
+        url = url_for('academico.mi_aula', grado_id=grado_id)
+    return redirect(url)
+
 @academico_bp.route('/aprobar_actualizacion/<int:id>', methods=['POST', 'GET'])
 def aprobar_actualizacion(id):
     if session.get('nombre_rol') not in ['Administrador Supremo', 'Equipo Directivo (Dirección)']:

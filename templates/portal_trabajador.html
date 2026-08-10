@@ -2,234 +2,283 @@
 {% block title %}Mi Autogestión - Kolegium{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 fw-bold mb-1">Mi Autogestión</h1>
-        <p class="text-muted mb-0">Gestión de credenciales MPPE y Expediente Digital</p>
+<style>
+    /* Ajustes puntuales que Bootstrap no cubre con utilidades: elevación al hover y transiciones suaves. */
+    .autogestion-view .btn-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .autogestion-view .btn-lift:hover {
+        transform: translateY(-2px);
+    }
+    .autogestion-view .bento-doc {
+        transition: transform 0.2s ease;
+    }
+    .autogestion-view .bento-doc:hover {
+        transform: translateY(-3px);
+    }
+    /* Tokens de tema del panel (claro/oscuro) que Bootstrap no expone como utilidad */
+    .autogestion-view .surface-card {
+        background: var(--surface);
+    }
+    .autogestion-view .surface-tint {
+        background: var(--surface-container);
+    }
+    .autogestion-view .text-on-surface {
+        color: var(--on-surface) !important;
+    }
+</style>
+
+<div class="autogestion-view">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Mi Autogestión</h1>
+            <p class="text-muted mb-0">Gestión de credenciales MPPE y Expediente Digital</p>
+        </div>
     </div>
-</div>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show border-0 shadow-sm" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show border-0 rounded-4 shadow-sm" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-<!-- Guía Rápida: Tutorial MPPE -->
-<div class="accordion mb-4 shadow-sm" id="accordionTutorial">
-    <div class="accordion-item border-0 rounded-4 overflow-hidden">
-        <h2 class="accordion-header">
-            <button class="accordion-button collapsed text-primary fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTutorial" aria-expanded="false" aria-controls="collapseTutorial">
-                💡 Guía Rápida: ¿Cómo encuentro mi usuario y clave del Ministerio?
-            </button>
-        </h2>
-        <div id="collapseTutorial" class="accordion-collapse collapse" data-bs-parent="#accordionTutorial">
-            <div class="accordion-body p-4">
-                <ul class="list-unstyled mb-0">
-                    <li class="d-flex mb-3">
-                        <div class="badge bg-info  rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.9rem;">1</div>
-                        <div>Abre tu correo electrónico personal (el que usas para el Ministerio).</div>
-                    </li>
-                    <li class="d-flex mb-3">
-                        <div class="badge bg-info  rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.9rem;">2</div>
-                        <div>En la barra de búsqueda de arriba, escribe la palabra <strong>"autogestion"</strong>. <span class="text-muted small d-block mt-1">(Revisa también tu carpeta de Spam o Correo no deseado).</span></div>
-                    </li>
-                    <li class="d-flex mb-3">
-                        <div class="badge bg-info  rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.9rem;">3</div>
-                        <div>Busca un correo enviado por <em>no-responde@mppe.gob.ve</em> con el asunto <strong>"clave y usuario sistema autogestion ME"</strong>.</div>
-                    </li>
-                    <li class="d-flex mb-3">
-                        <div class="badge bg-info  rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.9rem;">4</div>
-                        <div>Allí verás tu contraseña (suele ser una mezcla rara de letras y comas, ej: <code class="bg-light text-dark px-2 py-1 rounded">lki,iPNM</code>). Cópiala y tráela a este sistema.</div>
-                    </li>
-                </ul>
-                <div class="mt-4 p-3 bg-warning bg-opacity-10 text-warning-emphasis rounded-3 border border-warning border-opacity-25 small">
-                    <strong>⚠️ Notas Importantes:</strong> Si nunca has usado el portal, debes registrarte primero. Si cambiaste tu clave y la olvidaste, debes ir al departamento de Recursos Humanos de la Zona Educativa para que te la reseteen.
+    <!-- Guía Rápida: Tutorial MPPE -->
+    <div class="accordion mb-4" id="accordionTutorial">
+        <div class="accordion-item bg-primary-subtle border-0 rounded-4 overflow-hidden shadow-sm"
+             style="--bs-accordion-btn-focus-box-shadow: none; --bs-accordion-active-bg: transparent; --bs-accordion-btn-bg: transparent; --bs-accordion-border-width: 0;">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed bg-transparent fw-bold text-primary-emphasis" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTutorial" aria-expanded="false" aria-controls="collapseTutorial">
+                    💡 Guía Rápida: ¿Cómo encuentro mi usuario y clave del Ministerio?
+                </button>
+            </h2>
+            <div id="collapseTutorial" class="accordion-collapse collapse" data-bs-parent="#accordionTutorial">
+                <div class="accordion-body pt-0 px-4 pb-4">
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex mb-3">
+                            <div class="surface-card text-primary rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0 fw-bold shadow-sm" style="width: 28px; height: 28px; font-size: 0.9rem;">1</div>
+                            <div>Abre tu correo electrónico personal (el que usas para el Ministerio).</div>
+                        </li>
+                        <li class="d-flex mb-3">
+                            <div class="surface-card text-primary rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0 fw-bold shadow-sm" style="width: 28px; height: 28px; font-size: 0.9rem;">2</div>
+                            <div>En la barra de búsqueda de arriba, escribe la palabra <strong>"autogestion"</strong>. <span class="text-muted small d-block mt-1">(Revisa también tu carpeta de Spam o Correo no deseado).</span></div>
+                        </li>
+                        <li class="d-flex mb-3">
+                            <div class="surface-card text-primary rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0 fw-bold shadow-sm" style="width: 28px; height: 28px; font-size: 0.9rem;">3</div>
+                            <div>Busca un correo enviado por <em>no-responde@mppe.gob.ve</em> con el asunto <strong>"clave y usuario sistema autogestion ME"</strong>.</div>
+                        </li>
+                        <li class="d-flex mb-3">
+                            <div class="surface-card text-primary rounded-circle me-3 d-flex align-items-center justify-content-center flex-shrink-0 fw-bold shadow-sm" style="width: 28px; height: 28px; font-size: 0.9rem;">4</div>
+                            <div>Allí verás tu contraseña (suele ser una mezcla rara de letras y comas, ej: <code class="surface-card text-on-surface px-2 py-1 rounded-3">lki,iPNM</code>). Cópiala y tráela a este sistema.</div>
+                        </li>
+                    </ul>
+                    <div class="mt-4 p-3 surface-card text-warning-emphasis rounded-4 shadow-sm small">
+                        <strong>⚠️ Notas Importantes:</strong> Si nunca has usado el portal, debes registrarte primero. Si cambiaste tu clave y la olvidaste, debes ir al departamento de Recursos Humanos de la Zona Educativa para que te la reseteen.
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row g-4">
-    <!-- Paso 1: Asistente MPPE -->
-    <div class="col-lg-6">
-        <div class="card shadow-sm border-0 rounded-4 h-100">
-            <div class="card-header bg-primary bg-opacity-10 border-bottom-0 pt-4 pb-3 px-4">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="bg-primary  rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 40px; height: 40px; font-size: 1.2rem;">
-                        1
+    <div class="row g-4">
+        <!-- Paso 1: Asistente MPPE -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="bg-primary-subtle text-primary rounded-4 d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width: 48px; height: 48px; font-size: 1.2rem;">
+                            1
+                        </div>
+                        <div>
+                            <span class="d-block text-uppercase fw-bold text-muted" style="font-size: 0.7rem; letter-spacing: 0.06em;">Paso 1</span>
+                            <h3 class="h5 fw-bold mb-0">Tus Credenciales del Ministerio</h3>
+                        </div>
                     </div>
-                    <h3 class="h5 fw-bold text-primary mb-0">Tus Credenciales del Ministerio</h3>
+
+                    <p class="text-muted mb-4">Utiliza estas credenciales para ingresar al sistema de autogestión del MPPE y descargar tus recibos de pago o constancias de trabajo.</p>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <div class="surface-tint rounded-4 p-3 p-md-4">
+                                <label class="d-block text-uppercase fw-bold text-muted mb-2" style="font-size: 0.7rem; letter-spacing: 0.06em;">Usuario MPPE (Correo)</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="text" class="form-control fw-bold border-0 bg-transparent p-0 text-on-surface" id="correoMppe" value="{{ usuario.usuario_autogestion or 'No configurado' }}" readonly style="font-size: 1.1rem; box-shadow: none;">
+                                    <button type="button" class="btn btn-outline-primary btn-lift rounded-pill d-flex align-items-center px-3 flex-shrink-0" onclick="copiarTexto('correoMppe')">
+                                        <i data-lucide="copy" class="me-2" style="width: 16px; height: 16px;"></i> Copiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="surface-tint rounded-4 p-3 p-md-4">
+                                <label class="d-block text-uppercase fw-bold text-muted mb-2" style="font-size: 0.7rem; letter-spacing: 0.06em;">Clave de Acceso</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="password" class="form-control fw-bold border-0 bg-transparent p-0 text-on-surface" id="claveMppe" value="{{ usuario.clave_autogestion or '' }}" readonly style="font-size: 1.1rem; box-shadow: none;">
+                                    <button type="button" class="btn btn-outline-primary btn-lift rounded-pill d-flex align-items-center px-3 flex-shrink-0" onclick="copiarTexto('claveMppe')">
+                                        <i data-lucide="copy" class="me-2" style="width: 16px; height: 16px;"></i> Copiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-warning-subtle text-warning-emphasis rounded-4 p-3 mb-4 d-flex align-items-start gap-2" style="font-size: 0.85rem;">
+                        <i data-lucide="alert-circle" class="mt-1 flex-shrink-0" style="width: 16px; height: 16px;"></i>
+                        <div>
+                            Si no tienes configuradas tus credenciales, por favor dirígete a la administración de la escuela para que las actualicen en tu expediente.
+                        </div>
+                    </div>
+
+                    <a href="https://autogestion.mppe.gob.ve/iniciar-sesion" target="_blank" id="btnPortalMppe" class="btn btn-primary btn-lift rounded-pill w-100 fw-bold py-3 shadow-sm d-flex justify-content-center align-items-center gap-2">
+                        <i data-lucide="external-link" style="width: 20px; height: 20px;"></i> Abrir Portal del Ministerio
+                    </a>
                 </div>
             </div>
-            
-            <div class="card-body p-4">
-                <p class="text-muted mb-4">Utiliza estas credenciales para ingresar al sistema de autogestión del MPPE y descargar tus recibos de pago o constancias de trabajo.</p>
-                
-                <div class="bg-transparent rounded-4 p-4 mb-4 border">
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">Usuario MPPE (Correo)</label>
-                        <div class="d-flex gap-2">
-                            <input type="text" class="form-control fw-bold fs-6" id="correoMppe" value="{{ usuario.usuario_autogestion or 'No configurado' }}" readonly>
-                            <button type="button" class="btn btn-outline-primary d-flex align-items-center px-3" onclick="copiarTexto('correoMppe')">
-                                <i data-lucide="copy" class="me-2" style="width: 16px; height: 16px;"></i> Copiar
-                            </button>
+        </div>
+
+        <!-- Paso 2: Bóveda Documental -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 rounded-4 h-100">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="bg-success-subtle text-success rounded-4 d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width: 48px; height: 48px; font-size: 1.2rem;">
+                            2
+                        </div>
+                        <div>
+                            <span class="d-block text-uppercase fw-bold text-muted" style="font-size: 0.7rem; letter-spacing: 0.06em;">Paso 2</span>
+                            <h3 class="h5 fw-bold mb-0">Expediente Digital</h3>
                         </div>
                     </div>
-                    
-                    <div>
-                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">Clave de Acceso</label>
-                        <div class="d-flex gap-2">
-                            <input type="password" class="form-control fw-bold fs-6" id="claveMppe" value="{{ usuario.clave_autogestion or '' }}" readonly>
-                            <button type="button" class="btn btn-outline-primary d-flex align-items-center px-3" onclick="copiarTexto('claveMppe')">
-                                <i data-lucide="copy" class="me-2" style="width: 16px; height: 16px;"></i> Copiar
-                            </button>
+
+                    <p class="text-muted mb-4">Sube tus documentos personales para mantener tu expediente digital actualizado. Selecciona el tipo de documento y adjunta el archivo.</p>
+
+                    <form action="{{ url_for('portal_trabajador') }}" method="POST" enctype="multipart/form-data" class="surface-tint rounded-4 p-3 p-md-4 mb-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 0.06em;">¿Qué documento vas a subir?</label>
+                            <select name="tipo_documento" class="form-select form-select-lg border-0 shadow-sm rounded-4 py-3" style="font-size: 1rem;" required>
+                                <option value="" selected disabled>Selecciona el tipo de documento...</option>
+                                <option value="voucher">Voucher / Recibo de Pago (PDF/Img)</option>
+                                <option value="constancia">Constancia de Trabajo (PDF/Img)</option>
+                                <option value="curriculum">Síntesis Curricular (PDF)</option>
+                                <option value="rif">RIF (PDF/JPG)</option>
+                                <option value="cedula">Cédula de Identidad (Imagen/PDF)</option>
+                                <option value="foto_perfil">Foto de Perfil (Imagen)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 0.06em;">Selecciona el archivo (PDF, JPG, PNG)</label>
+                            <input class="form-control form-control-lg border-0 shadow-sm rounded-4 py-3" type="file" name="archivo" accept=".pdf,.png,.jpg,.jpeg" style="font-size: 1rem;" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lift rounded-pill w-100 fw-bold py-3 shadow-sm d-flex justify-content-center align-items-center gap-2" style="font-size: 1.1rem;">
+                            <i data-lucide="upload-cloud" style="width: 24px; height: 24px;"></i> Guardar en mi Expediente
+                        </button>
+                    </form>
+
+                    <!-- Estado del Expediente (Bento) -->
+                    <h4 class="h6 fw-bold text-uppercase text-muted mb-3" style="font-size: 0.75rem; letter-spacing: 0.06em;">Estado de tu Expediente</h4>
+                    <div class="row row-cols-2 row-cols-md-3 g-3">
+                        <div class="col">
+                            <div class="bento-doc h-100 rounded-4 p-3 d-flex flex-column align-items-center text-center gap-2 {% if usuario.voucher_path %}bg-success-subtle{% else %}surface-tint{% endif %}">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm {% if usuario.voucher_path %}bg-success text-white{% else %}surface-card text-muted{% endif %}" style="width: 40px; height: 40px;">
+                                    <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
+                                </div>
+                                <span class="fw-semibold {% if usuario.voucher_path %}text-success-emphasis{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">Voucher de Pago</span>
+                                {% if usuario.voucher_path %}
+                                <span class="badge bg-success rounded-pill">Subido</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">Pendiente</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="bento-doc h-100 rounded-4 p-3 d-flex flex-column align-items-center text-center gap-2 {% if usuario.constancia_path %}bg-success-subtle{% else %}surface-tint{% endif %}">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm {% if usuario.constancia_path %}bg-success text-white{% else %}surface-card text-muted{% endif %}" style="width: 40px; height: 40px;">
+                                    <i data-lucide="award" style="width: 18px; height: 18px;"></i>
+                                </div>
+                                <span class="fw-semibold {% if usuario.constancia_path %}text-success-emphasis{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">Constancia de Trabajo</span>
+                                {% if usuario.constancia_path %}
+                                <span class="badge bg-success rounded-pill">Subido</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">Pendiente</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="bento-doc h-100 rounded-4 p-3 d-flex flex-column align-items-center text-center gap-2 {% if usuario.curriculum_path %}bg-success-subtle{% else %}surface-tint{% endif %}">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm {% if usuario.curriculum_path %}bg-success text-white{% else %}surface-card text-muted{% endif %}" style="width: 40px; height: 40px;">
+                                    <i data-lucide="file-text" style="width: 18px; height: 18px;"></i>
+                                </div>
+                                <span class="fw-semibold {% if usuario.curriculum_path %}text-success-emphasis{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">Síntesis Curricular</span>
+                                {% if usuario.curriculum_path %}
+                                <span class="badge bg-success rounded-pill">Subido</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">Pendiente</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="bento-doc h-100 rounded-4 p-3 d-flex flex-column align-items-center text-center gap-2 {% if usuario.rif_path %}bg-success-subtle{% else %}surface-tint{% endif %}">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm {% if usuario.rif_path %}bg-success text-white{% else %}surface-card text-muted{% endif %}" style="width: 40px; height: 40px;">
+                                    <i data-lucide="credit-card" style="width: 18px; height: 18px;"></i>
+                                </div>
+                                <span class="fw-semibold {% if usuario.rif_path %}text-success-emphasis{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">RIF Actualizado</span>
+                                {% if usuario.rif_path %}
+                                <span class="badge bg-success rounded-pill">Subido</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">Pendiente</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="bento-doc h-100 rounded-4 p-3 d-flex flex-column align-items-center text-center gap-2 {% if usuario.cedula_path %}bg-success-subtle{% else %}surface-tint{% endif %}">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm {% if usuario.cedula_path %}bg-success text-white{% else %}surface-card text-muted{% endif %}" style="width: 40px; height: 40px;">
+                                    <i data-lucide="contact-2" style="width: 18px; height: 18px;"></i>
+                                </div>
+                                <span class="fw-semibold {% if usuario.cedula_path %}text-success-emphasis{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">Cédula de Identidad</span>
+                                {% if usuario.cedula_path %}
+                                <span class="badge bg-success rounded-pill">Subido</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">Pendiente</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col">
+                            <div class="bento-doc h-100 rounded-4 p-3 d-flex flex-column align-items-center text-center gap-2 {% if usuario.foto_perfil_path %}bg-success-subtle{% else %}surface-tint{% endif %}">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm {% if usuario.foto_perfil_path %}bg-success text-white{% else %}surface-card text-muted{% endif %}" style="width: 40px; height: 40px;">
+                                    <i data-lucide="camera" style="width: 18px; height: 18px;"></i>
+                                </div>
+                                <span class="fw-semibold {% if usuario.foto_perfil_path %}text-success-emphasis{% else %}text-muted{% endif %}" style="font-size: 0.8rem;">Foto de Perfil</span>
+                                {% if usuario.foto_perfil_path %}
+                                <span class="badge bg-success rounded-pill">Subido</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">Pendiente</span>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="alert alert-warning border-0 bg-warning bg-opacity-10 text-warning-emphasis p-3 mb-4 d-flex align-items-start gap-2" style="font-size: 0.85rem;">
-                    <i data-lucide="alert-circle" class="mt-1 flex-shrink-0" style="width: 16px; height: 16px;"></i>
-                    <div>
-                        Si no tienes configuradas tus credenciales, por favor dirígete a la administración de la escuela para que las actualicen en tu expediente.
+                    <div class="bg-warning-subtle text-warning-emphasis rounded-4 p-3 mt-4 d-flex align-items-center gap-2">
+                        <i data-lucide="alert-triangle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                        <span style="font-size: 0.9rem;">⚠️ <strong>Nota:</strong> La carga digital no exonera la entrega de los documentos en físico ante la Dirección de la institución.</span>
                     </div>
                 </div>
-
-                <a href="https://autogestion.mppe.gob.ve/iniciar-sesion" target="_blank" id="btnPortalMppe" class="btn btn-primary w-100 fw-bold py-3 shadow-sm d-flex justify-content-center align-items-center transition-all">
-                    <i data-lucide="external-link" class="me-2" style="width: 20px; height: 20px;"></i> Abrir Portal del Ministerio
-                </a>
             </div>
         </div>
     </div>
 
-    <!-- Paso 2: Bóveda Documental -->
-    <div class="col-lg-6">
-        <div class="card shadow-sm border-0 rounded-4 h-100">
-            <div class="card-header bg-success bg-opacity-10 border-bottom-0 pt-4 pb-3 px-4">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="bg-success  rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 40px; height: 40px; font-size: 1.2rem;">
-                        2
-                    </div>
-                    <h3 class="h5 fw-bold text-success mb-0">Expediente Digital</h3>
-                </div>
-            </div>
-            
-            <div class="card-body p-4">
-                <p class="text-muted mb-4">Sube tus documentos personales para mantener tu expediente digital actualizado. Selecciona el tipo de documento y adjunta el archivo.</p>
-                
-                <form action="{{ url_for('portal_trabajador') }}" method="POST" enctype="multipart/form-data" class="bg-transparent rounded-4 p-4 border mb-4">
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">¿Qué documento vas a subir?</label>
-                        <select name="tipo_documento" class="form-select form-select-lg border-0 shadow-sm py-3" style="font-size: 1rem;" required>
-                            <option value="" selected disabled>Selecciona el tipo de documento...</option>
-                            <option value="voucher">Voucher / Recibo de Pago (PDF/Img)</option>
-                            <option value="constancia">Constancia de Trabajo (PDF/Img)</option>
-                            <option value="curriculum">Síntesis Curricular (PDF)</option>
-                            <option value="rif">RIF (PDF/JPG)</option>
-                            <option value="cedula">Cédula de Identidad (Imagen/PDF)</option>
-                            <option value="foto_perfil">Foto de Perfil (Imagen)</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Selecciona el archivo (PDF, JPG, PNG)</label>
-                        <input class="form-control form-control-lg border-0 shadow-sm py-3" type="file" name="archivo" accept=".pdf,.png,.jpg,.jpeg" style="font-size: 1rem;" required>
-                    </div>
-
-                    <button type="submit" class="btn btn-success btn-lg w-100 fw-bold py-3 shadow-sm d-flex justify-content-center align-items-center" style="font-size: 1.1rem;">
-                        <i data-lucide="upload-cloud" class="me-2" style="width: 24px; height: 24px;"></i> Guardar en mi Expediente
-                    </button>
-                </form>
-                
-                <!-- Estado del Expediente -->
-                <h4 class="h6 fw-bold mb-3">Estado de tu Expediente:</h4>
-                <div class="d-flex flex-column gap-2">
-                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 {% if usuario.voucher_path %}bg-success bg-opacity-10 border border-success border-opacity-25{% else %}bg-light border{% endif %}">
-                        <div class="d-flex align-items-center gap-2">
-                            <i data-lucide="file-text" class="{% if usuario.voucher_path %}text-success{% else %}text-muted{% endif %}" style="width: 20px; height: 20px;"></i>
-                            <span class="fw-semibold {% if usuario.voucher_path %}text-success-emphasis{% else %}text-muted{% endif %}">Voucher de Pago</span>
-                        </div>
-                        {% if usuario.voucher_path %}
-                        <span class="badge bg-success">Subido</span>
-                        {% else %}
-                        <span class="badge">Pendiente</span>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 {% if usuario.constancia_path %}bg-success bg-opacity-10 border border-success border-opacity-25{% else %}bg-light border{% endif %}">
-                        <div class="d-flex align-items-center gap-2">
-                            <i data-lucide="award" class="{% if usuario.constancia_path %}text-success{% else %}text-muted{% endif %}" style="width: 20px; height: 20px;"></i>
-                            <span class="fw-semibold {% if usuario.constancia_path %}text-success-emphasis{% else %}text-muted{% endif %}">Constancia de Trabajo</span>
-                        </div>
-                        {% if usuario.constancia_path %}
-                        <span class="badge bg-success">Subido</span>
-                        {% else %}
-                        <span class="badge">Pendiente</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 {% if usuario.curriculum_path %}bg-success bg-opacity-10 border border-success border-opacity-25{% else %}bg-light border{% endif %}">
-                        <div class="d-flex align-items-center gap-2">
-                            <i data-lucide="file-text" class="{% if usuario.curriculum_path %}text-success{% else %}text-muted{% endif %}" style="width: 20px; height: 20px;"></i>
-                            <span class="fw-semibold {% if usuario.curriculum_path %}text-success-emphasis{% else %}text-muted{% endif %}">Síntesis Curricular</span>
-                        </div>
-                        {% if usuario.curriculum_path %}
-                        <span class="badge bg-success">Subido</span>
-                        {% else %}
-                        <span class="badge">Pendiente</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 {% if usuario.rif_path %}bg-success bg-opacity-10 border border-success border-opacity-25{% else %}bg-light border{% endif %}">
-                        <div class="d-flex align-items-center gap-2">
-                            <i data-lucide="credit-card" class="{% if usuario.rif_path %}text-success{% else %}text-muted{% endif %}" style="width: 20px; height: 20px;"></i>
-                            <span class="fw-semibold {% if usuario.rif_path %}text-success-emphasis{% else %}text-muted{% endif %}">RIF Actualizado</span>
-                        </div>
-                        {% if usuario.rif_path %}
-                        <span class="badge bg-success">Subido</span>
-                        {% else %}
-                        <span class="badge">Pendiente</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 {% if usuario.cedula_path %}bg-success bg-opacity-10 border border-success border-opacity-25{% else %}bg-light border{% endif %}">
-                        <div class="d-flex align-items-center gap-2">
-                            <i data-lucide="contact-2" class="{% if usuario.cedula_path %}text-success{% else %}text-muted{% endif %}" style="width: 20px; height: 20px;"></i>
-                            <span class="fw-semibold {% if usuario.cedula_path %}text-success-emphasis{% else %}text-muted{% endif %}">Cédula de Identidad</span>
-                        </div>
-                        {% if usuario.cedula_path %}
-                        <span class="badge bg-success">Subido</span>
-                        {% else %}
-                        <span class="badge">Pendiente</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 {% if usuario.foto_perfil_path %}bg-success bg-opacity-10 border border-success border-opacity-25{% else %}bg-light border{% endif %}">
-                        <div class="d-flex align-items-center gap-2">
-                            <i data-lucide="camera" class="{% if usuario.foto_perfil_path %}text-success{% else %}text-muted{% endif %}" style="width: 20px; height: 20px;"></i>
-                            <span class="fw-semibold {% if usuario.foto_perfil_path %}text-success-emphasis{% else %}text-muted{% endif %}">Foto de Perfil</span>
-                        </div>
-                        {% if usuario.foto_perfil_path %}
-                        <span class="badge bg-success">Subido</span>
-                        {% else %}
-                        <span class="badge">Pendiente</span>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="alert alert-warning mt-4 mb-0 border-0 bg-warning bg-opacity-10 text-warning-emphasis d-flex align-items-center gap-2">
-                    <i data-lucide="alert-triangle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
-                    <span style="font-size: 0.9rem;">⚠️ <strong>Nota:</strong> La carga digital no exonera la entrega de los documentos en físico ante la Dirección de la institución.</span>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -246,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectTipo = document.querySelector('select[name="tipo_documento"]');
     const btnSubmit = document.querySelector('form button[type="submit"]');
     const iconBase = '<i data-lucide="upload-cloud" class="me-2" style="width: 24px; height: 24px;"></i>';
-    
+
     if (selectTipo && btnSubmit) {
         selectTipo.addEventListener('change', function() {
             if (statusDocumentos[this.value]) {
@@ -266,14 +315,14 @@ document.addEventListener('DOMContentLoaded', function() {
 function copiarTexto(elementId) {
     var copyText = document.getElementById(elementId);
     if(!copyText.value || copyText.value === 'No configurado') return;
-    
+
     const isPassword = copyText.type === 'password';
     if(isPassword) copyText.type ="text";
-    
+
     // API de portapapeles moderna y robusta
     navigator.clipboard.writeText(copyText.value).then(() => {
         if(isPassword) copyText.type ="password";
-        
+
         // Feedback visual en el botón
         const btn = event.currentTarget;
         const originalHTML = btn.innerHTML;
@@ -281,19 +330,19 @@ function copiarTexto(elementId) {
         btn.classList.replace('btn-outline-primary', 'btn-success');
         btn.classList.add('');
         lucide.createIcons();
-        
+
         // Destacar el botón del Ministerio para guiar al usuario al siguiente paso
         const btnPortal = document.getElementById('btnPortalMppe');
         btnPortal.classList.remove('btn-primary');
         btnPortal.classList.add('btn-warning', 'text-dark', 'shadow-lg');
         btnPortal.style.transform = 'scale(1.02)';
-        
+
         setTimeout(() => {
             btn.innerHTML = originalHTML;
             btn.classList.replace('btn-success', 'btn-outline-primary');
             btn.classList.remove('');
             lucide.createIcons();
-            
+
             // Revertir sutilmente el botón del portal si se desea, o dejarlo destacado
             btnPortal.style.transform = 'scale(1)';
         }, 2000);

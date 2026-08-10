@@ -52,6 +52,12 @@
     height: 18px;
 }
 
+.sidebar-brand .brand-icon .logo-k-svg {
+    width: 18px;
+    height: 18px;
+    color: var(--on-primary);
+}
+
 .sidebar-brand .brand-text {
     overflow: hidden;
     white-space: nowrap;

@@ -57,6 +57,23 @@
             letter-spacing: -1px;
         }
 
+        .brand-logo .logo-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .brand-logo .logo-icon .logo-k-svg {
+            width: 60%;
+            height: 60%;
+            color: #fff;
+        }
+
         .reset-card h2 {
             font-size: 1.5rem;
             font-weight: 800;
@@ -209,7 +226,13 @@
 
     <div class="reset-card">
         <div class="brand-logo">
-            <img src="{{ url_for('static', filename='img/logo_kolegium.png') }}" alt="Logo Kolegium" style="width: 48px; height: 48px; object-fit: contain;">
+            <div class="logo-icon">
+                <svg class="logo-k-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <rect x="5" y="4" width="3.4" height="16" rx="1" fill="currentColor"/>
+                    <path d="M8.6 12.3 L18.4 3.6" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+                    <path d="M8.6 11.7 L18.4 20.4" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+                </svg>
+            </div>
             <span>Kolegium</span>
         </div>
 

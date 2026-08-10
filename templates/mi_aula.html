@@ -42,7 +42,7 @@
             </div>
         </div>
         {% else %}
-        <div class="card border-0 shadow-sm rounded-4 text-center py-5" style="background-color: rgba(245,158,11,0.1); border-left: 5px solid #f59e0b !important;">
+        <div class="card border-0 shadow-sm rounded-4 text-center py-5 bg-warning-subtle" style="border-left: 5px solid #f59e0b !important;">
             <div class="card-body">
                 <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-inline-flex mx-auto align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
                     <i data-lucide="alert-triangle" style="width: 40px; height: 40px;"></i>
@@ -66,7 +66,7 @@
                     <p class="text-muted fw-bold mb-3"><i data-lucide="user-check" style="width:16px;height:16px;" class="me-1"></i> Docente Titular: <span>{{ docente_titular }}</span></p>
                     <div class="d-flex gap-2 flex-wrap">
                         <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem; background-color: var(--surface); color: var(--text-main);"><i data-lucide="users" style="width:14px;height:14px;" class="me-1 text-primary"></i> Total: {{ total_matricula }}</span>
-                        <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem; background-color: var(--surface); color: var(--text-main);"><i data-lucide="user" style="width:14px;height:14px;" class="me-1 text-danger"></i> Niñas: {{ total_hembras }}</span>
+                        <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem; background-color: var(--surface); color: var(--text-main);"><i data-lucide="user" style="width:14px;height:14px;" class="me-1 text-danger"></i> Hembras: {{ total_hembras }}</span>
                         <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem; background-color: var(--surface); color: var(--text-main);"><i data-lucide="user" style="width:14px;height:14px;" class="me-1 text-info"></i> Varones: {{ total_varones }}</span>
                     </div>
                 </div>
@@ -109,103 +109,329 @@
                 </div>
             </div>
             
-            <div class="d-flex justify-content-between align-items-center mb-4 px-4">
+            {% set sin_genero_lista = estudiantes | rejectattr('genero', 'in', ['Masculino', 'Femenino']) | list %}
+            <div class="d-flex justify-content-between align-items-center mb-3 px-4">
                             <h5 class="fw-bold m-0" style="color: var(--on-surface);">Lista de Estudiantes</h5>
                             <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 border border-primary border-opacity-25" style="font-size: 0.85rem;">
                                 <i data-lucide="users" style="width:14px; height:14px; margin-right:4px;"></i> Total: {{ grado.estudiantes|length }}
                             </span>
                         </div>
-                
-                <div class="card-body p-0 mt-3">
-                    <div class="table-responsive border-0 shadow-sm rounded" style="max-height: 60vh; overflow-y: auto;">
-                        <table class="table table-hover table-borderless align-middle mb-0">
-                            <thead class="sticky-top" style="z-index: 1;">
-                                <tr>
-                                    <th class="px-4 py-3 text-muted fw-semibold" style="font-size: 0.85rem; letter-spacing: 0.5px;">ESTUDIANTE (C.I Escolar)</th>
-                                    <th class="py-3 text-center text-muted fw-semibold" style="font-size: 0.85rem;">STATUS</th>
-                                    <th class="px-4 py-3 text-end text-muted fw-semibold" style="font-size: 0.85rem;">ACCIONES RÁPIDAS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for est in estudiantes %}
-                                <tr class="border-bottom">
-                                    <td class="px-4 py-3">
-                                        <div class="d-flex align-items-center">
-                                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold" style="width:40px;height:40px;">
-                                                {{ est.nombre_completo[0]|upper }}
-                                            </div>
-                                            <div>
-                                                <div class="fw-bold d-flex align-items-center gap-2" style="font-size: 0.95rem;">
-                                                    {{ est.nombre_completo }}
-                                                    {% set alerta_data = alertas_estudiantes.get(est.id) %}
-                                                    {% if alerta_data %}
-                                                    <span class="badge bg-danger rounded-pill shadow-sm d-flex align-items-center gap-1" data-bs-toggle="tooltip" title="Alerta Activa: {{ alerta_data.tipo }}">
-                                                        <i data-lucide="alert-triangle" style="width:12px;height:12px;"></i> Defensoría ({{ alerta_data.tipo }})
-                                                        {% if alerta_data.tipo == 'Incidencia' %}
-                                                        <form id="form-revisar-alerta-{{ alerta_data.id }}" action="/academico/enterado_alerta/{{ alerta_data.id }}?grado_id={{ grado.id }}" method="POST" style="display: none;"></form>
-                                                        <button type="button" class="btn btn-sm p-0 text-white ms-1" style="line-height: 1;" title="Marcar como revisado" onclick="abrirModalRevisarAlerta('{{ alerta_data.id }}')"><i data-lucide="x" style="width: 12px; height: 12px;"></i></button>
-                                                        {% endif %}
-                                                    </span>
+
+                        <!-- Selector Varones/Hembras: solo protagonista en móvil (Bootstrap nav-pills, sin recarga de página) -->
+                        <ul class="nav nav-pills nav-fill gap-2 px-4 mb-3 d-lg-none" id="pillsGenero" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2" id="pill-varones-tab" data-bs-toggle="pill" data-bs-target="#pane-varones" type="button" role="tab" aria-controls="pane-varones" aria-selected="true">
+                                    <i data-lucide="user" style="width:16px;height:16px;"></i> Varones
+                                    <span class="badge rounded-pill" style="background:#6366f1;color:#fff;">{{ total_varones }}</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2" id="pill-hembras-tab" data-bs-toggle="pill" data-bs-target="#pane-hembras" type="button" role="tab" aria-controls="pane-hembras" aria-selected="false">
+                                    <i data-lucide="user" style="width:16px;height:16px;"></i> Hembras
+                                    <span class="badge rounded-pill" style="background:#ec4899;color:#fff;">{{ total_hembras }}</span>
+                                </button>
+                            </li>
+                            {% if sin_genero_lista|length > 0 %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link rounded-pill fw-bold py-2 d-flex align-items-center justify-content-center gap-2" id="pill-sin-genero-tab" data-bs-toggle="pill" data-bs-target="#pane-sin-genero" type="button" role="tab" aria-controls="pane-sin-genero" aria-selected="false">
+                                    <i data-lucide="circle-help" style="width:16px;height:16px;"></i> Sin Género
+                                    <span class="badge rounded-pill" style="background:#64748b;color:#fff;">{{ sin_genero_lista|length }}</span>
+                                </button>
+                            </li>
+                            {% endif %}
+                        </ul>
+
+                <div class="card-body p-0 pt-1">
+                    <div class="tab-content px-4 pb-3">
+                        <div class="row g-3">
+                            <!-- Bento Varones -->
+                            <div class="col-lg-6 tab-pane fade show active aula-gender-pane" id="pane-varones" role="tabpanel" aria-labelledby="pill-varones-tab">
+                                <div class="aula-bento aula-bento-varones rounded-4 p-3 h-100">
+                                    <div class="d-flex align-items-center justify-content-between mb-3 px-1">
+                                        <h6 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color:#6366f1;">
+                                            <i data-lucide="user" style="width:16px;height:16px;"></i> Varones
+                                        </h6>
+                                        <span class="badge rounded-pill" style="background:#6366f1;color:#fff;">{{ total_varones }}</span>
+                                    </div>
+                                    <div class="d-flex flex-column gap-2 aula-scroll">
+                                        {% for est in estudiantes if est.genero == 'Masculino' %}
+                                        <div class="aula-est-card shadow-sm rounded-4 p-3">
+                                            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="aula-avatar-varon rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:40px;height:40px;">
+                                                        {{ est.nombre_completo[0]|upper }}
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold" style="font-size: 0.95rem;">{{ est.nombre_completo }}</div>
+                                                        <div class="text-muted small">{{ est.cedula_escolar }}</div>
+                                                    </div>
+                                                </div>
+                                                {% set porc = asistencia_porcentaje[est.id] %}
+                                                <div class="d-inline-flex align-items-center justify-content-center flex-shrink-0" data-bs-toggle="tooltip" title="{{ porc }}% Resumen de Asistencia">
+                                                    {% if porc >= 90 %}
+                                                        <span class="badge rounded-circle p-2 bg-success  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="check" style="width:16px;"></i></span>
+                                                    {% elif porc >= 75 %}
+                                                        <span class="badge rounded-circle p-2 bg-warning text-dark shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="minus" style="width:16px;"></i></span>
+                                                    {% else %}
+                                                        <span class="badge rounded-circle p-2 bg-danger  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="alert-circle" style="width:16px;"></i></span>
                                                     {% endif %}
                                                 </div>
-                                                <div class="text-muted small">{{ est.cedula_escolar }}</div>
+                                            </div>
+
+                                            <div class="d-flex justify-content-end mt-3">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" data-bs-boundary="window" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
+                                                        <i data-lucide="settings" class="me-2" style="width:14px;height:14px;"></i> Gestionar
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 py-2">
+                                                        {% set solicitud = estado_solicitudes.get(est.id) %}
+                                                        <li>
+                                                            {% if not solicitud or solicitud.estado == 'Rechazado' or solicitud.estado == 'Utilizado' %}
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalSolicitud{{ est.id }}">
+                                                                <i data-lucide="lock" style="width:14px;height:14px;"></i> Solicitar Acceso
+                                                            </button>
+                                                            {% elif solicitud.estado == 'Pendiente' %}
+                                                            <span class="dropdown-item d-flex align-items-center gap-2 py-2 text-muted disabled">
+                                                                <i data-lucide="clock" style="width:14px;height:14px;"></i> En revisión
+                                                            </span>
+                                                            {% elif solicitud.estado == 'Aprobado' %}
+                                                            {% set url_publica = url_for('academico.expediente_publico', token=solicitud.token_generado, _external=True) %}
+                                                            {% set mensaje = "Aquí tienes el expediente temporal de " ~ est.nombre_completo ~ ": " ~ url_publica ~ "%0A%0A*Nota: Este enlace es confidencial y ha sido aprobado por Dirección.*" %}
+                                                            <a href="https://api.whatsapp.com/send?text={{ mensaje }}" target="_blank" class="dropdown-item d-flex align-items-center gap-2 py-2 text-success">
+                                                                <i data-lucide="send" style="width:14px;height:14px;"></i> Enviar Enlace (WhatsApp)
+                                                            </a>
+                                                            {% endif %}
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalActualizar_{{ est.id }}">
+                                                                <i data-lucide="edit-3" style="width:14px;height:14px;"></i> Actualizar
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalMedidas_{{ est.id }}">
+                                                                <i data-lucide="ruler" style="width:14px;height:14px;"></i> Actualizar Medidas
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalFicha_{{ est.id }}">
+                                                                <i data-lucide="activity" style="width:14px;height:14px;"></i> Ficha Médica
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalHistorialAsist_{{ est.id }}">
+                                                                <i data-lucide="pie-chart" style="width:14px;height:14px;"></i> Historial Asist.
+                                                            </button>
+                                                        </li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 text-warning" data-bs-toggle="modal" data-bs-target="#modalNota_{{ est.id }}">
+                                                                <i data-lucide="file-plus" style="width:14px;height:14px;"></i> Añadir Nota
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
                                             </div>
                                         </div>
-                                    </td>
-                                    
-                                    <td class="text-center py-3">
-                                        {% set porc = asistencia_porcentaje[est.id] %}
-                                        <div class="d-inline-flex align-items-center justify-content-center" data-bs-toggle="tooltip" title="{{ porc }}% Resumen de Asistencia">
-                                            {% if porc >= 90 %}
-                                                <span class="badge rounded-circle p-2 bg-success  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="check" style="width:16px;"></i></span>
-                                            {% elif porc >= 75 %}
-                                                <span class="badge rounded-circle p-2 bg-warning text-dark shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="minus" style="width:16px;"></i></span>
-                                            {% else %}
-                                                <span class="badge rounded-circle p-2 bg-danger  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="alert-circle" style="width:16px;"></i></span>
-                                            {% endif %}
+                                        {% else %}
+                                        <div class="text-center py-4 text-muted small">No hay varones registrados en este salón.</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bento Hembras -->
+                            <div class="col-lg-6 tab-pane fade aula-gender-pane" id="pane-hembras" role="tabpanel" aria-labelledby="pill-hembras-tab">
+                                <div class="aula-bento aula-bento-hembras rounded-4 p-3 h-100">
+                                    <div class="d-flex align-items-center justify-content-between mb-3 px-1">
+                                        <h6 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color:#ec4899;">
+                                            <i data-lucide="user" style="width:16px;height:16px;"></i> Hembras
+                                        </h6>
+                                        <span class="badge rounded-pill" style="background:#ec4899;color:#fff;">{{ total_hembras }}</span>
+                                    </div>
+                                    <div class="d-flex flex-column gap-2 aula-scroll">
+                                        {% for est in estudiantes if est.genero == 'Femenino' %}
+                                        <div class="aula-est-card shadow-sm rounded-4 p-3">
+                                            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="aula-avatar-hembra rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:40px;height:40px;">
+                                                        {{ est.nombre_completo[0]|upper }}
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold" style="font-size: 0.95rem;">{{ est.nombre_completo }}</div>
+                                                        <div class="text-muted small">{{ est.cedula_escolar }}</div>
+                                                    </div>
+                                                </div>
+                                                {% set porc = asistencia_porcentaje[est.id] %}
+                                                <div class="d-inline-flex align-items-center justify-content-center flex-shrink-0" data-bs-toggle="tooltip" title="{{ porc }}% Resumen de Asistencia">
+                                                    {% if porc >= 90 %}
+                                                        <span class="badge rounded-circle p-2 bg-success  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="check" style="width:16px;"></i></span>
+                                                    {% elif porc >= 75 %}
+                                                        <span class="badge rounded-circle p-2 bg-warning text-dark shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="minus" style="width:16px;"></i></span>
+                                                    {% else %}
+                                                        <span class="badge rounded-circle p-2 bg-danger  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="alert-circle" style="width:16px;"></i></span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex justify-content-end mt-3">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" data-bs-boundary="window" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
+                                                        <i data-lucide="settings" class="me-2" style="width:14px;height:14px;"></i> Gestionar
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 py-2">
+                                                        {% set solicitud = estado_solicitudes.get(est.id) %}
+                                                        <li>
+                                                            {% if not solicitud or solicitud.estado == 'Rechazado' or solicitud.estado == 'Utilizado' %}
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalSolicitud{{ est.id }}">
+                                                                <i data-lucide="lock" style="width:14px;height:14px;"></i> Solicitar Acceso
+                                                            </button>
+                                                            {% elif solicitud.estado == 'Pendiente' %}
+                                                            <span class="dropdown-item d-flex align-items-center gap-2 py-2 text-muted disabled">
+                                                                <i data-lucide="clock" style="width:14px;height:14px;"></i> En revisión
+                                                            </span>
+                                                            {% elif solicitud.estado == 'Aprobado' %}
+                                                            {% set url_publica = url_for('academico.expediente_publico', token=solicitud.token_generado, _external=True) %}
+                                                            {% set mensaje = "Aquí tienes el expediente temporal de " ~ est.nombre_completo ~ ": " ~ url_publica ~ "%0A%0A*Nota: Este enlace es confidencial y ha sido aprobado por Dirección.*" %}
+                                                            <a href="https://api.whatsapp.com/send?text={{ mensaje }}" target="_blank" class="dropdown-item d-flex align-items-center gap-2 py-2 text-success">
+                                                                <i data-lucide="send" style="width:14px;height:14px;"></i> Enviar Enlace (WhatsApp)
+                                                            </a>
+                                                            {% endif %}
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalActualizar_{{ est.id }}">
+                                                                <i data-lucide="edit-3" style="width:14px;height:14px;"></i> Actualizar
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalMedidas_{{ est.id }}">
+                                                                <i data-lucide="ruler" style="width:14px;height:14px;"></i> Actualizar Medidas
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalFicha_{{ est.id }}">
+                                                                <i data-lucide="activity" style="width:14px;height:14px;"></i> Ficha Médica
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalHistorialAsist_{{ est.id }}">
+                                                                <i data-lucide="pie-chart" style="width:14px;height:14px;"></i> Historial Asist.
+                                                            </button>
+                                                        </li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 text-warning" data-bs-toggle="modal" data-bs-target="#modalNota_{{ est.id }}">
+                                                                <i data-lucide="file-plus" style="width:14px;height:14px;"></i> Añadir Nota
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </td>
-                                    
-                                    <td class="text-end px-4 py-3">
-                                        {% set solicitud = estado_solicitudes.get(est.id) %}
-                                        <div class="btn-group gap-2">
-                                            {% if not solicitud or solicitud.estado == 'Rechazado' or solicitud.estado == 'Utilizado' %}
-                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalSolicitud{{ est.id }}" title="Solicitar enlace de expediente a Dirección">
-                                                <i data-lucide="lock" class="me-1" style="width:14px;height:14px;"></i> Solicitar Acceso
-                                            </button>
-                                            {% elif solicitud.estado == 'Pendiente' %}
-                                            <button type="button" class="btn btn-sm btn-light text-muted rounded-pill px-3 d-flex align-items-center border" disabled title="En revisión por Dirección">
-                                                <i data-lucide="clock" class="me-1" style="width:14px;height:14px;"></i> En revisión
-                                            </button>
-                                            {% elif solicitud.estado == 'Aprobado' %}
-                                            {% set url_publica = url_for('academico.expediente_publico', token=solicitud.token_generado, _external=True) %}
-                                            {% set mensaje = "Aquí tienes el expediente temporal de " ~ est.nombre_completo ~ ": " ~ url_publica ~ "%0A%0A*Nota: Este enlace es confidencial y ha sido aprobado por Dirección.*" %}
-                                            <a href="https://api.whatsapp.com/send?text={{ mensaje }}" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 d-flex align-items-center" style="background-color: #25D366; border-color: #25D366;" title="Enviar por WhatsApp">
-                                                <i data-lucide="send" class="me-1" style="width:14px;height:14px;"></i> Enviar Enlace
-                                            </a>
-                                            {% endif %}
-                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalActualizar_{{ est.id }}" title="Actualización Rápida">
-                                                <i data-lucide="edit-3" class="me-1" style="width:14px;height:14px;"></i> Actualizar
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalFicha_{{ est.id }}">
-                                                <i data-lucide="activity" class="me-1" style="width:14px;height:14px;"></i> Ficha Médica
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalHistorialAsist_{{ est.id }}">
-                                                <i data-lucide="pie-chart" class="me-1" style="width:14px;height:14px;"></i> Historial Asist.
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalNota_{{ est.id }}">
-                                                <i data-lucide="file-plus" class="me-1" style="width:14px;height:14px;"></i> Añadir Nota
-                                            </button>
+                                        {% else %}
+                                        <div class="text-center py-4 text-muted small">No hay hembras registradas en este salón.</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if sin_genero_lista|length > 0 %}
+                            <!-- Bento Sin Género Registrado -->
+                            <div class="col-12 tab-pane fade aula-gender-pane" id="pane-sin-genero" role="tabpanel" aria-labelledby="pill-sin-genero-tab">
+                                <div class="aula-bento aula-bento-neutro rounded-4 p-3">
+                                    <div class="d-flex align-items-center justify-content-between mb-3 px-1">
+                                        <h6 class="fw-bold mb-0 d-flex align-items-center gap-2" style="color:#64748b;">
+                                            <i data-lucide="circle-help" style="width:16px;height:16px;"></i> Sin Género Registrado
+                                        </h6>
+                                        <span class="badge rounded-pill" style="background:#64748b;color:#fff;">{{ sin_genero_lista|length }}</span>
+                                    </div>
+                                    <p class="text-muted small px-1 mb-3">Estos estudiantes no tienen el campo "Género" completado en su ficha. Actualízalo desde "Gestionar" → "Actualizar" para clasificarlos correctamente.</p>
+                                    <div class="row row-cols-1 row-cols-md-2 g-2">
+                                        {% for est in sin_genero_lista %}
+                                        <div class="col">
+                                        <div class="aula-est-card shadow-sm rounded-4 p-3 h-100">
+                                            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                                <div class="d-flex align-items-center gap-3">
+                                                    <div class="aula-avatar-neutro rounded-circle d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width:40px;height:40px;">
+                                                        {{ est.nombre_completo[0]|upper }}
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold" style="font-size: 0.95rem;">{{ est.nombre_completo }}</div>
+                                                        <div class="text-muted small">{{ est.cedula_escolar }}</div>
+                                                    </div>
+                                                </div>
+                                                {% set porc = asistencia_porcentaje[est.id] %}
+                                                <div class="d-inline-flex align-items-center justify-content-center flex-shrink-0" data-bs-toggle="tooltip" title="{{ porc }}% Resumen de Asistencia">
+                                                    {% if porc >= 90 %}
+                                                        <span class="badge rounded-circle p-2 bg-success  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="check" style="width:16px;"></i></span>
+                                                    {% elif porc >= 75 %}
+                                                        <span class="badge rounded-circle p-2 bg-warning text-dark shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="minus" style="width:16px;"></i></span>
+                                                    {% else %}
+                                                        <span class="badge rounded-circle p-2 bg-danger  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="alert-circle" style="width:16px;"></i></span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex justify-content-end mt-3">
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" data-bs-boundary="window" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
+                                                        <i data-lucide="settings" class="me-2" style="width:14px;height:14px;"></i> Gestionar
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 py-2">
+                                                        {% set solicitud = estado_solicitudes.get(est.id) %}
+                                                        <li>
+                                                            {% if not solicitud or solicitud.estado == 'Rechazado' or solicitud.estado == 'Utilizado' %}
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalSolicitud{{ est.id }}">
+                                                                <i data-lucide="lock" style="width:14px;height:14px;"></i> Solicitar Acceso
+                                                            </button>
+                                                            {% elif solicitud.estado == 'Pendiente' %}
+                                                            <span class="dropdown-item d-flex align-items-center gap-2 py-2 text-muted disabled">
+                                                                <i data-lucide="clock" style="width:14px;height:14px;"></i> En revisión
+                                                            </span>
+                                                            {% elif solicitud.estado == 'Aprobado' %}
+                                                            {% set url_publica = url_for('academico.expediente_publico', token=solicitud.token_generado, _external=True) %}
+                                                            {% set mensaje = "Aquí tienes el expediente temporal de " ~ est.nombre_completo ~ ": " ~ url_publica ~ "%0A%0A*Nota: Este enlace es confidencial y ha sido aprobado por Dirección.*" %}
+                                                            <a href="https://api.whatsapp.com/send?text={{ mensaje }}" target="_blank" class="dropdown-item d-flex align-items-center gap-2 py-2 text-success">
+                                                                <i data-lucide="send" style="width:14px;height:14px;"></i> Enviar Enlace (WhatsApp)
+                                                            </a>
+                                                            {% endif %}
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalActualizar_{{ est.id }}">
+                                                                <i data-lucide="edit-3" style="width:14px;height:14px;"></i> Actualizar
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalMedidas_{{ est.id }}">
+                                                                <i data-lucide="ruler" style="width:14px;height:14px;"></i> Actualizar Medidas
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalFicha_{{ est.id }}">
+                                                                <i data-lucide="activity" style="width:14px;height:14px;"></i> Ficha Médica
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalHistorialAsist_{{ est.id }}">
+                                                                <i data-lucide="pie-chart" style="width:14px;height:14px;"></i> Historial Asist.
+                                                            </button>
+                                                        </li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 text-warning" data-bs-toggle="modal" data-bs-target="#modalNota_{{ est.id }}">
+                                                                <i data-lucide="file-plus" style="width:14px;height:14px;"></i> Añadir Nota
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="4" class="text-center py-4 text-muted">No hay estudiantes registrados en este salón.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 
@@ -224,7 +450,7 @@
 <div class="modal fade" id="modalActualizar_{{ est.id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow-lg">
-            <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 aula-surface-tint rounded-top-4">
                 <div class="d-flex align-items-center">
                     <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
                         <i data-lucide="edit-3" style="width:24px;height:24px;"></i>
@@ -241,19 +467,19 @@
                     <h6 class="fw-bold mb-3 mt-4" style="font-size:0.9rem;">Datos de Contacto (Representante)</h6>
                     <div class="row g-2 mb-3">
                         <div class="col-6">
-                            <input type="text" name="rep_telefono" class="form-control bg-light border-0 py-2" placeholder="Teléfono" value="{{ est.representante_info.telefono if est.representante_info else '' }}">
+                            <input type="text" name="rep_telefono" class="form-control aula-surface-tint border-0 py-2" placeholder="Teléfono" value="{{ est.representante_info.telefono if est.representante_info else '' }}">
                         </div>
                         <div class="col-12">
-                            <input type="text" name="rep_direccion" class="form-control bg-light border-0 py-2" placeholder="Dirección de Habitación" value="{{ est.representante_info.direccion_completa if est.representante_info else '' }}">
+                            <input type="text" name="rep_direccion" class="form-control aula-surface-tint border-0 py-2" placeholder="Dirección de Habitación" value="{{ est.representante_info.direccion_completa if est.representante_info else '' }}">
                         </div>
                     </div>
                     <hr style="opacity: 0.1;">
                     <h6 class="fw-bold mb-3 mt-4" style="font-size:0.9rem;">Ficha Médica</h6>
                     <div class="mb-2">
-                        <input type="text" name="alergias" class="form-control bg-light border-0 py-2" placeholder="Alergias" value="{{ est.alergias or '' }}">
+                        <input type="text" name="alergias" class="form-control aula-surface-tint border-0 py-2" placeholder="Alergias" value="{{ est.alergias or '' }}">
                     </div>
                     <div>
-                        <input type="text" name="neuro_detalle" class="form-control bg-light border-0 py-2" placeholder="Condición Especial / Neurodivergencia" value="{{ est.neuro_detalle or '' }}">
+                        <input type="text" name="neuro_detalle" class="form-control aula-surface-tint border-0 py-2" placeholder="Condición Especial / Neurodivergencia" value="{{ est.neuro_detalle or '' }}">
                     </div>
                 </div>
                 <div class="modal-footer border-top-0 px-4 pb-4 pt-0">
@@ -265,11 +491,64 @@
     </div>
 </div>
 
+<!-- Modal Actualizar Medidas (guardado directo, sin aprobación de Dirección) -->
+<div class="modal fade" id="modalMedidas_{{ est.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 aula-surface-tint rounded-top-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                        <i data-lucide="ruler" style="width:24px;height:24px;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold">Actualizar Medidas</h5>
+                        <p class="text-muted small mb-0">{{ est.nombre_completo }}</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('academico.actualizar_medidas', id=est.id) }}" method="POST">
+                <input type="hidden" name="grado_id" value="{{ grado.id }}">
+                <div class="modal-body px-4 py-4">
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted mb-1">Peso (kg)</label>
+                            <input type="number" step="0.01" min="0" name="peso" class="form-control aula-surface-tint border-0 py-2" placeholder="Ej: 32.5" value="{{ est.peso if est.peso is not none else '' }}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted mb-1">Estatura (m)</label>
+                            <input type="number" step="0.01" min="0" name="talla" class="form-control aula-surface-tint border-0 py-2" placeholder="Ej: 1.35" value="{{ est.talla if est.talla is not none else '' }}">
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <label class="form-label small fw-bold text-muted mb-1">Talla Camisa</label>
+                            <input type="text" name="talla_camisa" class="form-control aula-surface-tint border-0 py-2" placeholder="Ej: 10" value="{{ est.talla_camisa or '' }}">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold text-muted mb-1">Talla Pantalón</label>
+                            <input type="text" name="talla_pantalon" class="form-control aula-surface-tint border-0 py-2" placeholder="Ej: 10" value="{{ est.talla_pantalon or '' }}">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold text-muted mb-1">Calzado</label>
+                            <input type="text" name="calzado" class="form-control aula-surface-tint border-0 py-2" placeholder="Ej: 32" value="{{ est.calzado or '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn text-muted fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Guardar Medidas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Ficha Médica -->
 <div class="modal fade" id="modalFicha_{{ est.id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow-lg">
-            <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 aula-surface-tint rounded-top-4">
                 <div class="d-flex align-items-center">
                     <div class="bg-info  p-2 rounded-3 me-3">
                         <i data-lucide="activity" style="width:24px;height:24px;"></i>
@@ -321,8 +600,8 @@
             <form action="{{ url_for('academico.agregar_incidencia') }}" method="POST">
                 <input type="hidden" name="estudiante_id" value="{{ est.id }}">
                 <input type="hidden" name="grado_id" value="{{ grado.id }}">
-                
-                <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+
+                <div class="modal-header border-bottom px-4 pt-4 pb-3 aula-surface-tint rounded-top-4">
                     <div class="d-flex align-items-center">
                         <div class="bg-warning p-2 rounded-3 me-3">
                             <i data-lucide="file-plus" style="width:24px;height:24px;"></i>
@@ -350,7 +629,7 @@
                         <textarea name="descripcion" class="form-control" rows="4" placeholder="Describa el evento, comportamiento o reporte de manera objetiva..." required></textarea>
                     </div>
                 </div>
-                <div class="modal-footer px-4 py-3 bg-light rounded-bottom-4 border-top-0">
+                <div class="modal-footer px-4 py-3 aula-surface-tint rounded-bottom-4 border-top-0">
                     <button type="button" class="btn btn-outline-secondary fw-semibold rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-warning fw-semibold rounded-pill px-4 shadow-sm border-0">
                         Guardar Nota
@@ -400,7 +679,7 @@
 <div class="modal fade" id="modalHistorialAsist_{{ est.id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 rounded-4 shadow-lg">
-            <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 aula-surface-tint rounded-top-4">
                 <div class="d-flex align-items-center">
                     <div class="bg-secondary bg-opacity-10 text-secondary p-2 rounded-3 me-3">
                         <i data-lucide="pie-chart" style="width:24px;height:24px;"></i>
@@ -427,7 +706,7 @@
                         document.addEventListener('DOMContentLoaded', function() {
                             const modal = document.getElementById('modalHistorialAsist_{{ est.id }}');
                             let chartInstance = null;
-                            
+
                             modal.addEventListener('shown.bs.modal', function () {
                                 if (chartInstance) { chartInstance.destroy(); }
                                 const ctx = document.getElementById('chartAsist_{{ est.id }}').getContext('2d');
@@ -445,7 +724,7 @@
                                     options: {
                                         responsive: true,
                                         maintainAspectRatio: false,
-                                        plugins: { 
+                                        plugins: {
                                             legend: { position: 'bottom', labels: { boxWidth: 12, padding: 15 } }
                                         }
                                     }
@@ -455,7 +734,7 @@
                     </script>
                 {% endif %}
             </div>
-            <div class="modal-footer px-4 py-3 bg-light rounded-bottom-4 border-top-0">
+            <div class="modal-footer px-4 py-3 aula-surface-tint rounded-bottom-4 border-top-0">
                 <button type="button" class="btn btn-outline-secondary fw-semibold rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
@@ -464,31 +743,11 @@
 
 {% endfor %}
 
-<!-- Modal Confirmar Revisar Alerta -->
-<div class="modal fade" id="modalConfirmarRevisarAlerta" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
-        <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
-            <div class="modal-body p-4 text-start">
-                <h5 style="font-weight:800; color:#ef4444; display:flex; align-items:center; gap:6px;">
-                    <i data-lucide="alert-triangle" style="width:20px;height:20px;"></i> Confirmar revisión
-                </h5>
-                <p style="color:var(--on-surface-variant); font-size:0.875rem; margin:12px 0 0;">
-                    ¿Marcar esta alerta de incidencia como revisada?<br>Desaparecerá de tu vista.
-                </p>
-            </div>
-            <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
-                <button type="button" class="btn w-50" style="background: #f1f5f9; color: #64748b; border-radius: 8px; padding: 8px; border: none; font-weight: 600;" onclick="cerrarModalRevisarAlerta()">Cancelar</button>
-                <button type="button" class="btn w-50 border-0" style="background: #ef4444; color: white; border-radius: 8px; padding: 8px; font-weight: 600; display:flex; justify-content:center; align-items:center;" onclick="ejecutarRevisarAlerta()">Sí, marcar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Modal Nuevo Ingreso -->
 <div class="modal fade" id="modalNuevoIngreso" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-fullscreen-lg-down">
         <div class="modal-content border-0 rounded-4 shadow-lg">
-            <div class="modal-header border-bottom px-4 pt-4 pb-3 bg-light rounded-top-4">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 aula-surface-tint rounded-top-4">
                 <div class="d-flex align-items-center">
                     <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
                         <i data-lucide="user-plus" style="width:24px;height:24px;"></i>
@@ -638,33 +897,37 @@
     .status-btn-lista.active-present { background: #059669; color: #fff; border-color: #059669; }
     .status-btn-lista.active-absent { background: #ef4444; color: #fff; border-color: #ef4444; }
     .status-btn-lista.active-justified { background: #d97706; color: #fff; border-color: #d97706; }
+
+    /* ====== Bento Vista Dividida (Varones/Hembras) ====== */
+    .aula-surface-tint { background: var(--surface-container) !important; }
+    .aula-bento { background: var(--surface-container); }
+    .aula-bento-varones { border-top: 3px solid #6366f1; }
+    .aula-bento-hembras { border-top: 3px solid #ec4899; }
+    .aula-scroll { max-height: 65vh; overflow-y: auto; padding-right: 2px; }
+    .aula-est-card {
+        background: var(--surface);
+        transition: box-shadow 0.15s ease;
+    }
+    /* Sin "transform" a propósito: un ancestro con transform crea un nuevo
+       "containing block" para los hijos con position:fixed (el dropdown-menu
+       de Bootstrap/Popper usa fixed aquí), lo que rompe su posicionamiento
+       justo cuando el mouse está sobre la tarjeta. Elevamos solo con sombra. */
+    .aula-est-card:hover { box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12); }
+    .aula-avatar-varon { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
+    .aula-avatar-hembra { background: linear-gradient(135deg, #ec4899, #f472b6); color: #fff; }
+    .aula-avatar-neutro { background: linear-gradient(135deg, #64748b, #94a3b8); color: #fff; }
+    .aula-bento-neutro { border-top: 3px solid #64748b; }
+    #pill-varones-tab.active { background: #6366f1 !important; border-color: #6366f1 !important; color: #fff !important; }
+    #pill-hembras-tab.active { background: #ec4899 !important; border-color: #ec4899 !important; color: #fff !important; }
+    #pill-sin-genero-tab.active { background: #64748b !important; border-color: #64748b !important; color: #fff !important; }
+
+    /* En escritorio, ambos paneles se muestran lado a lado (col-lg-6) en vez de comportarse como pestañas */
+    @media (min-width: 992px) {
+        .aula-gender-pane { display: block !important; opacity: 1 !important; }
+    }
 </style>
 
 <script>
-let idParaRevisarAlerta = null;
-let modalRevisarAlertaInstance = null;
-
-function abrirModalRevisarAlerta(id) {
-    idParaRevisarAlerta = 'form-revisar-alerta-' + id;
-    const modalEl = document.getElementById('modalConfirmarRevisarAlerta');
-    if (!modalRevisarAlertaInstance) {
-        modalRevisarAlertaInstance = new bootstrap.Modal(modalEl);
-    }
-    modalRevisarAlertaInstance.show();
-}
-
-function cerrarModalRevisarAlerta() {
-    if (modalRevisarAlertaInstance) {
-        modalRevisarAlertaInstance.hide();
-    }
-}
-
-function ejecutarRevisarAlerta() {
-    if (idParaRevisarAlerta) {
-        document.getElementById(idParaRevisarAlerta).submit();
-    }
-}
-
 let estudiantesListaData = [];
 const gradoIdActual = "{{ grado.id }}";
 
