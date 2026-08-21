@@ -925,6 +925,17 @@
     @media (min-width: 992px) {
         .aula-gender-pane { display: block !important; opacity: 1 !important; }
     }
+
+    /* Ocultar completamente paneles inactivos en móviles */
+    @media (max-width: 991.98px) {
+        .aula-gender-pane:not(.active) {
+            display: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+        }
+    }
 </style>
 
 <script>
