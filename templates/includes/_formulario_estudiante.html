@@ -1,5 +1,19 @@
 {% set est = estudiante_actual if estudiante_actual is defined else None %}
 {% set rep = est.representante_info if est else None %}
+{% set rep_parentesco = (rep.parentesco or '').strip().lower() if rep else '' %}
+{# Fallback: si madre_*/padre_* (columnas nuevas) aun no se han guardado en el
+   estudiante, se preseleccionan aqui desde el Representante heredado cuando su
+   parentesco coincide, para que al Guardar queden fijadas en su propio campo. #}
+{% set madre_nombre_val = (est.madre_nombre if est else None) or (rep.nombre_completo if rep and rep_parentesco == 'madre' and est and not est.madre_nombre else None) or '' %}
+{% set madre_ci_val = (est.madre_ci if est else None) or (rep.cedula if rep and rep_parentesco == 'madre' and est and not est.madre_nombre else None) or '' %}
+{% set madre_telefono_val = (est.madre_telefono if est else None) or (rep.telefono if rep and rep_parentesco == 'madre' and est and not est.madre_nombre else None) or '' %}
+{% set madre_ocupacion_val = (est.madre_ocupacion if est else None) or (rep.ocupacion if rep and rep_parentesco == 'madre' and est and not est.madre_nombre else None) or '' %}
+{% set madre_direccion_val = (est.madre_direccion if est else None) or (rep.direccion_habitacion if rep and rep_parentesco == 'madre' and est and not est.madre_nombre else None) or '' %}
+{% set padre_nombre_val = (est.padre_nombre if est else None) or (rep.nombre_completo if rep and rep_parentesco == 'padre' and est and not est.padre_nombre else None) or '' %}
+{% set padre_ci_val = (est.padre_ci if est else None) or (rep.cedula if rep and rep_parentesco == 'padre' and est and not est.padre_nombre else None) or '' %}
+{% set padre_telefono_val = (est.padre_telefono if est else None) or (rep.telefono if rep and rep_parentesco == 'padre' and est and not est.padre_nombre else None) or '' %}
+{% set padre_ocupacion_val = (est.padre_ocupacion if est else None) or (rep.ocupacion if rep and rep_parentesco == 'padre' and est and not est.padre_nombre else None) or '' %}
+{% set padre_direccion_val = (est.padre_direccion if est else None) or (rep.direccion_habitacion if rep and rep_parentesco == 'padre' and est and not est.padre_nombre else None) or '' %}
 <div class="ficha-admision-wrapper">
     <div class="accordion accordion-flush" id="accordionFichaAdmision">
 
@@ -381,27 +395,27 @@
                                     <div class="col-12">
                                         <label class="form-label fw-semibold text-body">Nombres y Apellidos</label>
                                         <input type="text" class="form-control rounded-3" name="madre_nombre"
-                                            value="{{ (est.madre_nombre or '') if est else '' }}" placeholder="Nombre completo">
+                                            value="{{ madre_nombre_val }}" placeholder="Nombre completo">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold text-body">Cédula</label>
                                         <input type="text" class="form-control rounded-3" name="madre_ci"
-                                            value="{{ (est.madre_ci or '') if est else '' }}" placeholder="V-12345678">
+                                            value="{{ madre_ci_val }}" placeholder="V-12345678">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold text-body">Teléfono</label>
                                         <input type="text" class="form-control rounded-3" name="madre_telefono"
-                                            value="{{ (est.madre_telefono or '') if est else '' }}" placeholder="04XX-XXXXXXX">
+                                            value="{{ madre_telefono_val }}" placeholder="04XX-XXXXXXX">
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold text-body">Ocupación</label>
                                         <input type="text" class="form-control rounded-3" name="madre_ocupacion"
-                                            value="{{ (est.madre_ocupacion or '') if est else '' }}" placeholder="Ej. Comerciante">
+                                            value="{{ madre_ocupacion_val }}" placeholder="Ej. Comerciante">
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold text-body">Dirección</label>
                                         <textarea class="form-control rounded-3" name="madre_direccion" rows="2"
-                                            placeholder="Dirección de habitación">{{ (est.madre_direccion or '') if est else '' }}</textarea>
+                                            placeholder="Dirección de habitación">{{ madre_direccion_val }}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -415,27 +429,27 @@
                                     <div class="col-12">
                                         <label class="form-label fw-semibold text-body">Nombres y Apellidos</label>
                                         <input type="text" class="form-control rounded-3" name="padre_nombre"
-                                            value="{{ (est.padre_nombre or '') if est else '' }}" placeholder="Nombre completo">
+                                            value="{{ padre_nombre_val }}" placeholder="Nombre completo">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold text-body">Cédula</label>
                                         <input type="text" class="form-control rounded-3" name="padre_ci"
-                                            value="{{ (est.padre_ci or '') if est else '' }}" placeholder="V-12345678">
+                                            value="{{ padre_ci_val }}" placeholder="V-12345678">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold text-body">Teléfono</label>
                                         <input type="text" class="form-control rounded-3" name="padre_telefono"
-                                            value="{{ (est.padre_telefono or '') if est else '' }}" placeholder="04XX-XXXXXXX">
+                                            value="{{ padre_telefono_val }}" placeholder="04XX-XXXXXXX">
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold text-body">Ocupación</label>
                                         <input type="text" class="form-control rounded-3" name="padre_ocupacion"
-                                            value="{{ (est.padre_ocupacion or '') if est else '' }}" placeholder="Ej. Comerciante">
+                                            value="{{ padre_ocupacion_val }}" placeholder="Ej. Comerciante">
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label fw-semibold text-body">Dirección</label>
                                         <textarea class="form-control rounded-3" name="padre_direccion" rows="2"
-                                            placeholder="Dirección de habitación">{{ (est.padre_direccion or '') if est else '' }}</textarea>
+                                            placeholder="Dirección de habitación">{{ padre_direccion_val }}</textarea>
                                     </div>
                                 </div>
                             </div>

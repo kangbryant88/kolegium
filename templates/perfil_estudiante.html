@@ -138,6 +138,22 @@
 </div>
 
 <!-- Cuerpo del Expediente en Tarjetas -->
+{% set rep = estudiante.representante_info %}
+{% set rep_parentesco = (rep.parentesco or '').strip().lower() if rep else '' %}
+{# Fallback: si madre_*/padre_* (columnas nuevas) están vacías, se infieren desde el
+   Representante heredado cuando su parentesco coincide. Ver mapear_datos.py para el
+   backfill permanente de estos casos. #}
+{% set madre_heredada = rep and rep_parentesco == 'madre' and not estudiante.madre_nombre %}
+{% set madre_nombre_ef = estudiante.madre_nombre or (rep.nombre_completo if madre_heredada else None) %}
+{% set madre_ci_ef = estudiante.madre_ci or (rep.cedula if madre_heredada else None) %}
+{% set madre_telefono_ef = estudiante.madre_telefono or (rep.telefono if madre_heredada else None) %}
+{% set madre_ocupacion_ef = estudiante.madre_ocupacion or (rep.ocupacion if madre_heredada else None) %}
+
+{% set padre_heredado = rep and rep_parentesco == 'padre' and not estudiante.padre_nombre %}
+{% set padre_nombre_ef = estudiante.padre_nombre or (rep.nombre_completo if padre_heredado else None) %}
+{% set padre_ci_ef = estudiante.padre_ci or (rep.cedula if padre_heredado else None) %}
+{% set padre_telefono_ef = estudiante.padre_telefono or (rep.telefono if padre_heredado else None) %}
+{% set padre_ocupacion_ef = estudiante.padre_ocupacion or (rep.ocupacion if padre_heredado else None) %}
 <div class="row g-4">
 
     <!-- Tarjeta 1: Identidad y Legal -->
@@ -313,12 +329,15 @@
                 <div class="p-3 bg-light rounded-3 mb-3">
                     <span class="d-block text-muted small fw-bold text-uppercase mb-2" style="letter-spacing:0.5px;">
                         <i data-lucide="user-round" class="me-1" style="width:14px;"></i> Madre
+                        {% if madre_heredada %}
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 ms-1" style="font-size:0.65rem;letter-spacing:0;text-transform:none;" title="Inferido del Representante heredado; guarde el expediente para fijarlo en su propio campo">heredado del Representante</span>
+                        {% endif %}
                     </span>
-                    {% if estudiante.madre_nombre %}
-                        <div class="fw-bold text-dark mb-1">{{ estudiante.madre_nombre }}</div>
-                        <div class="text-muted small mb-1">C.I: {{ estudiante.madre_ci or 'N/A' }} <span class="mx-1">&bull;</span> {{ estudiante.madre_ocupacion or 'Ocupación N/A' }}</div>
+                    {% if madre_nombre_ef %}
+                        <div class="fw-bold text-dark mb-1">{{ madre_nombre_ef }}</div>
+                        <div class="text-muted small mb-1">C.I: {{ madre_ci_ef or 'N/A' }} <span class="mx-1">&bull;</span> {{ madre_ocupacion_ef or 'Ocupación N/A' }}</div>
                         <div class="d-flex align-items-center text-primary small">
-                            <i data-lucide="phone-call" class="me-2" style="width:14px;"></i> {{ estudiante.madre_telefono or 'No registrado' }}
+                            <i data-lucide="phone-call" class="me-2" style="width:14px;"></i> {{ madre_telefono_ef or 'No registrado' }}
                         </div>
                     {% else %}
                         <span class="text-muted small">Sin registrar</span>
@@ -327,12 +346,15 @@
                 <div class="p-3 bg-light rounded-3 mb-0">
                     <span class="d-block text-muted small fw-bold text-uppercase mb-2" style="letter-spacing:0.5px;">
                         <i data-lucide="user-round" class="me-1" style="width:14px;"></i> Padre
+                        {% if padre_heredado %}
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 ms-1" style="font-size:0.65rem;letter-spacing:0;text-transform:none;" title="Inferido del Representante heredado; guarde el expediente para fijarlo en su propio campo">heredado del Representante</span>
+                        {% endif %}
                     </span>
-                    {% if estudiante.padre_nombre %}
-                        <div class="fw-bold text-dark mb-1">{{ estudiante.padre_nombre }}</div>
-                        <div class="text-muted small mb-1">C.I: {{ estudiante.padre_ci or 'N/A' }} <span class="mx-1">&bull;</span> {{ estudiante.padre_ocupacion or 'Ocupación N/A' }}</div>
+                    {% if padre_nombre_ef %}
+                        <div class="fw-bold text-dark mb-1">{{ padre_nombre_ef }}</div>
+                        <div class="text-muted small mb-1">C.I: {{ padre_ci_ef or 'N/A' }} <span class="mx-1">&bull;</span> {{ padre_ocupacion_ef or 'Ocupación N/A' }}</div>
                         <div class="d-flex align-items-center text-primary small">
-                            <i data-lucide="phone-call" class="me-2" style="width:14px;"></i> {{ estudiante.padre_telefono or 'No registrado' }}
+                            <i data-lucide="phone-call" class="me-2" style="width:14px;"></i> {{ padre_telefono_ef or 'No registrado' }}
                         </div>
                     {% else %}
                         <span class="text-muted small">Sin registrar</span>
