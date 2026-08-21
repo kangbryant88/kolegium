@@ -83,26 +83,53 @@
 
         <div class="card border-0 shadow-sm rounded-4">
             
-            <div class="row g-3 px-4 pt-4 pb-2">
+            <div class="row g-4 px-4 pt-4 pb-2">
+                <!-- Asistencia -->
                 <div class="col-12 col-md-6 col-lg-4 mb-4">
-                    <div class="card border-0 shadow-sm rounded-4 h-100">
-                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-4">
-                            <h6 class="fw-bold text-primary mb-3"><i data-lucide="calendar-check" class="me-2" style="width:18px;"></i>Asistencia Mensual</h6>
-                            <div style="position: relative; width: 140px; height: 140px;">
-                                <canvas id="chartAsistencia"></canvas>
-                                <div class="position-absolute top-50 start-50 translate-middle text-center" style="margin-top: 5px;">
-                                    <span class="fs-4 fw-bold text-primary">{{ asistencia_promedio_salon }}%</span>
-                                </div>
+                    <div class="card border-0 shadow-sm rounded-4 h-100 p-4" style="background: var(--surface);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold text-muted mb-0"><i data-lucide="calendar-check" class="me-2 text-primary" style="width:18px;"></i>Asistencia Mensual</h6>
+                        </div>
+                        <div style="position: relative; width: 150px; height: 150px; margin: 0 auto;">
+                            <canvas id="chartAsistencia"></canvas>
+                            <div class="position-absolute top-50 start-50 translate-middle text-center w-100" style="margin-top: 5px;">
+                                <span class="fs-4 fw-bold" id="asistenciaPromedioText" style="color: var(--on-surface);">--%</span>
                             </div>
+                        </div>
+                        <div class="text-center mt-3 text-muted small" id="asistenciaMensaje" style="display: none;">Sin registros aún</div>
+                    </div>
+                </div>
+                
+                <!-- Incidencias -->
+                <div class="col-12 col-md-6 col-lg-5 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 p-4" style="background: var(--surface);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold text-muted mb-0"><i data-lucide="bar-chart-2" class="me-2 text-warning" style="width:18px;"></i>Incidencias del Mes</h6>
+                        </div>
+                        <div style="height: 160px; width: 100%;">
+                            <canvas id="chartIncidencias"></canvas>
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-md-6 col-lg-4 mb-4">
-                    <div class="card border-0 shadow-sm rounded-4 h-100">
-                        <div class="card-body p-4">
-                            <h6 class="fw-bold mb-3"><i data-lucide="bar-chart-2" class="me-2 text-warning" style="width:18px;"></i>Análisis de Incidencias</h6>
-                            <div style="height: 140px;">
-                                <canvas id="chartIncidencias"></canvas>
+
+                <!-- Resumen Rápido -->
+                <div class="col-12 col-lg-3 mb-4">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 p-4" style="background: var(--surface);">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold text-muted mb-0"><i data-lucide="zap" class="me-2 text-success" style="width:18px;"></i>Resumen Rápido</h6>
+                        </div>
+                        <div class="d-flex flex-column gap-3 mt-2 h-100 justify-content-center">
+                            <div class="d-flex align-items-center justify-content-between p-2 rounded-3 bg-primary bg-opacity-10">
+                                <span class="text-muted small fw-bold">Matrícula</span>
+                                <span class="fw-bold fs-5 text-primary">{{ total_matricula }}</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between p-2 rounded-3 bg-danger bg-opacity-10">
+                                <span class="text-muted small fw-bold">Incidencias</span>
+                                <span class="fw-bold fs-5 text-danger" id="totalIncidenciasText">0</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between p-2 rounded-3 bg-secondary bg-opacity-10">
+                                <span class="text-muted small fw-bold">Varones / Hembras</span>
+                                <span class="fw-bold fs-6" style="color: var(--on-surface);">{{ total_varones }} / {{ total_hembras }}</span>
                             </div>
                         </div>
                     </div>
@@ -110,6 +137,10 @@
             </div>
             
             {% set sin_genero_lista = estudiantes | rejectattr('genero', 'in', ['Masculino', 'Femenino']) | list %}
+            {% set registros_mes = 0 %}
+            {% for est_id, info in datos_mensuales_estudiantes.items() %}
+                {% set registros_mes = registros_mes + info['Presente'] + info['Ausente'] + info['Justificado'] %}
+            {% endfor %}
             <div class="d-flex justify-content-between align-items-center mb-3 px-4">
                             <h5 class="fw-bold m-0" style="color: var(--on-surface);">Lista de Estudiantes</h5>
                             <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 border border-primary border-opacity-25" style="font-size: 0.85rem;">
@@ -166,21 +197,12 @@
                                                         <div class="text-muted small">{{ est.cedula_escolar }}</div>
                                                     </div>
                                                 </div>
-                                                {% set porc = asistencia_porcentaje[est.id] %}
-                                                <div class="d-inline-flex align-items-center justify-content-center flex-shrink-0" data-bs-toggle="tooltip" title="{{ porc }}% Resumen de Asistencia">
-                                                    {% if porc >= 90 %}
-                                                        <span class="badge rounded-circle p-2 bg-success  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="check" style="width:16px;"></i></span>
-                                                    {% elif porc >= 75 %}
-                                                        <span class="badge rounded-circle p-2 bg-warning text-dark shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="minus" style="width:16px;"></i></span>
-                                                    {% else %}
-                                                        <span class="badge rounded-circle p-2 bg-danger  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="alert-circle" style="width:16px;"></i></span>
-                                                    {% endif %}
-                                                </div>
+
                                             </div>
 
                                             <div class="d-flex justify-content-end mt-3">
                                                 <div class="dropdown">
-                                                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" data-bs-boundary="window" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false">
+                                                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i data-lucide="settings" class="me-2" style="width:14px;height:14px;"></i> Gestionar
                                                     </button>
                                                     <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 py-2">
@@ -791,7 +813,24 @@
             });
         }
 
-        const asist = {{ asistencia_promedio_salon | default(0) }};
+        // Calcular asistencia real si hay registros
+        const registrosMes = {{ registros_mes | default(0) }};
+        const asistBackend = {{ asistencia_promedio_salon | default(0) }};
+        const asistFinal = registrosMes > 0 ? asistBackend : 0;
+        
+        const txtAsist = document.getElementById('asistenciaPromedioText');
+        const msjAsist = document.getElementById('asistenciaMensaje');
+        if (txtAsist) {
+            txtAsist.textContent = registrosMes > 0 ? `${asistFinal}%` : '0%';
+            if (registrosMes === 0) {
+                msjAsist.style.display = 'block';
+                txtAsist.classList.remove('text-primary');
+                txtAsist.classList.add('text-muted');
+            } else {
+                txtAsist.classList.add('text-success');
+            }
+        }
+
         const ctxA = document.getElementById('chartAsistencia');
         if(ctxA) {
             new Chart(ctxA.getContext('2d'), {
@@ -799,10 +838,10 @@
                 data: {
                     labels: ['Asistencias', 'Inasistencias'],
                     datasets: [{
-                        data: [asist, 100 - asist],
-                        backgroundColor: ['#4648d4', 'var(--border-color)'],
+                        data: [asistFinal, 100 - asistFinal],
+                        backgroundColor: registrosMes > 0 ? ['#10b981', 'var(--border-color)'] : ['var(--surface-container)', 'var(--border-color)'],
                         borderWidth: 0,
-                        cutout: '75%'
+                        cutout: '80%'
                     }]
                 },
                 options: {
@@ -814,6 +853,10 @@
         }
 
         const dataInc = {{ datos_incidencias | tojson | safe }};
+        const totalInc = Object.values(dataInc).reduce((a, b) => a + b, 0);
+        const txtTotalInc = document.getElementById('totalIncidenciasText');
+        if(txtTotalInc) txtTotalInc.textContent = totalInc;
+
         const ctxI = document.getElementById('chartIncidencias');
         if(ctxI) {
             new Chart(ctxI.getContext('2d'), {
@@ -824,15 +867,16 @@
                         label: 'Reportes M. Actual',
                         data: Object.values(dataInc),
                         backgroundColor: ['#f59e0b', '#3b82f6', '#ef4444', '#8b5cf6'],
-                        borderRadius: 4
+                        borderRadius: 6,
+                        barPercentage: 0.6
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } },
-                        x: { grid: { display: false } }
+                        y: { beginAtZero: true, border: { display: false }, grid: { color: 'var(--border-color)' }, ticks: { stepSize: 1, precision: 0 } },
+                        x: { border: { display: false }, grid: { display: false } }
                     },
                     plugins: { legend: { display: false } }
                 }
@@ -903,7 +947,7 @@
     .aula-bento { background: var(--surface-container); }
     .aula-bento-varones { border-top: 3px solid #6366f1; }
     .aula-bento-hembras { border-top: 3px solid #ec4899; }
-    .aula-scroll { max-height: 65vh; overflow-y: auto; padding-right: 2px; }
+    .aula-scroll { padding-right: 2px; padding-bottom: 120px; } /* Dropdown fix: Removido overflow-y y agregado padding inferior */
     .aula-est-card {
         background: var(--surface);
         transition: box-shadow 0.15s ease;

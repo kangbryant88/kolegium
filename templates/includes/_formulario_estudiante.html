@@ -1,236 +1,627 @@
-                <h6 class="fw-bold text-primary mb-3 text-uppercase" style="font-size:0.8rem;letter-spacing:1px;"><i
-                        data-lucide="id-card" class="me-1" style="width:16px;"></i> Identidad y Legal (Generador de
-                    Cédula Escolar)</h6>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-5">
-                        <label class="form-label fw-semibold text-body">Nombre Completo del Estudiante</label>
-                        <input type="text" class="form-control" name="nombre_estudiante" required
-                            placeholder="Ej. Juan Pérez">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold text-body">Fecha Nacimiento</label>
-                        <input type="date" class="form-control" name="fecha_nacimiento" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold text-body">Nro Parto</label>
-                        <input type="number" class="form-control" name="nro_parto" required min="1" value="1">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold text-body">Género</label>
-                        <select class="form-select" name="genero">
-                            <option value="Masculino">Masculino</option>
-                            <option value="Femenino">Femenino</option>
-                        </select>
-                    </div>
+{% set est = estudiante_actual if estudiante_actual is defined else None %}
+{% set rep = est.representante_info if est else None %}
+<div class="ficha-admision-wrapper">
+    <div class="accordion accordion-flush" id="accordionFichaAdmision">
 
-                    <div class="col-md-12">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold text-body">Lugar Nacimiento</label>
-                                <input type="text" class="form-control" name="lugar_nacimiento"
-                                    placeholder="Estado, Ciudad, Hospital">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold text-body">Nro de Acta</label>
-                                <input type="text" class="form-control" name="num_acta" placeholder="Ej. 1290">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold text-body">Nro de Oficio</label>
-                                <input type="text" class="form-control" name="num_oficio" placeholder="Ej. 04052">
-                            </div>
+        <!-- ============================================ -->
+        <!-- 1. DATOS PERSONALES DEL ALUMNO -->
+        <!-- ============================================ -->
+        <div class="accordion-item bg-body rounded-4 shadow-sm mb-3 overflow-hidden border-0">
+            <h2 class="accordion-header">
+                <button class="accordion-button fw-bold rounded-4" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#panelDatosAlumno" aria-expanded="true" aria-controls="panelDatosAlumno">
+                    <i data-lucide="id-card" class="me-2 text-primary" style="width:18px;"></i>
+                    Datos Personales del Alumno
+                </button>
+            </h2>
+            <div id="panelDatosAlumno" class="accordion-collapse collapse show" data-bs-parent="#accordionFichaAdmision">
+                <div class="accordion-body pt-2">
+
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-body">Nombres</label>
+                            <input type="text" class="form-control rounded-3" name="nombres" required
+                                value="{{ (est.nombres or '') if est else '' }}" placeholder="Ej. Juan Carlos">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-body">Apellidos</label>
+                            <input type="text" class="form-control rounded-3" name="apellidos" required
+                                value="{{ (est.apellidos or '') if est else '' }}" placeholder="Ej. Pérez Rondón">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-body">Fecha Nacimiento</label>
+                            <input type="date" class="form-control rounded-3" name="fecha_nacimiento" required
+                                value="{{ est.fecha_nacimiento.strftime('%Y-%m-%d') if est and est.fecha_nacimiento else '' }}">
+                        </div>
+                        <div class="col-md-2">
+                            {% if est %}
+                            <label class="form-label fw-semibold text-body">Cédula Escolar</label>
+                            <input type="text" class="form-control rounded-3 bg-body-tertiary" value="{{ est.cedula_escolar }}" disabled readonly>
+                            {% else %}
+                            <label class="form-label fw-semibold text-body">Nro Parto</label>
+                            <input type="number" class="form-control rounded-3" name="nro_parto" required min="1" value="1">
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-body">Edad</label>
+                            <input type="number" class="form-control rounded-3" name="edad" min="0" max="25"
+                                value="{{ est.edad if est and est.edad is not none else '' }}" placeholder="Años">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-body">Sexo</label>
+                            <select class="form-select rounded-3" name="genero">
+                                <option value="Masculino" {% if est and est.genero=='Masculino' %}selected{% endif %}>Masculino</option>
+                                <option value="Femenino" {% if est and est.genero=='Femenino' %}selected{% endif %}>Femenino</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-body">Nacionalidad</label>
+                            <select class="form-select rounded-3" name="nacionalidad">
+                                <option value="Venezolana" {% if not est or est.nacionalidad=='Venezolana' %}selected{% endif %}>Venezolana</option>
+                                <option value="Extranjera" {% if est and est.nacionalidad=='Extranjera' %}selected{% endif %}>Extranjera</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-body">Lugar de Nacimiento</label>
+                            <input type="text" class="form-control rounded-3" name="lugar_nacimiento"
+                                value="{{ (est.lugar_nacimiento or '') if est else '' }}" placeholder="Estado, Ciudad, Hospital">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-body">Municipio</label>
+                            <input type="text" class="form-control rounded-3" name="municipio"
+                                value="{{ (est.municipio or '') if est else '' }}" placeholder="Ej. Libertador">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-body">Parroquia</label>
+                            <input type="text" class="form-control rounded-3" name="parroquia"
+                                value="{{ (est.parroquia or '') if est else '' }}" placeholder="Ej. San Juan">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-body">Nro de Acta</label>
+                            <input type="text" class="form-control rounded-3" name="num_acta"
+                                value="{{ (est.num_acta or '') if est else '' }}" placeholder="Ej. 1290">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-body">Nro de Oficio</label>
+                            <input type="text" class="form-control rounded-3" name="num_oficio"
+                                value="{{ (est.num_oficio or '') if est else '' }}" placeholder="Ej. 04052">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-body">Plantel de Procedencia</label>
+                            <input type="text" class="form-control rounded-3" name="plantel_procedencia"
+                                value="{{ (est.plantel_procedencia or '') if est else '' }}" placeholder="Nombre de la Institución Anterior">
+                        </div>
+
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold text-body">Dirección (con punto de referencia)</label>
+                            <textarea class="form-control rounded-3" name="direccion_alumno" rows="2"
+                                placeholder="Ej. Urb. Los Mangos, Calle 4, Casa Nro 12, frente a la bodega">{{ (est.direccion_alumno or '') if est else '' }}</textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-body">Teléfono de Habitación</label>
+                            <input type="text" class="form-control rounded-3" name="telefono_habitacion"
+                                value="{{ (est.telefono_habitacion or '') if est else '' }}" placeholder="0212-XXXXXXX">
                         </div>
                     </div>
 
-                    <div class="col-md-12">
-                        <div class="row g-3 mt-1">
+                    <div class="bg-body-tertiary rounded-4 p-3 mt-3">
+                        <h6 class="fw-bold text-primary text-uppercase mb-3" style="font-size:0.75rem;letter-spacing:1px;">
+                            Asignación y Procedencia
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-body">Grado a Asignar</label>
+                                <select class="form-select rounded-3" name="grado_id">
+                                    <option value="">-- Seleccione (Opcional) --</option>
+                                    {% for g in grados %}
+                                    <option value="{{ g.id }}" {% if est and est.grado_id==g.id %}selected{% endif %}>{{ g.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label fw-semibold text-body">Literal (A-D)</label>
+                                <select class="form-select rounded-3" name="literal_escolar">
+                                    <option value="" {% if est and not est.literal_escolar %}selected{% endif %}>N/A</option>
+                                    <option value="A" {% if est and est.literal_escolar=='A' %}selected{% endif %}>A</option>
+                                    <option value="B" {% if est and est.literal_escolar=='B' %}selected{% endif %}>B</option>
+                                    <option value="C" {% if est and est.literal_escolar=='C' %}selected{% endif %}>C</option>
+                                    <option value="D" {% if est and est.literal_escolar=='D' %}selected{% endif %}>D</option>
+                                </select>
+                            </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold text-body">Plantel de Procedencia</label>
-                                <input type="text" class="form-control" name="plantel_procedencia"
-                                    placeholder="Nombre de la Institución Anterior">
+                                <label class="form-label fw-semibold text-body">Procedencia (Nuevo Ingreso / Nro. Plantel)</label>
+                                <input type="text" class="form-control rounded-3" name="institucion_procedencia"
+                                    value="{{ (est.institucion_procedencia or '') if est else '' }}" placeholder="Ej. Nuevo Ingreso">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold text-body">Correo Electrónico (Estudiante)</label>
-                                <input type="email" class="form-control" name="email_estudiante"
-                                    placeholder="estudiante@ejemplo.com">
+                                <input type="email" class="form-control rounded-3" name="email_estudiante"
+                                    value="{{ (est.email_estudiante or '') if est else '' }}" placeholder="estudiante@ejemplo.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-4">
+                            <div class="form-check form-switch pt-1 text-body-secondary">
+                                <input class="form-check-input" type="checkbox" name="nuevo_ingreso" id="checkNuevoIngreso"
+                                    {% if (est and est.nuevo_ingreso) or not est %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold text-body" for="checkNuevoIngreso">Nuevo Ingreso</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch pt-1 text-body-secondary">
+                                <input class="form-check-input" type="checkbox" name="es_repetidor" id="checkRepetidor"
+                                    {% if est and est.es_repetidor %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold text-body" for="checkRepetidor">Repitiente</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch pt-1 text-body-secondary">
+                                <input class="form-check-input" type="checkbox" name="posee_canaima" id="checkCanaima"
+                                    {% if est and est.posee_canaima %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold text-body" for="checkCanaima">Posee Canaima</label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- 2. ANTROPOMETRÍA Y TALLAS -->
+        <!-- ============================================ -->
+        <div class="accordion-item bg-body rounded-4 shadow-sm mb-3 overflow-hidden border-0">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-bold rounded-4" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#panelAntropometria" aria-expanded="false" aria-controls="panelAntropometria">
+                    <i data-lucide="ruler" class="me-2 text-primary" style="width:18px;"></i>
+                    Antropometría y Tallas
+                </button>
+            </h2>
+            <div id="panelAntropometria" class="accordion-collapse collapse" data-bs-parent="#accordionFichaAdmision">
+                <div class="accordion-body pt-2">
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-body">Estatura</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" class="form-control rounded-start-3" name="talla"
+                                    value="{{ est.talla if est and est.talla is not none else '' }}" placeholder="110">
+                                <span class="input-group-text bg-body-tertiary text-body-secondary">cm</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-body">Peso</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" class="form-control rounded-start-3" name="peso"
+                                    value="{{ est.peso if est and est.peso is not none else '' }}" placeholder="25">
+                                <span class="input-group-text bg-body-tertiary text-body-secondary">kg</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold text-body">Talla Calzado</label>
+                            <input type="text" class="form-control rounded-3" name="calzado"
+                                value="{{ (est.calzado or '') if est else '' }}" placeholder="Ej. 28">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-body">Talla de Camisa/Franela</label>
+                            <input type="text" class="form-control rounded-3" name="talla_camisa"
+                                value="{{ (est.talla_camisa or '') if est else '' }}" placeholder="Ej. 10 o S">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-body">Talla de Pantalón/Falda</label>
+                            <input type="text" class="form-control rounded-3" name="talla_pantalon"
+                                value="{{ (est.talla_pantalon or '') if est else '' }}" placeholder="Ej. 12 o M">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-body">Lateralidad</label>
+                            <select class="form-select rounded-3" name="lateralidad">
+                                <option value="Diestro" {% if est and est.lateralidad=='Diestro' %}selected{% endif %}>Diestro</option>
+                                <option value="Zurdo" {% if est and est.lateralidad=='Zurdo' %}selected{% endif %}>Zurdo</option>
+                                <option value="Ambidextro" {% if est and est.lateralidad=='Ambidextro' %}selected{% endif %}>Ambidextro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- 3. FICHA MÉDICA Y SALUD -->
+        <!-- ============================================ -->
+        <div class="accordion-item bg-body rounded-4 shadow-sm mb-3 overflow-hidden border-0">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-bold rounded-4" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#panelSalud" aria-expanded="false" aria-controls="panelSalud">
+                    <i data-lucide="stethoscope" class="me-2 text-primary" style="width:18px;"></i>
+                    Ficha Médica y Salud
+                </button>
+            </h2>
+            <div id="panelSalud" class="accordion-collapse collapse" data-bs-parent="#accordionFichaAdmision">
+                <div class="accordion-body pt-2">
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold text-body">Tipo de Sangre</label>
+                            <select class="form-select rounded-3" name="tipaje">
+                                <option value="O+" {% if est and est.tipaje=='O+' %}selected{% endif %}>O+</option>
+                                <option value="O-" {% if est and est.tipaje=='O-' %}selected{% endif %}>O-</option>
+                                <option value="A+" {% if est and est.tipaje=='A+' %}selected{% endif %}>A+</option>
+                                <option value="A-" {% if est and est.tipaje=='A-' %}selected{% endif %}>A-</option>
+                                <option value="B+" {% if est and est.tipaje=='B+' %}selected{% endif %}>B+</option>
+                                <option value="B-" {% if est and est.tipaje=='B-' %}selected{% endif %}>B-</option>
+                                <option value="AB+" {% if est and est.tipaje=='AB+' %}selected{% endif %}>AB+</option>
+                                <option value="AB-" {% if est and est.tipaje=='AB-' %}selected{% endif %}>AB-</option>
+                                <option value="No Sabe" {% if est and est.tipaje=='No Sabe' %}selected{% endif %}>No Sabe</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold text-body">Esquema de Vacunación</label>
+                            <select class="form-select rounded-3" name="vacunacion_completa">
+                                <option value="Si" {% if est and est.vacunacion_completa=='Si' %}selected{% endif %}>Sí, Esquema Completo</option>
+                                <option value="Parcial" {% if est and est.vacunacion_completa=='Parcial' %}selected{% endif %}>No, Incompleto</option>
+                                <option value="No" {% if est and est.vacunacion_completa=='No' %}selected{% endif %}>Sin Vacunación</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label fw-semibold text-body">Otras Alergias (alimentos, ambiente...)</label>
+                            <input type="text" class="form-control rounded-3" name="alergias"
+                                value="{{ (est.alergias or '') if est else '' }}" placeholder="Ninguna, Polen, Maní...">
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="bg-body-tertiary rounded-4 p-3 h-100">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input toggle-bool" type="checkbox" role="switch"
+                                        id="switchEnfermedad" name="posee_enfermedad" data-target="#detalleEnfermedad"
+                                        {% if est and est.posee_enfermedad %}checked{% endif %}>
+                                    <label class="form-check-label fw-semibold" for="switchEnfermedad">¿Posee alguna enfermedad?</label>
+                                </div>
+                                <input type="text" class="form-control rounded-3" id="detalleEnfermedad" name="enfermedad_detalle"
+                                    value="{{ (est.enfermedad_detalle or '') if est else '' }}" placeholder="¿Cuál enfermedad?" disabled>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-body-tertiary rounded-4 p-3 h-100">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input toggle-bool" type="checkbox" role="switch"
+                                        id="switchMedicamento" name="toma_medicamento" data-target="#detalleMedicamento"
+                                        {% if est and est.toma_medicamento %}checked{% endif %}>
+                                    <label class="form-check-label fw-semibold" for="switchMedicamento">¿Toma algún medicamento?</label>
+                                </div>
+                                <input type="text" class="form-control rounded-3" id="detalleMedicamento" name="medicamento_detalle"
+                                    value="{{ (est.medicamento_detalle or '') if est else '' }}" placeholder="¿Cuál medicamento?" disabled>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-body-tertiary rounded-4 p-3 h-100">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input toggle-bool" type="checkbox" role="switch"
+                                        id="switchAlergiaMed" name="alergico_medicamento" data-target="#detalleAlergiaMed"
+                                        {% if est and est.alergico_medicamento %}checked{% endif %}>
+                                    <label class="form-check-label fw-semibold" for="switchAlergiaMed">¿Alérgico a algún medicamento?</label>
+                                </div>
+                                <input type="text" class="form-control rounded-3" id="detalleAlergiaMed" name="alergia_medicamento_detalle"
+                                    value="{{ (est.alergia_medicamento_detalle or '') if est else '' }}" placeholder="¿Cuál medicamento?" disabled>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-body-tertiary rounded-4 p-3 h-100">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input toggle-bool" type="checkbox" role="switch"
+                                        id="switchNeuro" name="neurodivergencia" data-target="#inputNeuroDetalle"
+                                        {% if est and est.neurodivergencia %}checked{% endif %}>
+                                    <label class="form-check-label fw-semibold" for="switchNeuro">Diversidad Funcional / N.E.E</label>
+                                </div>
+                                <input type="text" class="form-control rounded-3" id="inputNeuroDetalle" name="neuro_detalle"
+                                    value="{{ (est.neuro_detalle or '') if est else '' }}"
+                                    placeholder="TEA, TDAH, Dislexia, Condición Motora..." disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-primary text-uppercase mb-3 mt-4"
+                        style="font-size:0.75rem;letter-spacing:1px;border-top:1px solid var(--bs-border-color);padding-top:1.25rem;">
+                        Recaudos Consignados
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="form-check form-switch pt-1 text-body-secondary">
+                                <input class="form-check-input" type="checkbox" name="doc_partida" id="checkPartida"
+                                    {% if est and est.doc_partida %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold text-body" for="checkPartida">Partida de Nacimiento</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch pt-1 text-body-secondary">
+                                <input class="form-check-input" type="checkbox" name="doc_sano" id="checkSano"
+                                    {% if est and est.doc_sano %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold text-body" for="checkSano">Certificado Médico</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch pt-1 text-body-secondary">
+                                <input class="form-check-input" type="checkbox" name="doc_vacuna" id="checkVacuna"
+                                    {% if est and est.doc_vacuna %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold text-body" for="checkVacuna">Carnet de Vacunación</label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- 4. DATOS DE LOS PADRES -->
+        <!-- ============================================ -->
+        <div class="accordion-item bg-body rounded-4 shadow-sm mb-3 overflow-hidden border-0">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-bold rounded-4" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#panelPadres" aria-expanded="false" aria-controls="panelPadres">
+                    <i data-lucide="users" class="me-2 text-primary" style="width:18px;"></i>
+                    Datos de los Padres
+                </button>
+            </h2>
+            <div id="panelPadres" class="accordion-collapse collapse" data-bs-parent="#accordionFichaAdmision">
+                <div class="accordion-body pt-2">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="bg-body-tertiary rounded-4 p-3 h-100">
+                                <h6 class="fw-bold text-body-secondary text-uppercase mb-3" style="font-size:0.75rem;letter-spacing:1px;">
+                                    <i data-lucide="user-round" class="me-1" style="width:14px;"></i> Madre
+                                </h6>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold text-body">Nombres y Apellidos</label>
+                                        <input type="text" class="form-control rounded-3" name="madre_nombre"
+                                            value="{{ (est.madre_nombre or '') if est else '' }}" placeholder="Nombre completo">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-body">Cédula</label>
+                                        <input type="text" class="form-control rounded-3" name="madre_ci"
+                                            value="{{ (est.madre_ci or '') if est else '' }}" placeholder="V-12345678">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-body">Teléfono</label>
+                                        <input type="text" class="form-control rounded-3" name="madre_telefono"
+                                            value="{{ (est.madre_telefono or '') if est else '' }}" placeholder="04XX-XXXXXXX">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold text-body">Ocupación</label>
+                                        <input type="text" class="form-control rounded-3" name="madre_ocupacion"
+                                            value="{{ (est.madre_ocupacion or '') if est else '' }}" placeholder="Ej. Comerciante">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold text-body">Dirección</label>
+                                        <textarea class="form-control rounded-3" name="madre_direccion" rows="2"
+                                            placeholder="Dirección de habitación">{{ (est.madre_direccion or '') if est else '' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-body-tertiary rounded-4 p-3 h-100">
+                                <h6 class="fw-bold text-body-secondary text-uppercase mb-3" style="font-size:0.75rem;letter-spacing:1px;">
+                                    <i data-lucide="user-round" class="me-1" style="width:14px;"></i> Padre
+                                </h6>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold text-body">Nombres y Apellidos</label>
+                                        <input type="text" class="form-control rounded-3" name="padre_nombre"
+                                            value="{{ (est.padre_nombre or '') if est else '' }}" placeholder="Nombre completo">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-body">Cédula</label>
+                                        <input type="text" class="form-control rounded-3" name="padre_ci"
+                                            value="{{ (est.padre_ci or '') if est else '' }}" placeholder="V-12345678">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-body">Teléfono</label>
+                                        <input type="text" class="form-control rounded-3" name="padre_telefono"
+                                            value="{{ (est.padre_telefono or '') if est else '' }}" placeholder="04XX-XXXXXXX">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold text-body">Ocupación</label>
+                                        <input type="text" class="form-control rounded-3" name="padre_ocupacion"
+                                            value="{{ (est.padre_ocupacion or '') if est else '' }}" placeholder="Ej. Comerciante">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold text-body">Dirección</label>
+                                        <textarea class="form-control rounded-3" name="padre_direccion" rows="2"
+                                            placeholder="Dirección de habitación">{{ (est.padre_direccion or '') if est else '' }}</textarea>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <h6 class="fw-bold text-primary mb-3 text-uppercase"
-                    style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i
-                        data-lucide="users" class="me-1" style="width:16px;"></i> Referencia Familiar y Procedencia</h6>
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold text-body">Cédula Madre/Representante</label>
-                        <input type="text" class="form-control" name="cedula_representante" required
-                            placeholder="Ej. 12345678">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold text-body">Nombre Representante</label>
-                        <input type="text" class="form-control" name="nombre_representante" required
-                            placeholder="Ej. María Pérez">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold text-body">Parentesco</label>
-                        <select class="form-select" name="parentesco">
-                            <option value="Madre">Madre</option>
-                            <option value="Padre">Padre</option>
-                            <option value="Abuelo/a">Abuelo/a</option>
-                            <option value="Tío/a">Tío/a</option>
-                            <option value="Hermano/a Mayor">Hermano/a Mayor</option>
-                            <option value="Otro Tutor Legal">Otro Tutor Legal</option>
-                        </select>
-                    </div>
+        <!-- ============================================ -->
+        <!-- 5. REPRESENTANTE LEGAL Y BANCO -->
+        <!-- ============================================ -->
+        <div class="accordion-item bg-body rounded-4 shadow-sm mb-3 overflow-hidden border-0">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-bold rounded-4" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#panelRepresentante" aria-expanded="false" aria-controls="panelRepresentante">
+                    <i data-lucide="shield-check" class="me-2 text-primary" style="width:18px;"></i>
+                    Representante Legal y Banco
+                </button>
+            </h2>
+            <div id="panelRepresentante" class="accordion-collapse collapse" data-bs-parent="#accordionFichaAdmision">
+                <div class="accordion-body pt-2">
 
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold text-body">Teléfono</label>
-                        <input type="text" class="form-control" name="telefono_representante"
-                            placeholder="04XX-XXXXXXX">
-                    </div>
-                    <div class="col-md-5">
-                        <label class="form-label fw-semibold text-body">Correo del Representante</label>
-                        <input type="email" class="form-control" name="email_representante"
-                            placeholder="correo@ejemplo.com">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold text-body">Dirección de Habitación</label>
-                        <input type="text" class="form-control" name="direccion_habitacion"
-                            placeholder="Ej. Urb. Los Mangos, Calle 4, Casa Nro 12">
-                    </div>
-                    <div class="col-md-12">
-                        <label class="form-label fw-semibold text-body">Dirección Completa (Adicional)</label>
-                        <textarea class="form-control" name="direccion_completa" rows="2"
-                            placeholder="Describa punto de referencia y otros detalles"></textarea>
-                    </div>
+                    {% if est %}
+                    <p class="small text-muted mb-3">
+                        <i data-lucide="info" class="me-1" style="width:14px;"></i>
+                        Estos cambios actualizan directamente el registro del representante vinculado a este alumno.
+                    </p>
+                    {% endif %}
 
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold text-body">Grado a Asignar</label>
-                        <select class="form-select" name="grado_id">
-                            <option value="">-- Seleccione (Opcional) --</option>
-                            {% for g in grados %}
-                            <option value="{{ g.id }}">{{ g.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold text-body">Literal (A-D)</label>
-                        <select class="form-select" name="literal_escolar">
-                            <option value="">N/A</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="C">C</option>
-                            <option value="D">D</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold text-body">Procedencia / Institución</label>
-                        <input type="text" class="form-control" name="procedencia"
-                            placeholder="(Nuevo Ingreso / Nro. Plantel)">
-                    </div>
-                </div>
+                    <div class="bg-body-tertiary rounded-4 p-3 mb-3">
+                        <h6 class="fw-bold text-body-secondary text-uppercase mb-3" style="font-size:0.75rem;letter-spacing:1px;">
+                            Representante Legal
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-body">Cédula</label>
+                                <input type="text" class="form-control rounded-3" name="cedula_representante" required
+                                    value="{{ (rep.cedula or '') if rep else '' }}" placeholder="Ej. 12345678">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-body">Nombres y Apellidos</label>
+                                <input type="text" class="form-control rounded-3" name="nombre_representante" required
+                                    value="{{ (rep.nombre_completo or '') if rep else '' }}" placeholder="Ej. María Pérez">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-body">Parentesco</label>
+                                <select class="form-select rounded-3" name="parentesco">
+                                    <option value="Madre" {% if rep and rep.parentesco=='Madre' %}selected{% endif %}>Madre</option>
+                                    <option value="Padre" {% if rep and rep.parentesco=='Padre' %}selected{% endif %}>Padre</option>
+                                    <option value="Abuelo/a" {% if rep and rep.parentesco=='Abuelo/a' %}selected{% endif %}>Abuelo/a</option>
+                                    <option value="Tío/a" {% if rep and rep.parentesco=='Tío/a' %}selected{% endif %}>Tío/a</option>
+                                    <option value="Hermano/a Mayor" {% if rep and rep.parentesco=='Hermano/a Mayor' %}selected{% endif %}>Hermano/a Mayor</option>
+                                    <option value="Otro Tutor Legal" {% if rep and rep.parentesco=='Otro Tutor Legal' %}selected{% endif %}>Otro Tutor Legal</option>
+                                </select>
+                            </div>
 
-                <h6 class="fw-bold text-primary mb-3 text-uppercase"
-                    style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i
-                        data-lucide="activity" class="me-1" style="width:16px;"></i> Referencia Médica y Física</h6>
-                <div class="row g-3 mb-2">
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold text-body">Medida Talla</label>
-                        <div class="input-group">
-                            <input type="number" step="0.01" class="form-control" name="talla" placeholder="110">
-                            <span class="input-group-text bg-body-tertiary text-body-secondary">cm</span>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold text-body">Medida Peso</label>
-                        <div class="input-group">
-                            <input type="number" step="0.01" class="form-control" name="peso" placeholder="25">
-                            <span class="input-group-text bg-body-tertiary text-body-secondary">kg</span>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold text-body">Talla Calzado</label>
-                        <input type="text" class="form-control" name="calzado" placeholder="Ej. 28">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold text-body">Talla de Camisa/Franela</label>
-                        <input type="text" class="form-control" name="talla_camisa" placeholder="Ej. 10 o S">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold text-body">Talla de Pantalón/Falda</label>
-                        <input type="text" class="form-control" name="talla_pantalon" placeholder="Ej. 12 o M">
-                    </div>
-                    <div class="col-md-2 mt-3">
-                        <label class="form-label fw-semibold text-body">Grupo Sanguíneo</label>
-                        <select class="form-select" name="tipaje">
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
-                            <option value="No Sabe">No Sabe</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold text-body">Lateralidad</label>
-                        <select class="form-select" name="lateralidad">
-                            <option value="Diestro">Diestro</option>
-                            <option value="Zurdo">Zurdo</option>
-                            <option value="Ambidextro">Ambidextro</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold text-body">Alergias</label>
-                        <input type="text" class="form-control" name="alergias"
-                            placeholder="Alimentos, Medicamentos, Ninguna...">
-                    </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-body">Ocupación</label>
+                                <input type="text" class="form-control rounded-3" name="ocupacion_representante"
+                                    value="{{ (rep.ocupacion or '') if rep else '' }}" placeholder="Ej. Docente">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold text-body">Teléfono</label>
+                                <input type="text" class="form-control rounded-3" name="telefono_representante"
+                                    value="{{ (rep.telefono or '') if rep else '' }}" placeholder="04XX-XXXXXXX">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold text-body">Correo Electrónico</label>
+                                <input type="email" class="form-control rounded-3" name="email_representante"
+                                    value="{{ (rep.email_representante or rep.email or '') if rep else '' }}" placeholder="correo@ejemplo.com">
+                            </div>
 
-                    <div class="col-md-4 mt-3">
-                        <label class="form-label fw-semibold text-body">Esquema de Vacunación</label>
-                        <select class="form-select" name="vacunacion_completa">
-                            <option value="Si">Sí, Esquema Completo</option>
-                            <option value="Parcial">No, Incompleto</option>
-                            <option value="No">Sin Vacunación</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-8 mt-3">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="form-check form-switch me-3">
-                                <input class="form-check-input mt-1" type="checkbox" role="switch" id="switchNeuro"
-                                    name="neurodivergencia">
-                                <label class="form-check-label fw-semibold" for="switchNeuro">Estudiante Neurodivergente
-                                    / N.E.E</label>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-body">Dirección de Habitación</label>
+                                <input type="text" class="form-control rounded-3" name="direccion_habitacion"
+                                    value="{{ (rep.direccion_habitacion or '') if rep else '' }}" placeholder="Ej. Urb. Los Mangos, Calle 4, Casa Nro 12">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-body">Lugar y Dirección de Trabajo</label>
+                                <input type="text" class="form-control rounded-3" name="lugar_direccion_trabajo"
+                                    value="{{ (rep.lugar_direccion_trabajo or '') if rep else '' }}" placeholder="Empresa / Institución y dirección">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold text-body">Dirección Completa (Punto de Referencia Adicional)</label>
+                                <textarea class="form-control rounded-3" name="direccion_completa" rows="2"
+                                    placeholder="Describa punto de referencia y otros detalles">{{ (rep.direccion_completa or '') if rep else '' }}</textarea>
                             </div>
                         </div>
-                        <input type="text" class="form-control bg-body-tertiary" name="neuro_detalle" id="inputNeuroDetalle"
-                            placeholder="Si aplica, indique diagnóstico (TEA, TDAH, Dislexia, Condición Motora...)"
-                            disabled>
                     </div>
-                </div>
 
-                <h6 class="fw-bold text-primary mb-3 text-uppercase"
-                    style="font-size:0.8rem;letter-spacing:1px;border-top:1px solid #e5e7eb;padding-top:1.5rem;"><i
-                        data-lucide="file-check-2" class="me-1" style="width:16px;"></i> Estatus Histórico</h6>
-                <div class="row pt-2 g-3">
-                    <div class="col-md-6 mb-2">
-                        <div class="form-check form-switch pt-1 text-body-secondary">
-                            <input class="form-check-input" type="checkbox" name="nuevo_ingreso" id="checkNuevoIngreso"
-                                checked>
-                            <label class="form-check-label fw-semibold text-body" for="checkNuevoIngreso">
-                                Estudiante de Nuevo Ingreso
-                            </label>
+                    <div class="bg-body-tertiary rounded-4 p-3">
+                        <h6 class="fw-bold text-body-secondary text-uppercase mb-3" style="font-size:0.75rem;letter-spacing:1px;">
+                            <i data-lucide="landmark" class="me-1" style="width:14px;"></i> Datos Bancarios (Beca / Alimentación)
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-body">Nombre del Banco</label>
+                                <input type="text" class="form-control rounded-3" name="banco_nombre"
+                                    value="{{ (rep.banco_nombre or '') if rep else '' }}" placeholder="Ej. Banco de Venezuela">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-body">N° de Cuenta</label>
+                                <input type="text" class="form-control rounded-3" name="banco_cuenta_numero"
+                                    value="{{ (rep.banco_cuenta_numero or '') if rep else '' }}" placeholder="0102-XXXX-XX-XXXXXXXXXX">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-body">Tipo de Cuenta</label>
+                                <select class="form-select rounded-3" name="banco_cuenta_tipo">
+                                    <option value="Ahorro" {% if not rep or rep.banco_cuenta_tipo=='Ahorro' %}selected{% endif %}>Ahorro</option>
+                                    <option value="Corriente" {% if rep and rep.banco_cuenta_tipo=='Corriente' %}selected{% endif %}>Corriente</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold text-body">Nombre del Titular</label>
+                                <input type="text" class="form-control rounded-3" name="banco_titular_nombre"
+                                    value="{{ (rep.banco_titular_nombre or '') if rep else '' }}" placeholder="Titular de la cuenta">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-body">Cédula del Titular</label>
+                                <input type="text" class="form-control rounded-3" name="banco_titular_ci"
+                                    value="{{ (rep.banco_titular_ci or '') if rep else '' }}" placeholder="V-12345678">
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-6 mb-2">
-                        <div class="form-check form-switch pt-1 text-body-secondary">
-                            <input class="form-check-input" type="checkbox" name="es_repetidor" id="checkRepetidor">
-                            <label class="form-check-label fw-semibold text-body" for="checkRepetidor">
-                                Estudiante Repitiente
-                            </label>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- 6. AUTORIZACIONES -->
+        <!-- ============================================ -->
+        <div class="accordion-item bg-body rounded-4 shadow-sm mb-3 overflow-hidden border-0">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-bold rounded-4" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#panelAutorizaciones" aria-expanded="false" aria-controls="panelAutorizaciones">
+                    <i data-lucide="clipboard-check" class="me-2 text-primary" style="width:18px;"></i>
+                    Autorizaciones
+                </button>
+            </h2>
+            <div id="panelAutorizaciones" class="accordion-collapse collapse" data-bs-parent="#accordionFichaAdmision">
+                <div class="accordion-body pt-2">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="bg-body-tertiary rounded-4 p-3 h-100">
+                                <div class="form-check form-switch pt-1">
+                                    <input class="form-check-input" type="checkbox" name="autorizacion_odontologica"
+                                        id="checkOdontologia" {% if est and est.autorizacion_odontologica %}checked{% endif %}>
+                                    <label class="form-check-label fw-semibold text-body" for="checkOdontologia">
+                                        Autorización Odontológica (Barrio Adentro)
+                                    </label>
+                                </div>
+                                <p class="small text-muted mb-0 mt-1">
+                                    Autorizo la atención odontológica del alumno(a) por parte de la misión Barrio Adentro.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold text-body">Teléfono Extra de Familiares (Emergencia)</label>
+                            <input type="text" class="form-control rounded-3" name="telefono_familiar_extra"
+                                value="{{ (est.telefono_familiar_extra or '') if est else '' }}" placeholder="04XX-XXXXXXX">
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        (function () {
+            var wrapper = document.currentScript.closest('.ficha-admision-wrapper');
+            if (!wrapper) return;
+            wrapper.querySelectorAll('.toggle-bool').forEach(function (sw) {
+                var targetSel = sw.getAttribute('data-target');
+                var target = targetSel ? wrapper.querySelector(targetSel) : null;
+                if (!target) return;
+                function sync() {
+                    target.disabled = !sw.checked;
+                    target.classList.toggle('bg-body-tertiary', !sw.checked);
+                    if (!sw.checked) target.value = '';
+                }
+                sw.addEventListener('change', sync);
+                sync();
+            });
+        })();
+    </script>
+</div>

@@ -132,6 +132,15 @@ class Representante(db.Model):
     email_representante = db.Column(db.String(120))
     direccion_habitacion = db.Column(db.Text)
     direccion_completa = db.Column(db.Text)
+    # Datos Laborales (Ficha de Admisión)
+    ocupacion = db.Column(db.String(100))
+    lugar_direccion_trabajo = db.Column(db.Text)
+    # Datos Bancarios (Ficha de Admisión)
+    banco_nombre = db.Column(db.String(100))
+    banco_cuenta_numero = db.Column(db.String(30))
+    banco_cuenta_tipo = db.Column(db.String(20))
+    banco_titular_nombre = db.Column(db.String(150))
+    banco_titular_ci = db.Column(db.String(20))
     estudiantes = db.relationship('Estudiante', backref='representante_info', lazy=True)
 
 class Estudiante(db.Model):
@@ -139,13 +148,23 @@ class Estudiante(db.Model):
     # Identidad y Legal
     cedula_escolar = db.Column(db.String(30), unique=True, nullable=False)
     nombre_completo = db.Column(db.String(150), nullable=False)
+    nombres = db.Column(db.String(100))
+    apellidos = db.Column(db.String(100))
     fecha_nacimiento = db.Column(db.Date, nullable=False)
     lugar_nacimiento = db.Column(db.String(100))
+    municipio = db.Column(db.String(100))
+    parroquia = db.Column(db.String(100))
+    edad = db.Column(db.Integer)
     genero = db.Column(db.String(20))
+    nacionalidad = db.Column(db.String(50), default='Venezolana')
     num_acta = db.Column(db.String(50))
     num_oficio = db.Column(db.String(50))
+    # Contacto y Ubicación del Alumno
+    direccion_alumno = db.Column(db.Text) # Dirección con punto de referencia
+    telefono_habitacion = db.Column(db.String(20))
+    posee_canaima = db.Column(db.Boolean, default=False)
     # Salud y Nutrición
-    talla = db.Column(db.Float) # En cm
+    talla = db.Column(db.Float) # En cm (Estatura)
     peso = db.Column(db.Float) # En kg
     calzado = db.Column(db.String(10))
     talla_camisa = db.Column(db.String(50))
@@ -153,8 +172,14 @@ class Estudiante(db.Model):
     tipaje = db.Column(db.String(10)) # Grupo sanguíneo
     vacunacion_completa = db.Column(db.String(20)) # Si/No/Parcial
     alergias = db.Column(db.String(200))
-    neurodivergencia = db.Column(db.Boolean, default=False)
+    neurodivergencia = db.Column(db.Boolean, default=False) # Diversidad Funcional
     neuro_detalle = db.Column(db.String(200))
+    posee_enfermedad = db.Column(db.Boolean, default=False)
+    enfermedad_detalle = db.Column(db.String(200))
+    toma_medicamento = db.Column(db.Boolean, default=False)
+    medicamento_detalle = db.Column(db.String(200))
+    alergico_medicamento = db.Column(db.Boolean, default=False)
+    alergia_medicamento_detalle = db.Column(db.String(200))
     # Procedencia y Estado
     literal = db.Column(db.String(2))
     literal_escolar = db.Column(db.String(2))
@@ -170,6 +195,21 @@ class Estudiante(db.Model):
     institucion_procedencia = db.Column(db.String(150))
     estatus = db.Column(db.String(20), default='Activo') # Activo o Egreso
     fecha_registro = db.Column(db.DateTime, default=datetime.now)
+    # Datos de la Madre
+    madre_nombre = db.Column(db.String(150))
+    madre_ci = db.Column(db.String(20))
+    madre_ocupacion = db.Column(db.String(100))
+    madre_telefono = db.Column(db.String(20))
+    madre_direccion = db.Column(db.Text)
+    # Datos del Padre
+    padre_nombre = db.Column(db.String(150))
+    padre_ci = db.Column(db.String(20))
+    padre_ocupacion = db.Column(db.String(100))
+    padre_telefono = db.Column(db.String(20))
+    padre_direccion = db.Column(db.Text)
+    # Otros y Autorizaciones
+    telefono_familiar_extra = db.Column(db.String(20))
+    autorizacion_odontologica = db.Column(db.Boolean, default=False)
     # Relaciones
     grado_id = db.Column(db.Integer, db.ForeignKey('grado.id'))
     grado = db.relationship('Grado', backref='estudiantes')

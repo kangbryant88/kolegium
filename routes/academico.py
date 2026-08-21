@@ -314,7 +314,14 @@ def registrar_estudiante():
             email_representante=request.form.get('email_representante'),
             parentesco=request.form.get('parentesco'),
             direccion_habitacion=request.form.get('direccion_habitacion'),
-            direccion_completa=request.form.get('direccion_completa')
+            direccion_completa=request.form.get('direccion_completa'),
+            ocupacion=request.form.get('ocupacion_representante'),
+            lugar_direccion_trabajo=request.form.get('lugar_direccion_trabajo'),
+            banco_nombre=request.form.get('banco_nombre'),
+            banco_cuenta_numero=request.form.get('banco_cuenta_numero'),
+            banco_cuenta_tipo=request.form.get('banco_cuenta_tipo'),
+            banco_titular_nombre=request.form.get('banco_titular_nombre'),
+            banco_titular_ci=request.form.get('banco_titular_ci')
         )
         db.session.add(representante)
         db.session.flush() # Para poder usar el id del representante
@@ -327,35 +334,61 @@ def registrar_estudiante():
         if request.form.get('email_representante'):
             representante.email = request.form.get('email_representante')
             representante.email_representante = request.form.get('email_representante')
+        if request.form.get('ocupacion_representante'):
+            representante.ocupacion = request.form.get('ocupacion_representante')
+        if request.form.get('lugar_direccion_trabajo'):
+            representante.lugar_direccion_trabajo = request.form.get('lugar_direccion_trabajo')
+        if request.form.get('banco_nombre'):
+            representante.banco_nombre = request.form.get('banco_nombre')
+        if request.form.get('banco_cuenta_numero'):
+            representante.banco_cuenta_numero = request.form.get('banco_cuenta_numero')
+        if request.form.get('banco_cuenta_tipo'):
+            representante.banco_cuenta_tipo = request.form.get('banco_cuenta_tipo')
+        if request.form.get('banco_titular_nombre'):
+            representante.banco_titular_nombre = request.form.get('banco_titular_nombre')
+        if request.form.get('banco_titular_ci'):
+            representante.banco_titular_ci = request.form.get('banco_titular_ci')
         db.session.flush()
-        
+
     # Calcular datos para generar cédula escolar
     nro_parto = request.form.get('nro_parto', '1')
     fecha_nac_str = request.form.get('fecha_nacimiento')
     fecha_nac = datetime.strptime(fecha_nac_str, '%Y-%m-%d').date()
     anio_nino = fecha_nac.year
-    
+
     cedula_escolar_gen = generar_cedula_escolar(nro_parto, anio_nino, cedula_rep)
-    
+
     estudiante_existente = Estudiante.query.filter_by(cedula_escolar=cedula_escolar_gen).first()
     if estudiante_existente:
         grado_nombre = estudiante_existente.grado.nombre if estudiante_existente.grado else "el sistema"
         flash(f'Error: Este niño ya ha sido registrado anteriormente y se encuentra en {grado_nombre}.', 'error')
         return redirect(url_for('academico.estadistica_global'))
-    
+
     # Valores numéricos o nulos
     talla_val = request.form.get('talla')
     peso_val = request.form.get('peso')
+    edad_val = request.form.get('edad')
+    nombres_val = request.form.get('nombres', '')
+    apellidos_val = request.form.get('apellidos', '')
 
     # Guardar Estudiante
     estudiante = Estudiante(
         cedula_escolar=cedula_escolar_gen,
-        nombre_completo=request.form.get('nombre_estudiante'),
+        nombre_completo=f"{nombres_val} {apellidos_val}".strip(),
+        nombres=nombres_val,
+        apellidos=apellidos_val,
         fecha_nacimiento=fecha_nac,
         lugar_nacimiento=request.form.get('lugar_nacimiento'),
+        municipio=request.form.get('municipio'),
+        parroquia=request.form.get('parroquia'),
+        edad=int(edad_val) if edad_val else None,
         genero=request.form.get('genero'),
+        nacionalidad=request.form.get('nacionalidad', 'Venezolana'),
         num_acta=request.form.get('num_acta'),
         num_oficio=request.form.get('num_oficio'),
+        direccion_alumno=request.form.get('direccion_alumno'),
+        telefono_habitacion=request.form.get('telefono_habitacion'),
+        posee_canaima=True if request.form.get('posee_canaima') == 'on' else False,
         talla=float(talla_val) if talla_val else None,
         peso=float(peso_val) if peso_val else None,
         calzado=request.form.get('calzado'),
@@ -366,6 +399,12 @@ def registrar_estudiante():
         alergias=request.form.get('alergias'),
         neurodivergencia=True if request.form.get('neurodivergencia') == 'on' else False,
         neuro_detalle=request.form.get('neuro_detalle'),
+        posee_enfermedad=True if request.form.get('posee_enfermedad') == 'on' else False,
+        enfermedad_detalle=request.form.get('enfermedad_detalle'),
+        toma_medicamento=True if request.form.get('toma_medicamento') == 'on' else False,
+        medicamento_detalle=request.form.get('medicamento_detalle'),
+        alergico_medicamento=True if request.form.get('alergico_medicamento') == 'on' else False,
+        alergia_medicamento_detalle=request.form.get('alergia_medicamento_detalle'),
         literal=request.form.get('literal_escolar'),
         literal_escolar=request.form.get('literal_escolar'),
         procedencia=request.form.get('plantel_procedencia'),
@@ -379,10 +418,22 @@ def registrar_estudiante():
         nuevo_ingreso=True if request.form.get('nuevo_ingreso') == 'on' else False,
         institucion_procedencia=request.form.get('institucion_procedencia'),
         estatus=request.form.get('estatus', 'Activo'),
+        madre_nombre=request.form.get('madre_nombre'),
+        madre_ci=request.form.get('madre_ci'),
+        madre_ocupacion=request.form.get('madre_ocupacion'),
+        madre_telefono=request.form.get('madre_telefono'),
+        madre_direccion=request.form.get('madre_direccion'),
+        padre_nombre=request.form.get('padre_nombre'),
+        padre_ci=request.form.get('padre_ci'),
+        padre_ocupacion=request.form.get('padre_ocupacion'),
+        padre_telefono=request.form.get('padre_telefono'),
+        padre_direccion=request.form.get('padre_direccion'),
+        telefono_familiar_extra=request.form.get('telefono_familiar_extra'),
+        autorizacion_odontologica=True if request.form.get('autorizacion_odontologica') == 'on' else False,
         grado_id=request.form.get('grado_id'),
         representante_id=representante.id
     )
-    
+
     try:
         db.session.add(estudiante)
         db.session.commit()
@@ -402,19 +453,32 @@ def perfil_estudiante(id):
 def editar_estudiante(id):
     if not session.get('logeado'): return redirect(url_for('auth.login'))
     est = Estudiante.query.get_or_404(id)
-    
-    est.nombre_completo = request.form.get('nombre_estudiante')
+
+    nombres_val = request.form.get('nombres', '')
+    apellidos_val = request.form.get('apellidos', '')
+    edad_val = request.form.get('edad')
+
+    est.nombres = nombres_val
+    est.apellidos = apellidos_val
+    est.nombre_completo = f"{nombres_val} {apellidos_val}".strip()
     est.fecha_nacimiento = datetime.strptime(request.form.get('fecha_nacimiento'), '%Y-%m-%d').date()
     est.lugar_nacimiento = request.form.get('lugar_nacimiento')
+    est.municipio = request.form.get('municipio')
+    est.parroquia = request.form.get('parroquia')
+    est.edad = int(edad_val) if edad_val else None
     est.genero = request.form.get('genero')
+    est.nacionalidad = request.form.get('nacionalidad', 'Venezolana')
     est.num_acta = request.form.get('num_acta')
     est.num_oficio = request.form.get('num_oficio')
-    
+    est.direccion_alumno = request.form.get('direccion_alumno')
+    est.telefono_habitacion = request.form.get('telefono_habitacion')
+    est.posee_canaima = True if request.form.get('posee_canaima') == 'on' else False
+
     talla_val = request.form.get('talla')
     peso_val = request.form.get('peso')
     est.talla = float(talla_val) if talla_val else None
     est.peso = float(peso_val) if peso_val else None
-    
+
     est.calzado = request.form.get('calzado')
     est.talla_camisa = request.form.get('talla_camisa')
     est.talla_pantalon = request.form.get('talla_pantalon')
@@ -423,6 +487,12 @@ def editar_estudiante(id):
     est.alergias = request.form.get('alergias')
     est.neurodivergencia = True if request.form.get('neurodivergencia') == 'on' else False
     est.neuro_detalle = request.form.get('neuro_detalle')
+    est.posee_enfermedad = True if request.form.get('posee_enfermedad') == 'on' else False
+    est.enfermedad_detalle = request.form.get('enfermedad_detalle')
+    est.toma_medicamento = True if request.form.get('toma_medicamento') == 'on' else False
+    est.medicamento_detalle = request.form.get('medicamento_detalle')
+    est.alergico_medicamento = True if request.form.get('alergico_medicamento') == 'on' else False
+    est.alergia_medicamento_detalle = request.form.get('alergia_medicamento_detalle')
     est.literal = request.form.get('literal_escolar')
     est.literal_escolar = request.form.get('literal_escolar')
     est.procedencia = request.form.get('plantel_procedencia')
@@ -433,9 +503,45 @@ def editar_estudiante(id):
     est.doc_sano = True if request.form.get('doc_sano') == 'on' else False
     est.doc_vacuna = True if request.form.get('doc_vacuna') == 'on' else False
     est.lateralidad = request.form.get('lateralidad')
+    est.nuevo_ingreso = True if request.form.get('nuevo_ingreso') == 'on' else False
     est.institucion_procedencia = request.form.get('institucion_procedencia')
     est.grado_id = request.form.get('grado_id')
-    
+
+    # Datos de la Madre
+    est.madre_nombre = request.form.get('madre_nombre')
+    est.madre_ci = request.form.get('madre_ci')
+    est.madre_ocupacion = request.form.get('madre_ocupacion')
+    est.madre_telefono = request.form.get('madre_telefono')
+    est.madre_direccion = request.form.get('madre_direccion')
+    # Datos del Padre
+    est.padre_nombre = request.form.get('padre_nombre')
+    est.padre_ci = request.form.get('padre_ci')
+    est.padre_ocupacion = request.form.get('padre_ocupacion')
+    est.padre_telefono = request.form.get('padre_telefono')
+    est.padre_direccion = request.form.get('padre_direccion')
+    # Otros y Autorizaciones
+    est.telefono_familiar_extra = request.form.get('telefono_familiar_extra')
+    est.autorizacion_odontologica = True if request.form.get('autorizacion_odontologica') == 'on' else False
+
+    # Actualizar (en el mismo registro, sin reasignar) al Representante vinculado
+    if est.representante_info:
+        rep = est.representante_info
+        rep.cedula = request.form.get('cedula_representante', rep.cedula)
+        rep.nombre_completo = request.form.get('nombre_representante', rep.nombre_completo)
+        rep.telefono = request.form.get('telefono_representante')
+        rep.parentesco = request.form.get('parentesco')
+        rep.email = request.form.get('email_representante')
+        rep.email_representante = request.form.get('email_representante')
+        rep.direccion_habitacion = request.form.get('direccion_habitacion')
+        rep.direccion_completa = request.form.get('direccion_completa')
+        rep.ocupacion = request.form.get('ocupacion_representante')
+        rep.lugar_direccion_trabajo = request.form.get('lugar_direccion_trabajo')
+        rep.banco_nombre = request.form.get('banco_nombre')
+        rep.banco_cuenta_numero = request.form.get('banco_cuenta_numero')
+        rep.banco_cuenta_tipo = request.form.get('banco_cuenta_tipo')
+        rep.banco_titular_nombre = request.form.get('banco_titular_nombre')
+        rep.banco_titular_ci = request.form.get('banco_titular_ci')
+
     db.session.commit()
     return redirect(url_for('academico.perfil_estudiante', id=est.id))
 
@@ -852,7 +958,14 @@ def nuevo_ingreso_rapido():
             email_representante=request.form.get('email_representante'),
             parentesco=request.form.get('parentesco'),
             direccion_habitacion=request.form.get('direccion_habitacion'),
-            direccion_completa=request.form.get('direccion_completa')
+            direccion_completa=request.form.get('direccion_completa'),
+            ocupacion=request.form.get('ocupacion_representante'),
+            lugar_direccion_trabajo=request.form.get('lugar_direccion_trabajo'),
+            banco_nombre=request.form.get('banco_nombre'),
+            banco_cuenta_numero=request.form.get('banco_cuenta_numero'),
+            banco_cuenta_tipo=request.form.get('banco_cuenta_tipo'),
+            banco_titular_nombre=request.form.get('banco_titular_nombre'),
+            banco_titular_ci=request.form.get('banco_titular_ci')
         )
         db.session.add(representante)
         db.session.flush()
@@ -871,6 +984,20 @@ def nuevo_ingreso_rapido():
             representante.direccion_habitacion = request.form.get('direccion_habitacion')
         if request.form.get('direccion_completa'):
             representante.direccion_completa = request.form.get('direccion_completa')
+        if request.form.get('ocupacion_representante'):
+            representante.ocupacion = request.form.get('ocupacion_representante')
+        if request.form.get('lugar_direccion_trabajo'):
+            representante.lugar_direccion_trabajo = request.form.get('lugar_direccion_trabajo')
+        if request.form.get('banco_nombre'):
+            representante.banco_nombre = request.form.get('banco_nombre')
+        if request.form.get('banco_cuenta_numero'):
+            representante.banco_cuenta_numero = request.form.get('banco_cuenta_numero')
+        if request.form.get('banco_cuenta_tipo'):
+            representante.banco_cuenta_tipo = request.form.get('banco_cuenta_tipo')
+        if request.form.get('banco_titular_nombre'):
+            representante.banco_titular_nombre = request.form.get('banco_titular_nombre')
+        if request.form.get('banco_titular_ci'):
+            representante.banco_titular_ci = request.form.get('banco_titular_ci')
         db.session.flush()
 
     # ── 2. Generar Cédula Escolar ──
@@ -895,16 +1022,28 @@ def nuevo_ingreso_rapido():
     # ── 4. Captura exhaustiva de datos del estudiante ──
     talla_val = request.form.get('talla')
     peso_val = request.form.get('peso')
+    edad_val = request.form.get('edad')
+    nombres_val = request.form.get('nombres', '')
+    apellidos_val = request.form.get('apellidos', '')
 
     nuevo_estudiante = Estudiante(
         # Identidad y Legal
         cedula_escolar=cedula_escolar_gen,
-        nombre_completo=request.form.get('nombre_estudiante', ''),
+        nombre_completo=f"{nombres_val} {apellidos_val}".strip(),
+        nombres=nombres_val,
+        apellidos=apellidos_val,
         fecha_nacimiento=fecha_nac,
         lugar_nacimiento=request.form.get('lugar_nacimiento'),
+        municipio=request.form.get('municipio'),
+        parroquia=request.form.get('parroquia'),
+        edad=int(edad_val) if edad_val else None,
         genero=request.form.get('genero'),
+        nacionalidad=request.form.get('nacionalidad', 'Venezolana'),
         num_acta=request.form.get('num_acta'),
         num_oficio=request.form.get('num_oficio'),
+        direccion_alumno=request.form.get('direccion_alumno'),
+        telefono_habitacion=request.form.get('telefono_habitacion'),
+        posee_canaima=True if request.form.get('posee_canaima') == 'on' else False,
         # Salud y Antropometría
         talla=float(talla_val) if talla_val else None,
         peso=float(peso_val) if peso_val else None,
@@ -916,7 +1055,16 @@ def nuevo_ingreso_rapido():
         alergias=request.form.get('alergias'),
         neurodivergencia=True if request.form.get('neurodivergencia') == 'on' else False,
         neuro_detalle=request.form.get('neuro_detalle'),
+        posee_enfermedad=True if request.form.get('posee_enfermedad') == 'on' else False,
+        enfermedad_detalle=request.form.get('enfermedad_detalle'),
+        toma_medicamento=True if request.form.get('toma_medicamento') == 'on' else False,
+        medicamento_detalle=request.form.get('medicamento_detalle'),
+        alergico_medicamento=True if request.form.get('alergico_medicamento') == 'on' else False,
+        alergia_medicamento_detalle=request.form.get('alergia_medicamento_detalle'),
         lateralidad=request.form.get('lateralidad'),
+        doc_partida=True if request.form.get('doc_partida') == 'on' else False,
+        doc_sano=True if request.form.get('doc_sano') == 'on' else False,
+        doc_vacuna=True if request.form.get('doc_vacuna') == 'on' else False,
         # Procedencia y Estado Académico
         literal=request.form.get('literal_escolar'),
         literal_escolar=request.form.get('literal_escolar'),
@@ -925,7 +1073,23 @@ def nuevo_ingreso_rapido():
         email_estudiante=request.form.get('email_estudiante'),
         es_repetidor=True if request.form.get('es_repetidor') == 'on' else False,
         nuevo_ingreso=True if request.form.get('nuevo_ingreso') == 'on' else True,
+        institucion_procedencia=request.form.get('institucion_procedencia'),
         estatus='Activo',
+        # Datos de la Madre
+        madre_nombre=request.form.get('madre_nombre'),
+        madre_ci=request.form.get('madre_ci'),
+        madre_ocupacion=request.form.get('madre_ocupacion'),
+        madre_telefono=request.form.get('madre_telefono'),
+        madre_direccion=request.form.get('madre_direccion'),
+        # Datos del Padre
+        padre_nombre=request.form.get('padre_nombre'),
+        padre_ci=request.form.get('padre_ci'),
+        padre_ocupacion=request.form.get('padre_ocupacion'),
+        padre_telefono=request.form.get('padre_telefono'),
+        padre_direccion=request.form.get('padre_direccion'),
+        # Otros y Autorizaciones
+        telefono_familiar_extra=request.form.get('telefono_familiar_extra'),
+        autorizacion_odontologica=True if request.form.get('autorizacion_odontologica') == 'on' else False,
         # Relaciones
         grado_id=request.form.get('grado_id'),
         representante_id=representante.id
