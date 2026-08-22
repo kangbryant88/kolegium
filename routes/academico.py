@@ -1195,10 +1195,10 @@ def generar_boletin_pdf(estudiante_id):
     pdf.add_page()
     _dibujar_hoja_boletin(pdf, est, proyectos, evaluaciones)
 
-    nombre_archivo = f"Boletin_{est.nombre_completo.replace(' ', '_')}_{est.cedula_escolar}.pdf"
+    nombre_archivo = f"Boletin_de_{est.nombre_completo.strip().replace(' ', '_')}.pdf"
     response = make_response(pdf.output(dest='S').encode('latin1'))
     response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename={nombre_archivo}'
+    response.headers['Content-Disposition'] = f'inline; filename="{nombre_archivo}"'
     return response
 
 
@@ -1241,10 +1241,19 @@ def generar_boletines_masivo():
         pdf.add_page()
         _dibujar_hoja_boletin(pdf, est, proyectos, evaluaciones)
 
-    nombre_archivo = f"Boletines_{grado.nombre.replace(' ', '_')}.pdf"
+    # El nombre del grado puede venir combinado con la sección (ej. "Segundo Grado
+    # Sección A"); se separan para poder nombrar el archivo como Boletines_<Grado>_Seccion_<X>.pdf.
+    seccion_fallback = (estudiantes[0].literal_escolar or estudiantes[0].literal or '') if estudiantes else ''
+    grado_txt, seccion_txt = _separar_grado_seccion(grado.nombre, seccion_fallback)
+    grado_slug = grado_txt.strip().replace(' ', '_')
+    if seccion_txt and seccion_txt != '-':
+        nombre_archivo = f"Boletines_{grado_slug}_Seccion_{seccion_txt.strip().replace(' ', '_')}.pdf"
+    else:
+        nombre_archivo = f"Boletines_{grado_slug}.pdf"
+
     response = make_response(pdf.output(dest='S').encode('latin1'))
     response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename={nombre_archivo}'
+    response.headers['Content-Disposition'] = f'inline; filename="{nombre_archivo}"'
     return response
 
 # ==========================================
