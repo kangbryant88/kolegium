@@ -326,3 +326,51 @@ class TokenRecuperacion(db.Model):
     fecha_creacion = db.Column(db.DateTime, default=datetime.now)
     usado = db.Column(db.Boolean, default=False)
     usuario = db.relationship('Usuario', backref='tokens_recuperacion')
+
+# ==========================================
+# --- EVALUACIÓN DESCRIPTIVA Y BOLETINES ---
+# ==========================================
+
+class ProyectoAula(db.Model):
+    """Configuración global del Proyecto de Aprendizaje por salón y momento (lapso)."""
+    id = db.Column(db.Integer, primary_key=True)
+    grado_id = db.Column(db.Integer, db.ForeignKey('grado.id'), nullable=False)
+    momento = db.Column(db.Integer, nullable=False)  # 1, 2 o 3
+    titulo_proyecto = db.Column(db.String(200), nullable=False)
+    fecha_inicio = db.Column(db.Date, nullable=True)
+    fecha_cierre = db.Column(db.Date, nullable=True)
+    fecha_actualizacion = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    grado = db.relationship('Grado', backref='proyectos_aula')
+
+    __table_args__ = (
+        db.UniqueConstraint('grado_id', 'momento', name='uq_proyecto_aula_grado_momento'),
+    )
+
+
+class BancoIndicador(db.Model):
+    """Repositorio de indicadores/frases pre-guardadas por el docente, por momento y nivel de logro."""
+    id = db.Column(db.Integer, primary_key=True)
+    docente_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    momento = db.Column(db.Integer, nullable=False)  # 1, 2 o 3
+    nivel = db.Column(db.String(20), nullable=False)  # A, B, C, D, Deporte
+    texto_indicador = db.Column(db.Text, nullable=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.now)
+
+    docente = db.relationship('Usuario', backref='banco_indicadores')
+
+
+class EvaluacionEstudiante(db.Model):
+    """Evaluación descriptiva consolidada (nota final) de un estudiante para un momento dado."""
+    id = db.Column(db.Integer, primary_key=True)
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+    momento = db.Column(db.Integer, nullable=False)  # 1, 2 o 3
+    texto_descriptivo = db.Column(db.Text)
+    sugerencias = db.Column(db.Text)
+    fecha_actualizacion = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    estudiante = db.relationship('Estudiante', backref='evaluaciones')
+
+    __table_args__ = (
+        db.UniqueConstraint('estudiante_id', 'momento', name='uq_evaluacion_estudiante_momento'),
+    )

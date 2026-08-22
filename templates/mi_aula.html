@@ -77,6 +77,16 @@
                     <a href="{{ url_for('academico.descargar_inscripcion_inicial', grado_id=grado.id) }}" class="btn btn-success btn-lg shadow rounded-pill px-4 fw-bold d-flex align-items-center" style="letter-spacing: 0.5px;">
                         <i data-lucide="download" class="me-2" style="width:20px;height:20px;"></i> Inscripción Inicial
                     </a>
+                    <button class="btn btn-outline-primary btn-lg shadow-sm rounded-pill px-4 fw-bold d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalConfigurarLapso" style="letter-spacing: 0.5px;">
+                        <i data-lucide="calendar-range" class="me-2" style="width:20px;height:20px;"></i> Configurar Lapso
+                    </button>
+                    <button class="btn btn-outline-primary btn-lg shadow-sm rounded-pill px-4 fw-bold d-flex align-items-center" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBancoIndicadores" style="letter-spacing: 0.5px;">
+                        <i data-lucide="library-big" class="me-2" style="width:20px;height:20px;"></i> Banco de Indicadores
+                    </button>
+                    <a href="{{ url_for('academico.generar_boletines_masivo', grado_id=grado.id) }}" target="_blank"
+                        class="btn btn-success btn-lg shadow rounded-pill px-4 fw-bold d-flex align-items-center" style="letter-spacing: 0.5px;">
+                        <i data-lucide="printer" class="me-2" style="width:20px;height:20px;"></i> Imprimir Todos los Boletines
+                    </a>
                 </div>
             </div>
         </div>
@@ -244,6 +254,11 @@
                                                                 <i data-lucide="pie-chart" style="width:14px;height:14px;"></i> Historial Asist.
                                                             </button>
                                                         </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalBoletin_{{ est.id }}">
+                                                                <i data-lucide="notebook-pen" style="width:14px;height:14px;"></i> Redactar Boletín
+                                                            </button>
+                                                        </li>
                                                         <li><hr class="dropdown-divider"></li>
                                                         <li>
                                                             <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 text-warning" data-bs-toggle="modal" data-bs-target="#modalNota_{{ est.id }}">
@@ -337,6 +352,11 @@
                                                         <li>
                                                             <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalHistorialAsist_{{ est.id }}">
                                                                 <i data-lucide="pie-chart" style="width:14px;height:14px;"></i> Historial Asist.
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalBoletin_{{ est.id }}">
+                                                                <i data-lucide="notebook-pen" style="width:14px;height:14px;"></i> Redactar Boletín
                                                             </button>
                                                         </li>
                                                         <li><hr class="dropdown-divider"></li>
@@ -435,6 +455,11 @@
                                                         <li>
                                                             <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalHistorialAsist_{{ est.id }}">
                                                                 <i data-lucide="pie-chart" style="width:14px;height:14px;"></i> Historial Asist.
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalBoletin_{{ est.id }}">
+                                                                <i data-lucide="notebook-pen" style="width:14px;height:14px;"></i> Redactar Boletín
                                                             </button>
                                                         </li>
                                                         <li><hr class="dropdown-divider"></li>
@@ -763,6 +788,115 @@
     </div>
 </div>
 
+<!-- Modal Redactar Boletín (Evaluación Descriptiva por Momento) -->
+<div class="modal fade" id="modalBoletin_{{ est.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-fullscreen-lg-down">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 aula-surface-tint rounded-top-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                        <i data-lucide="notebook-pen" style="width:24px;height:24px;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold">Redactar Boletín</h5>
+                        <p class="text-muted small mb-0">{{ est.nombre_completo }}</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ url_for('academico.generar_boletin_pdf', estudiante_id=est.id) }}" target="_blank"
+                        class="btn btn-sm btn-success rounded-pill px-3 fw-bold d-none d-sm-inline-flex align-items-center">
+                        <i data-lucide="file-down" class="me-1" style="width:14px;"></i> Descargar PDF
+                    </a>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body px-4 py-4" style="max-height: 70vh; overflow-y: auto;">
+
+                <ul class="nav nav-pills nav-fill gap-2 mb-3" id="pillsBoletin_{{ est.id }}" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#boletin-{{ est.id }}-1" type="button" role="tab">I Momento</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#boletin-{{ est.id }}-2" type="button" role="tab">II Momento</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#boletin-{{ est.id }}-3" type="button" role="tab">III Momento</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    {% set evals_est = evaluaciones_por_estudiante.get(est.id, {}) %}
+                    {% for m in [1, 2, 3] %}
+                    {% set evaluacion = evals_est.get(m) %}
+                    {% set indicadores_m = banco_indicadores|selectattr('momento', 'equalto', m)|list %}
+                    <div class="tab-pane fade {% if m == 1 %}show active{% endif %}" id="boletin-{{ est.id }}-{{ m }}" role="tabpanel">
+                        <form action="{{ url_for('academico.guardar_evaluacion', estudiante_id=est.id) }}" method="POST">
+                            <input type="hidden" name="grado_id" value="{{ grado.id }}">
+                            <input type="hidden" name="momento" value="{{ m }}">
+
+                            <div class="bg-body-tertiary rounded-4 p-3 mb-3">
+                                <h6 class="fw-bold text-primary text-uppercase mb-2" style="font-size:0.75rem;letter-spacing:1px;">
+                                    <i data-lucide="library-big" class="me-1" style="width:14px;"></i> Banco de Indicadores &mdash; Click para insertar
+                                </h6>
+                                {% if not indicadores_m %}
+                                    <p class="text-muted small mb-0">No tienes indicadores guardados para este momento. Agrégalos desde "Banco de Indicadores" en el panel superior.</p>
+                                {% else %}
+                                    {% set niveles = ['A', 'B', 'C', 'D', 'Deporte'] %}
+                                    {% for nivel in niveles %}
+                                        {% set items_nivel = indicadores_m|selectattr('nivel', 'equalto', nivel)|list %}
+                                        {% if items_nivel %}
+                                        <div class="mb-2">
+                                            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-2 py-1 mb-1" style="font-size:0.7rem;">Nivel {{ nivel }}</span>
+                                            <div class="d-flex flex-wrap gap-2 mt-1">
+                                                {% for ind in items_nivel %}
+                                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill kolegium-chip-indicador text-truncate"
+                                                    style="max-width: 260px;" data-target="textoDescriptivo_{{ est.id }}_{{ m }}"
+                                                    data-texto="{{ ind.texto_indicador }}" title="{{ ind.texto_indicador }}">
+                                                    <i data-lucide="plus" style="width:12px;height:12px;" class="me-1"></i>{{ ind.texto_indicador }}
+                                                </button>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-1">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label fw-semibold text-body mb-0">Texto Descriptivo</label>
+                                    <span class="small text-muted" id="contadorDescriptivo_{{ est.id }}_{{ m }}">0 / 1200</span>
+                                </div>
+                                <textarea class="form-control rounded-3" id="textoDescriptivo_{{ est.id }}_{{ m }}" name="texto_descriptivo" rows="6"
+                                    data-kolegium-textarea data-counter="contadorDescriptivo_{{ est.id }}_{{ m }}" data-max="1200"
+                                    placeholder="Seleccione indicadores arriba o redacte libremente...">{{ evaluacion.texto_descriptivo if evaluacion else '' }}</textarea>
+                            </div>
+
+                            <div class="mb-1 mt-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label fw-semibold text-body mb-0">Sugerencias / Recomendaciones</label>
+                                    <span class="small text-muted" id="contadorSugerencias_{{ est.id }}_{{ m }}">0 / 1200</span>
+                                </div>
+                                <textarea class="form-control rounded-3" id="sugerencias_{{ est.id }}_{{ m }}" name="sugerencias" rows="3"
+                                    data-kolegium-textarea data-counter="contadorSugerencias_{{ est.id }}_{{ m }}" data-max="1200"
+                                    placeholder="Recomendaciones para el hogar...">{{ evaluacion.sugerencias if evaluacion else '' }}</textarea>
+                            </div>
+
+                            <div class="d-flex justify-content-end mt-3">
+                                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                                    <i data-lucide="save" class="me-1" style="width:16px;"></i> Guardar Momento {{ ['', 'I', 'II', 'III'][m] }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endfor %}
 
 <!-- Modal Nuevo Ingreso -->
@@ -794,11 +928,219 @@
     </div>
 </div>
 
+<!-- Modal Configurar Lapso (Proyecto de Aula por Momento) -->
+<div class="modal fade" id="modalConfigurarLapso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3 aula-surface-tint rounded-top-4">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 me-3">
+                        <i data-lucide="calendar-range" style="width:24px;height:24px;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold">Configurar Lapso</h5>
+                        <p class="text-muted small mb-0">Título del Proyecto de Aprendizaje y fechas por momento.</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-4">
+
+                <ul class="nav nav-pills nav-fill gap-2 mb-4" id="pillsMomentoLapso" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active rounded-pill fw-bold" id="pill-lapso-1-tab" data-bs-toggle="pill" data-bs-target="#pane-lapso-1" type="button" role="tab" aria-controls="pane-lapso-1" aria-selected="true">Momento I</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill fw-bold" id="pill-lapso-2-tab" data-bs-toggle="pill" data-bs-target="#pane-lapso-2" type="button" role="tab" aria-controls="pane-lapso-2" aria-selected="false">Momento II</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill fw-bold" id="pill-lapso-3-tab" data-bs-toggle="pill" data-bs-target="#pane-lapso-3" type="button" role="tab" aria-controls="pane-lapso-3" aria-selected="false">Momento III</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    {% for m in [1, 2, 3] %}
+                    {% set proyecto = proyectos_aula.get(m) %}
+                    <div class="tab-pane fade {% if m == 1 %}show active{% endif %}" id="pane-lapso-{{ m }}" role="tabpanel" aria-labelledby="pill-lapso-{{ m }}-tab">
+                        <form action="{{ url_for('academico.guardar_proyecto_aula') }}" method="POST">
+                            <input type="hidden" name="grado_id" value="{{ grado.id }}">
+                            <input type="hidden" name="momento" value="{{ m }}">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold text-body">Título del Proyecto de Aprendizaje</label>
+                                    <input type="text" class="form-control rounded-3" name="titulo_proyecto"
+                                        value="{{ proyecto.titulo_proyecto if proyecto else '' }}"
+                                        placeholder="Ej. Cuidemos Nuestro Planeta" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-body">Fecha de Inicio</label>
+                                    <input type="date" class="form-control rounded-3" name="fecha_inicio"
+                                        value="{{ proyecto.fecha_inicio.strftime('%Y-%m-%d') if proyecto and proyecto.fecha_inicio else '' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold text-body">Fecha de Cierre</label>
+                                    <input type="date" class="form-control rounded-3" name="fecha_cierre"
+                                        value="{{ proyecto.fecha_cierre.strftime('%Y-%m-%d') if proyecto and proyecto.fecha_cierre else '' }}">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end mt-4">
+                                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                                    <i data-lucide="save" class="me-1" style="width:16px;"></i>
+                                    Guardar Momento {{ ['', 'I', 'II', 'III'][m] }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Offcanvas Banco de Indicadores -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasBancoIndicadores" aria-labelledby="offcanvasBancoIndicadoresLabel" style="width: 640px; max-width: 100vw; background: var(--surface);">
+    <div class="offcanvas-header border-bottom border-secondary border-opacity-25">
+        <h5 class="offcanvas-title fw-bold d-flex align-items-center gap-2" id="offcanvasBancoIndicadoresLabel">
+            <i data-lucide="library-big" class="text-primary"></i> Banco de Indicadores
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column" style="padding: 0;">
+
+        <div class="p-4 border-bottom" style="background: var(--surface-container-lowest);">
+            <form action="{{ url_for('academico.guardar_indicador') }}" method="POST">
+                <input type="hidden" name="grado_id" value="{{ grado.id }}">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label small fw-semibold text-body mb-1">Momento</label>
+                        <select class="form-select form-select-sm rounded-3" name="momento" required>
+                            <option value="1">Momento I</option>
+                            <option value="2">Momento II</option>
+                            <option value="3">Momento III</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-semibold text-body mb-1">Nivel</label>
+                        <select class="form-select form-select-sm rounded-3" name="nivel" required>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                            <option value="Deporte">Deporte</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-body mb-1">Texto del Indicador</label>
+                        <textarea class="form-control rounded-3" name="texto_indicador" rows="2"
+                            placeholder="Ej. Reconoce y utiliza los números naturales hasta el 100 en situaciones cotidianas." required></textarea>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mt-2">
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                        <i data-lucide="plus" class="me-1" style="width:14px;"></i> Agregar al Banco
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <ul class="nav nav-pills nav-fill gap-2 px-4 pt-3" id="pillsMomentoBanco" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#banco-momento-todos" type="button" role="tab">Todos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#banco-momento-1" type="button" role="tab">I</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#banco-momento-2" type="button" role="tab">II</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#banco-momento-3" type="button" role="tab">III</button>
+            </li>
+        </ul>
+
+        <div class="tab-content flex-grow-1 overflow-auto px-4 py-3">
+            {% set niveles = ['A', 'B', 'C', 'D', 'Deporte'] %}
+            {% for filtro_id, filtro_momento in [('todos', None), ('1', 1), ('2', 2), ('3', 3)] %}
+            <div class="tab-pane fade {% if filtro_id == 'todos' %}show active{% endif %}" id="banco-momento-{{ filtro_id }}" role="tabpanel">
+                {% set indicadores_filtrados = banco_indicadores if filtro_momento is none else banco_indicadores|selectattr('momento', 'equalto', filtro_momento)|list %}
+                {% if not indicadores_filtrados %}
+                    <div class="text-center text-muted py-5">
+                        <i data-lucide="inbox" style="width:32px;height:32px;" class="mb-2 opacity-50"></i>
+                        <p class="mb-0 small">Sin indicadores guardados{% if filtro_momento %} para el Momento {{ ['', 'I', 'II', 'III'][filtro_momento] }}{% endif %}.</p>
+                    </div>
+                {% else %}
+                    {% for nivel in niveles %}
+                        {% set items_nivel = indicadores_filtrados|selectattr('nivel', 'equalto', nivel)|list %}
+                        {% if items_nivel %}
+                        <div class="mb-3">
+                            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 fw-bold mb-2 d-inline-block">Nivel {{ nivel }}</span>
+                            {% for ind in items_nivel %}
+                            <div class="card border-0 shadow-sm rounded-4 mb-2">
+                                <div class="card-body p-3 d-flex justify-content-between align-items-start gap-2">
+                                    <div>
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 py-1 mb-1" style="font-size:0.7rem;">Momento {{ ['', 'I', 'II', 'III'][ind.momento] }}</span>
+                                        <p class="mb-0 small">{{ ind.texto_indicador }}</p>
+                                    </div>
+                                    <form action="{{ url_for('academico.eliminar_indicador', id=ind.id) }}" method="POST" onsubmit="return confirm('¿Eliminar este indicador del banco?');">
+                                        <input type="hidden" name="grado_id" value="{{ grado.id }}">
+                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Eliminar">
+                                            <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
+
+    // ============================================
+    // BOLETÍN: inyección de indicadores + contador de caracteres
+    // ============================================
+    function kolegiumInjectIndicador(textareaId, texto) {
+        const ta = document.getElementById(textareaId);
+        if (!ta) return;
+        const sep = ta.value.trim().length ? ' ' : '';
+        ta.value = (ta.value.trim() + sep + texto).trim();
+        ta.dispatchEvent(new Event('input'));
+        ta.focus();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.kolegium-chip-indicador').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                kolegiumInjectIndicador(this.dataset.target, this.dataset.texto);
+            });
+        });
+
+        document.querySelectorAll('[data-kolegium-textarea]').forEach(function (ta) {
+            const counter = document.getElementById(ta.dataset.counter);
+            const max = parseInt(ta.dataset.max || '1200', 10);
+            if (!counter) return;
+            function sync() {
+                const len = ta.value.length;
+                counter.textContent = len + ' / ' + max;
+                counter.classList.toggle('text-danger', len > max);
+                counter.classList.toggle('fw-bold', len > max);
+            }
+            ta.addEventListener('input', sync);
+            sync();
+        });
+    });
 
     document.addEventListener('DOMContentLoaded', function() {
         if(typeof flatpickr !== 'undefined') {

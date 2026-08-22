@@ -1,13 +1,14 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, send_file, make_response, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, send_file, make_response, jsonify, current_app
 from datetime import datetime, date, timedelta
 import io
+import os
 import pandas as pd
 import openpyxl
 from docx import Document
 from fpdf import FPDF
 import urllib.parse
 import uuid
-from models import db, Bitacora, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Estudiante, Representante, Incidencia, AsistenciaEstudiante, AlertaDefensoria, EnlaceTemporal, SolicitudEnlace, SolicitudActualizacion
+from models import db, Bitacora, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Estudiante, Representante, Incidencia, AsistenciaEstudiante, AlertaDefensoria, EnlaceTemporal, SolicitudEnlace, SolicitudActualizacion, ProyectoAula, BancoIndicador, EvaluacionEstudiante
 
 academico_bp = Blueprint('academico', __name__, url_prefix='/academico')
 
@@ -636,6 +637,25 @@ def mi_aula():
     total_hembras = sum(1 for e in estudiantes if e.genero == 'Femenino')
     docente_titular = ", ".join([d.nombre_completo for d in grado_seleccionado.docentes]) if (grado_seleccionado and grado_seleccionado.docentes) else "Docente no asignado"
 
+    # Evaluación Descriptiva: Proyecto de Aula por momento (del salón) y Banco de Indicadores (del docente logeado)
+    proyectos_aula = {}
+    banco_indicadores = []
+    if grado_seleccionado:
+        for p in ProyectoAula.query.filter_by(grado_id=grado_seleccionado.id).all():
+            proyectos_aula[p.momento] = p
+    if session.get('usuario_id'):
+        banco_indicadores = BancoIndicador.query.filter_by(docente_id=session['usuario_id']) \
+            .order_by(BancoIndicador.momento.asc(), BancoIndicador.nivel.asc(), BancoIndicador.fecha_creacion.desc()).all()
+
+    # Evaluaciones ya guardadas por estudiante, agrupadas por momento: {estudiante_id: {momento: EvaluacionEstudiante}}
+    evaluaciones_por_estudiante = {}
+    if estudiantes:
+        evals = EvaluacionEstudiante.query.filter(
+            EvaluacionEstudiante.estudiante_id.in_([e.id for e in estudiantes])
+        ).all()
+        for ev in evals:
+            evaluaciones_por_estudiante.setdefault(ev.estudiante_id, {})[ev.momento] = ev
+
     estado_solicitudes = {}
     if estudiantes:
         mis_solicitudes = SolicitudEnlace.query.filter(
@@ -689,7 +709,10 @@ def mi_aula():
                            docente_titular=docente_titular,
                            datos_incidencias=datos_incidencias,
                            asistencia_promedio_salon=asistencia_promedio_salon,
-                           estado_solicitudes=estado_solicitudes)
+                           estado_solicitudes=estado_solicitudes,
+                           proyectos_aula=proyectos_aula,
+                           banco_indicadores=banco_indicadores,
+                           evaluaciones_por_estudiante=evaluaciones_por_estudiante)
 
 @academico_bp.route('/guardar_asistencia_aula', methods=['POST'])
 def guardar_asistencia_aula():
@@ -822,6 +845,366 @@ def descargar_inscripcion_inicial(grado_id):
     response = make_response(pdf.output(dest='S').encode('latin1'))
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'attachment; filename=Inscripcion_Inicial_Grado_{grado.id}.pdf'
+    return response
+
+# ==========================================
+# --- 11.1 EVALUACIÓN DESCRIPTIVA Y BOLETINES ---
+# ==========================================
+
+@academico_bp.route('/guardar_proyecto_aula', methods=['POST'])
+def guardar_proyecto_aula():
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    grado_id = request.form.get('grado_id')
+    momento_val = request.form.get('momento')
+    titulo = request.form.get('titulo_proyecto', '').strip()
+
+    if not grado_id or not momento_val or not titulo:
+        flash('Debe indicar el salón, el momento y el título del Proyecto de Aula.', 'danger')
+        return redirect(request.referrer or url_for('academico.mi_aula'))
+
+    momento = int(momento_val)
+
+    proyecto = ProyectoAula.query.filter_by(grado_id=grado_id, momento=momento).first()
+    if not proyecto:
+        proyecto = ProyectoAula(grado_id=grado_id, momento=momento)
+        db.session.add(proyecto)
+
+    proyecto.titulo_proyecto = titulo
+
+    fecha_inicio = request.form.get('fecha_inicio')
+    fecha_cierre = request.form.get('fecha_cierre')
+    proyecto.fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date() if fecha_inicio else None
+    proyecto.fecha_cierre = datetime.strptime(fecha_cierre, '%Y-%m-%d').date() if fecha_cierre else None
+
+    db.session.commit()
+    flash(f'Proyecto de Aula del Momento {momento} guardado correctamente.', 'success')
+    return redirect(url_for('academico.mi_aula', grado_id=grado_id))
+
+
+@academico_bp.route('/guardar_indicador', methods=['POST'])
+def guardar_indicador():
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    texto = request.form.get('texto_indicador', '').strip()
+    momento_val = request.form.get('momento')
+    nivel = request.form.get('nivel')
+    grado_id = request.form.get('grado_id')
+
+    if not texto or not momento_val or not nivel:
+        flash('Complete el momento, el nivel y el texto del indicador.', 'danger')
+        return redirect(request.referrer or url_for('academico.mi_aula', grado_id=grado_id))
+
+    indicador = BancoIndicador(
+        docente_id=session['usuario_id'],
+        momento=int(momento_val),
+        nivel=nivel,
+        texto_indicador=texto
+    )
+    db.session.add(indicador)
+    db.session.commit()
+    flash('Indicador agregado al banco.', 'success')
+    return redirect(url_for('academico.mi_aula', grado_id=grado_id))
+
+
+@academico_bp.route('/eliminar_indicador/<int:id>', methods=['POST'])
+def eliminar_indicador(id):
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    indicador = BancoIndicador.query.get_or_404(id)
+    es_propietario = indicador.docente_id == session.get('usuario_id')
+    es_admin = session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)']
+
+    if not (es_propietario or es_admin):
+        flash('No tiene permiso para eliminar este indicador.', 'danger')
+        return redirect(request.referrer or url_for('academico.mi_aula'))
+
+    grado_id = request.form.get('grado_id')
+    db.session.delete(indicador)
+    db.session.commit()
+    flash('Indicador eliminado del banco.', 'success')
+    return redirect(url_for('academico.mi_aula', grado_id=grado_id))
+
+
+@academico_bp.route('/guardar_evaluacion/<int:estudiante_id>', methods=['POST'])
+def guardar_evaluacion(estudiante_id):
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    est = Estudiante.query.get_or_404(estudiante_id)
+    momento_val = request.form.get('momento')
+    if not momento_val:
+        flash('Debe indicar el momento a guardar.', 'danger')
+        return redirect(request.referrer or url_for('academico.mi_aula'))
+
+    momento = int(momento_val)
+    grado_id = request.form.get('grado_id')
+
+    evaluacion = EvaluacionEstudiante.query.filter_by(estudiante_id=est.id, momento=momento).first()
+    if not evaluacion:
+        evaluacion = EvaluacionEstudiante(estudiante_id=est.id, momento=momento)
+        db.session.add(evaluacion)
+
+    evaluacion.texto_descriptivo = request.form.get('texto_descriptivo', '').strip()
+    evaluacion.sugerencias = request.form.get('sugerencias', '').strip()
+
+    db.session.commit()
+    flash(f'Evaluación del Momento {momento} guardada para {est.nombre_completo}.', 'success')
+    return redirect(url_for('academico.mi_aula', grado_id=grado_id))
+
+
+def _tipo_imagen(ruta):
+    """
+    fpdf 1.7.2 elige el parser por la extensión salvo que se indique `type=`
+    explícitamente; algunos assets están guardados con extensión .png pero
+    contenido JPEG (o viceversa), así que se detecta por la firma real de bytes.
+    """
+    try:
+        with open(ruta, 'rb') as f:
+            cabecera = f.read(8)
+    except OSError:
+        return ''
+    if cabecera.startswith(b'\x89PNG'):
+        return 'PNG'
+    if cabecera.startswith(b'\xff\xd8'):
+        return 'JPG'
+    return ''
+
+
+def _dibujar_hoja_boletin(pdf, estudiante, proyectos, evaluaciones):
+    """
+    Dibuja UNA hoja completa del Registro Descriptivo (Boletín) sobre la página
+    actualmente activa de `pdf`. El caller debe llamar pdf.add_page() antes de
+    invocar esta función (así se reutiliza igual para 1 estudiante o para un
+    PDF consolidado de varias páginas, una por estudiante).
+
+    proyectos: dict {momento: ProyectoAula} del salón del estudiante.
+    evaluaciones: dict {momento: EvaluacionEstudiante} de ESTE estudiante.
+    """
+    est = estudiante
+    grado = est.grado
+    docentes_nombres = ", ".join([d.nombre_completo for d in grado.docentes]) if (grado and grado.docentes) else "Docente no asignado"
+
+    # C.I: el estudiante no maneja cédula propia en el sistema; se fuerza siempre la Cédula Escolar (C.E.S.C).
+    ci_mostrar = est.cedula_escolar or 'S/N'
+
+    margin = 10
+    page_w = pdf.w
+    page_h = pdf.h
+    usable_w = page_w - (2 * margin)
+
+    # ── Logos + Membrete ──
+    logo_w = 25
+    logo_h = 25
+    logo_inset = 6  # separación extra respecto al margen lateral, para no pegar los logos al borde
+    logo_ministerio = os.path.join(current_app.root_path, 'static', 'img', 'LogoMInisterioDeEducacion.png')
+    logo_eep = os.path.join(current_app.root_path, 'static', 'img', 'LogoEEP.png')
+    y_logo = margin
+    logo_x_izq = margin + logo_inset
+    logo_x_der = page_w - margin - logo_inset - logo_w
+
+    if os.path.exists(logo_ministerio):
+        pdf.image(logo_ministerio, x=logo_x_izq, y=y_logo, w=logo_w, h=logo_h, type=_tipo_imagen(logo_ministerio))
+    if os.path.exists(logo_eep):
+        pdf.image(logo_eep, x=logo_x_der, y=y_logo, w=logo_w, h=logo_h, type=_tipo_imagen(logo_eep))
+
+    membrete_x = logo_x_izq + logo_w + 5
+    membrete_w = (logo_x_der - 5) - membrete_x
+    pdf.set_xy(membrete_x, y_logo)
+    pdf.set_font('Arial', 'B', 11)
+    pdf.cell(membrete_w, 5, 'República Bolivariana de Venezuela', ln=2, align='C')
+    pdf.set_x(membrete_x)
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(membrete_w, 5, 'Ministerio del Poder Popular para la Educación', ln=2, align='C')
+    pdf.set_x(membrete_x)
+    pdf.cell(membrete_w, 5, "E.E.P Daniel O'Leary", ln=2, align='C')
+    pdf.set_x(membrete_x)
+    pdf.set_font('Arial', '', 9)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(membrete_w, 5, 'San Fernando Estado Apure', ln=2, align='C')
+
+    # ── Título ──
+    pdf.set_xy(margin, y_logo + logo_h + 2)
+    pdf.set_font('Arial', 'B', 13)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(usable_w, 8, 'REGISTRO DESCRIPTIVO DE LA ACTUACIÓN DEL ESTUDIANTE', ln=1, align='C', fill=False)
+
+    # ── Datos del Alumno ──
+    pdf.ln(2)
+    col_w = usable_w / 3
+    y_datos = pdf.get_y()
+
+    pdf.set_font('Arial', 'B', 9)
+    pdf.set_xy(margin, y_datos)
+    pdf.cell(col_w, 6, f"Estudiante: {est.nombre_completo}")
+    pdf.set_xy(margin + col_w, y_datos)
+    pdf.cell(col_w, 6, f"C.I: {ci_mostrar}")
+    pdf.set_xy(margin + 2 * col_w, y_datos)
+    pdf.cell(col_w, 6, "Año Escolar: 2026 - 2027")
+
+    y_datos2 = y_datos + 6
+    pdf.set_xy(margin, y_datos2)
+    pdf.cell(col_w, 6, f"Grado: {grado.nombre if grado else '-'}")
+    pdf.set_xy(margin + col_w, y_datos2)
+    pdf.cell(col_w, 6, f"Sección: {est.literal_escolar or est.literal or '-'}")
+    pdf.set_xy(margin + 2 * col_w, y_datos2)
+    pdf.cell(col_w, 6, f"Docente(s): {docentes_nombres}")
+
+    pdf.set_draw_color(150, 150, 150)
+    y_regla = y_datos2 + 8
+    pdf.line(margin, y_regla, page_w - margin, y_regla)
+
+    # ── 3 Columnas: Momento I / II / III ──
+    y_top = y_regla + 3
+    y_bottom_limit = page_h - 32  # espacio reservado para firmas
+    # Anclaje al fondo: "Sugerencias" siempre arranca en esta Y fija (unos mm antes del
+    # borde inferior de la columna), sin importar dónde termine el texto de Actuación.
+    y_sugerencias = y_bottom_limit - 24
+    col_gap = 6
+    col_w3 = (usable_w - 2 * col_gap) / 3
+    etiquetas = {1: 'I MOMENTO', 2: 'II MOMENTO', 3: 'III MOMENTO'}
+
+    for idx, m in enumerate([1, 2, 3]):
+        x = margin + idx * (col_w3 + col_gap)
+        x_inner_izq = x + 2
+        x_inner_der = x + col_w3 - 2
+        proyecto = proyectos.get(m)
+        evaluacion = evaluaciones.get(m)
+
+        # Caja de la columna (alto fijo -> las 3 columnas quedan visualmente iguales)
+        pdf.set_draw_color(120, 120, 120)
+        pdf.rect(x, y_top, col_w3, y_bottom_limit - y_top)
+
+        # Encabezado del Momento (sin relleno: texto negro sobre fondo transparente)
+        pdf.set_xy(x, y_top)
+        pdf.set_font('Arial', 'B', 10)
+        pdf.set_text_color(0, 0, 0)
+        pdf.cell(col_w3, 6, etiquetas[m], align='C', fill=False)
+
+        # Título del Proyecto de Aprendizaje + fechas
+        pdf.set_xy(x_inner_izq, y_top + 8)
+        pdf.set_font('Arial', 'B', 8)
+        titulo_pa = proyecto.titulo_proyecto if proyecto and proyecto.titulo_proyecto else 'Proyecto de Aprendizaje'
+        pdf.multi_cell(col_w3 - 4, 4, titulo_pa, align='C')
+
+        pdf.set_x(x_inner_izq)
+        pdf.set_font('Arial', '', 7)
+        fecha_ini = proyecto.fecha_inicio.strftime('%d/%m/%Y') if proyecto and proyecto.fecha_inicio else '--/--/----'
+        fecha_fin = proyecto.fecha_cierre.strftime('%d/%m/%Y') if proyecto and proyecto.fecha_cierre else '--/--/----'
+        pdf.cell(col_w3 - 4, 5, f"Del {fecha_ini} al {fecha_fin}", align='C', ln=1)
+
+        # Línea divisoria 1: debajo de la Fecha Inicio/Cierre, antes de "ACTUACIÓN DEL ESTUDIANTE"
+        y_linea1 = pdf.get_y() + 2
+        pdf.set_draw_color(120, 120, 120)
+        pdf.line(x_inner_izq, y_linea1, x_inner_der, y_linea1)
+
+        y_cursor = y_linea1 + 3
+
+        # Actuación del Estudiante (Texto Descriptivo)
+        pdf.set_xy(x_inner_izq, y_cursor)
+        pdf.set_font('Arial', 'B', 7.5)
+        pdf.cell(col_w3 - 4, 4, 'ACTUACIÓN DEL ESTUDIANTE:')
+        y_cursor = pdf.get_y() + 4
+
+        pdf.set_xy(x_inner_izq, y_cursor)
+        pdf.set_font('Arial', '', 8)
+        texto_descriptivo = evaluacion.texto_descriptivo if evaluacion and evaluacion.texto_descriptivo else ''
+        pdf.multi_cell(col_w3 - 4, 4, texto_descriptivo, align='J')
+
+        # Línea divisoria 2: anclada a y_sugerencias (fija), NO a donde terminó el texto de
+        # Actuación -> el espacio sobrante queda atrapado en medio y Sugerencias siempre
+        # queda pegado al fondo de la columna.
+        y_linea2 = y_sugerencias - 2
+        pdf.line(x_inner_izq, y_linea2, x_inner_der, y_linea2)
+
+        # Sugerencias / Recomendaciones (impresas a partir de la coordenada Y fija)
+        pdf.set_xy(x_inner_izq, y_sugerencias)
+        pdf.set_font('Arial', 'B', 7.5)
+        pdf.cell(col_w3 - 4, 4, 'Sugerencias/Recomendaciones:', ln=1)
+
+        pdf.set_x(x_inner_izq)
+        pdf.set_font('Arial', 'I', 7.5)
+        sugerencias = evaluacion.sugerencias if evaluacion and evaluacion.sugerencias else ''
+        pdf.multi_cell(col_w3 - 4, 4, sugerencias, align='L')
+
+    # ── Firmas ──
+    y_firma_linea = page_h - 22
+    firma_w = usable_w / 4
+    etiquetas_firma = ['Directora', 'Enlace Pedagógico', 'Docente', 'Representante']
+
+    pdf.set_draw_color(0, 0, 0)
+    pdf.set_font('Arial', '', 8)
+    for i, etiqueta in enumerate(etiquetas_firma):
+        x = margin + i * firma_w
+        pdf.line(x + 8, y_firma_linea, x + firma_w - 8, y_firma_linea)
+        pdf.set_xy(x, y_firma_linea + 1)
+        pdf.cell(firma_w, 5, etiqueta, align='C')
+
+
+@academico_bp.route('/generar_boletin_pdf/<int:estudiante_id>')
+def generar_boletin_pdf(estudiante_id):
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    est = Estudiante.query.get_or_404(estudiante_id)
+    grado = est.grado
+
+    proyectos = {p.momento: p for p in ProyectoAula.query.filter_by(grado_id=grado.id).all()} if grado else {}
+    evaluaciones = {ev.momento: ev for ev in EvaluacionEstudiante.query.filter_by(estudiante_id=est.id).all()}
+
+    pdf = FPDF(orientation='L', unit='mm', format='Letter')
+    pdf.set_auto_page_break(auto=False)
+    pdf.add_page()
+    _dibujar_hoja_boletin(pdf, est, proyectos, evaluaciones)
+
+    nombre_archivo = f"Boletin_{est.nombre_completo.replace(' ', '_')}_{est.cedula_escolar}.pdf"
+    response = make_response(pdf.output(dest='S').encode('latin1'))
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename={nombre_archivo}'
+    return response
+
+
+@academico_bp.route('/generar_boletines_masivo')
+def generar_boletines_masivo():
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    rol = session.get('nombre_rol')
+    if rol not in ['Administrador Supremo', 'Equipo Directivo (Dirección)', 'Docente de Aula']:
+        return redirect(url_for('index'))
+
+    grado_id = request.args.get('grado_id')
+    grado = None
+
+    if grado_id:
+        grado = Grado.query.get_or_404(grado_id)
+        if rol == 'Docente de Aula' and session.get('usuario_id') not in [d.id for d in grado.docentes]:
+            flash('No tiene acceso a este salón.', 'danger')
+            return redirect(url_for('academico.mi_aula'))
+    elif rol == 'Docente de Aula':
+        grado = Grado.query.filter(Grado.docentes.any(id=session.get('usuario_id'))).first()
+
+    if not grado:
+        flash('Debe seleccionar un salón para imprimir los boletines.', 'warning')
+        return redirect(url_for('academico.mi_aula'))
+
+    estudiantes = Estudiante.query.filter_by(grado_id=grado.id).order_by(Estudiante.nombre_completo.asc()).all()
+    if not estudiantes:
+        flash('Este salón no tiene estudiantes registrados.', 'warning')
+        return redirect(url_for('academico.mi_aula', grado_id=grado.id))
+
+    # El Proyecto de Aula es por salón (no por estudiante): se consulta una sola vez.
+    proyectos = {p.momento: p for p in ProyectoAula.query.filter_by(grado_id=grado.id).all()}
+
+    pdf = FPDF(orientation='L', unit='mm', format='Letter')
+    pdf.set_auto_page_break(auto=False)
+
+    for est in estudiantes:
+        evaluaciones = {ev.momento: ev for ev in EvaluacionEstudiante.query.filter_by(estudiante_id=est.id).all()}
+        pdf.add_page()
+        _dibujar_hoja_boletin(pdf, est, proyectos, evaluaciones)
+
+    nombre_archivo = f"Boletines_{grado.nombre.replace(' ', '_')}.pdf"
+    response = make_response(pdf.output(dest='S').encode('latin1'))
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename={nombre_archivo}'
     return response
 
 # ==========================================
