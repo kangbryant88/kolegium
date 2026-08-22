@@ -64,11 +64,7 @@
                         {{ grado.nombre }}
                     </h4>
                     <p class="text-muted fw-bold mb-3"><i data-lucide="user-check" style="width:16px;height:16px;" class="me-1"></i> Docente Titular: <span>{{ docente_titular }}</span></p>
-                    <div class="d-flex gap-2 flex-wrap">
-                        <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem; background-color: var(--surface); color: var(--text-main);"><i data-lucide="users" style="width:14px;height:14px;" class="me-1 text-primary"></i> Total: {{ total_matricula }}</span>
-                        <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem; background-color: var(--surface); color: var(--text-main);"><i data-lucide="user" style="width:14px;height:14px;" class="me-1 text-danger"></i> Hembras: {{ total_hembras }}</span>
-                        <span class="badge shadow-sm px-3 py-2 border border-light rounded-pill" style="font-size:0.85rem; background-color: var(--surface); color: var(--text-main);"><i data-lucide="user" style="width:14px;height:14px;" class="me-1 text-info"></i> Varones: {{ total_varones }}</span>
-                    </div>
+
                 </div>
                 <div class="d-flex flex-column gap-2 flex-md-row">
                     <button class="btn btn-primary btn-lg shadow rounded-pill px-4 fw-bold d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalNuevoIngreso" style="letter-spacing: 0.5px;">
@@ -298,16 +294,7 @@
                                                         <div class="text-muted small">{{ est.cedula_escolar }}</div>
                                                     </div>
                                                 </div>
-                                                {% set porc = asistencia_porcentaje[est.id] %}
-                                                <div class="d-inline-flex align-items-center justify-content-center flex-shrink-0" data-bs-toggle="tooltip" title="{{ porc }}% Resumen de Asistencia">
-                                                    {% if porc >= 90 %}
-                                                        <span class="badge rounded-circle p-2 bg-success  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="check" style="width:16px;"></i></span>
-                                                    {% elif porc >= 75 %}
-                                                        <span class="badge rounded-circle p-2 bg-warning text-dark shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="minus" style="width:16px;"></i></span>
-                                                    {% else %}
-                                                        <span class="badge rounded-circle p-2 bg-danger  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="alert-circle" style="width:16px;"></i></span>
-                                                    {% endif %}
-                                                </div>
+
                                             </div>
 
                                             <div class="d-flex justify-content-end mt-3">
@@ -401,16 +388,7 @@
                                                         <div class="text-muted small">{{ est.cedula_escolar }}</div>
                                                     </div>
                                                 </div>
-                                                {% set porc = asistencia_porcentaje[est.id] %}
-                                                <div class="d-inline-flex align-items-center justify-content-center flex-shrink-0" data-bs-toggle="tooltip" title="{{ porc }}% Resumen de Asistencia">
-                                                    {% if porc >= 90 %}
-                                                        <span class="badge rounded-circle p-2 bg-success  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="check" style="width:16px;"></i></span>
-                                                    {% elif porc >= 75 %}
-                                                        <span class="badge rounded-circle p-2 bg-warning text-dark shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="minus" style="width:16px;"></i></span>
-                                                    {% else %}
-                                                        <span class="badge rounded-circle p-2 bg-danger  shadow-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;"><i data-lucide="alert-circle" style="width:16px;"></i></span>
-                                                    {% endif %}
-                                                </div>
+
                                             </div>
 
                                             <div class="d-flex justify-content-end mt-3">
@@ -804,7 +782,7 @@
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <a href="{{ url_for('academico.generar_boletin_pdf', estudiante_id=est.id) }}" target="_blank"
-                        class="btn btn-sm btn-success rounded-pill px-3 fw-bold d-none d-sm-inline-flex align-items-center">
+                        class="btn btn-sm btn-success rounded-pill px-3 fw-bold d-inline-flex align-items-center">
                         <i data-lucide="file-down" class="me-1" style="width:14px;"></i> Descargar PDF
                     </a>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
