@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from datetime import datetime, date, timedelta
 import io
 import os
+import re
+import unicodedata
 import pandas as pd
 import openpyxl
 from docx import Document
@@ -970,6 +972,30 @@ def _tipo_imagen(ruta):
     return ''
 
 
+def _separar_grado_seccion(texto, seccion_fallback='-'):
+    """
+    Separa un string de grado que puede venir combinado con la sección
+    (ej. "Segundo Grado Sección A") en sus dos partes: grado y sección.
+    Si no se detecta la palabra "Sección" (con o sin acento), se devuelve
+    el texto completo como grado y `seccion_fallback` como sección.
+    """
+    texto = (texto or '').strip()
+    if not texto:
+        return '-', seccion_fallback
+
+    texto_normalizado = ''.join(
+        c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn'
+    )
+    match = re.search(r'secci[oó]n', texto_normalizado, flags=re.IGNORECASE)
+    if not match:
+        return texto, seccion_fallback
+
+    grado_txt = texto[:match.start()].strip(' -,') or texto
+    resto = texto[match.end():].strip(' -,:')
+    seccion_txt = resto or seccion_fallback
+    return grado_txt, seccion_txt
+
+
 def _dibujar_hoja_boletin(pdf, estudiante, proyectos, evaluaciones):
     """
     Dibuja UNA hoja completa del Registro Descriptivo (Boletín) sobre la página
@@ -993,37 +1019,46 @@ def _dibujar_hoja_boletin(pdf, estudiante, proyectos, evaluaciones):
     usable_w = page_w - (2 * margin)
 
     # ── Logos + Membrete ──
-    logo_w = 25
-    logo_h = 25
+    # El logo del Ministerio es rectangular (ancho); forzarlo a un cuadrado lo deforma.
+    logo_ministerio_w = 45
+    logo_ministerio_h = 18
+    # El logo de la escuela sí es cuadrado.
+    logo_eep_w = 25
+    logo_eep_h = 25
+    logo_h_max = max(logo_ministerio_h, logo_eep_h)
     logo_inset = 6  # separación extra respecto al margen lateral, para no pegar los logos al borde
     logo_ministerio = os.path.join(current_app.root_path, 'static', 'img', 'LogoMInisterioDeEducacion.png')
     logo_eep = os.path.join(current_app.root_path, 'static', 'img', 'LogoEEP.png')
     y_logo = margin
+    # Se alinean por el centro vertical del bloque de logos, no por el borde superior,
+    # para que ambos luzcan balanceados aunque tengan alturas distintas.
+    y_logo_ministerio = y_logo + (logo_h_max - logo_ministerio_h) / 2
+    y_logo_eep = y_logo + (logo_h_max - logo_eep_h) / 2
     logo_x_izq = margin + logo_inset
-    logo_x_der = page_w - margin - logo_inset - logo_w
+    logo_x_der = page_w - margin - logo_inset - logo_eep_w
 
     if os.path.exists(logo_ministerio):
-        pdf.image(logo_ministerio, x=logo_x_izq, y=y_logo, w=logo_w, h=logo_h, type=_tipo_imagen(logo_ministerio))
+        pdf.image(logo_ministerio, x=logo_x_izq, y=y_logo_ministerio, w=logo_ministerio_w, h=logo_ministerio_h, type=_tipo_imagen(logo_ministerio))
     if os.path.exists(logo_eep):
-        pdf.image(logo_eep, x=logo_x_der, y=y_logo, w=logo_w, h=logo_h, type=_tipo_imagen(logo_eep))
+        pdf.image(logo_eep, x=logo_x_der, y=y_logo_eep, w=logo_eep_w, h=logo_eep_h, type=_tipo_imagen(logo_eep))
 
-    membrete_x = logo_x_izq + logo_w + 5
-    membrete_w = (logo_x_der - 5) - membrete_x
-    pdf.set_xy(membrete_x, y_logo)
+    # El membrete se centra respecto al ancho total de la página (ignorando el
+    # ancho/posición de los logos), para que no se desplace si los logos son asimétricos.
+    pdf.set_xy(margin, y_logo)
     pdf.set_font('Arial', 'B', 11)
-    pdf.cell(membrete_w, 5, 'República Bolivariana de Venezuela', ln=2, align='C')
-    pdf.set_x(membrete_x)
+    pdf.cell(usable_w, 5, 'República Bolivariana de Venezuela', ln=2, align='C')
+    pdf.set_x(margin)
     pdf.set_font('Arial', 'B', 10)
-    pdf.cell(membrete_w, 5, 'Ministerio del Poder Popular para la Educación', ln=2, align='C')
-    pdf.set_x(membrete_x)
-    pdf.cell(membrete_w, 5, "E.E.P Daniel O'Leary", ln=2, align='C')
-    pdf.set_x(membrete_x)
+    pdf.cell(usable_w, 5, 'Ministerio del Poder Popular para la Educación', ln=2, align='C')
+    pdf.set_x(margin)
+    pdf.cell(usable_w, 5, "E.E.P Daniel O'Leary", ln=2, align='C')
+    pdf.set_x(margin)
     pdf.set_font('Arial', '', 9)
     pdf.set_text_color(0, 0, 0)
-    pdf.cell(membrete_w, 5, 'San Fernando Estado Apure', ln=2, align='C')
+    pdf.cell(usable_w, 5, 'San Fernando Estado Apure', ln=2, align='C')
 
     # ── Título ──
-    pdf.set_xy(margin, y_logo + logo_h + 2)
+    pdf.set_xy(margin, y_logo + logo_h_max + 2)
     pdf.set_font('Arial', 'B', 13)
     pdf.set_text_color(0, 0, 0)
     pdf.cell(usable_w, 8, 'REGISTRO DESCRIPTIVO DE LA ACTUACIÓN DEL ESTUDIANTE', ln=1, align='C', fill=False)
@@ -1041,11 +1076,16 @@ def _dibujar_hoja_boletin(pdf, estudiante, proyectos, evaluaciones):
     pdf.set_xy(margin + 2 * col_w, y_datos)
     pdf.cell(col_w, 6, "Año Escolar: 2026 - 2027")
 
+    # El nombre del grado puede venir combinado con la sección (ej. "Segundo Grado
+    # Sección A"); se separan ambos campos para no dejar "Sección:" vacío.
+    seccion_fallback = est.literal_escolar or est.literal or '-'
+    grado_txt, seccion_txt = _separar_grado_seccion(grado.nombre if grado else None, seccion_fallback)
+
     y_datos2 = y_datos + 6
     pdf.set_xy(margin, y_datos2)
-    pdf.cell(col_w, 6, f"Grado: {grado.nombre if grado else '-'}")
+    pdf.cell(col_w, 6, f"Grado: {grado_txt}")
     pdf.set_xy(margin + col_w, y_datos2)
-    pdf.cell(col_w, 6, f"Sección: {est.literal_escolar or est.literal or '-'}")
+    pdf.cell(col_w, 6, f"Sección: {seccion_txt}")
     pdf.set_xy(margin + 2 * col_w, y_datos2)
     pdf.cell(col_w, 6, f"Docente(s): {docentes_nombres}")
 
