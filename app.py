@@ -195,13 +195,32 @@ def index():
                                total_v=total_v, total_h=total_h, config_inst=config_inst)
 
     registros_pers_hoy = AsistenciaPersonal.query.filter_by(fecha=date.today()).all()
-    mat_pers_hoy = sum(r.matricula_base for r in registros_pers_hoy)
     asist_pers_hoy = sum(r.asistentes for r in registros_pers_hoy)
-    porc_pers_hoy = round((asist_pers_hoy / mat_pers_hoy) * 100, 1) if mat_pers_hoy > 0 else 0.0
-    
+
+    # Matrícula real de personal: se calcula desde Usuario+Rol (plantilla registrada),
+    # no desde los registros de asistencia del día (que pueden no existir aún).
+    mapa_categorias_rol = {
+        'Docente de Aula': 'Docentes',
+        'Docente Especialista': 'Docentes',
+        'Administrativo': 'Administrativos',
+        'Obrero': 'Obreros',
+        'Personal de Cocina': 'Cocina',
+        'Personal de Vigilancia': 'Vigilantes',
+    }
+
+    conteo_por_rol = db.session.query(
+        Rol.nombre, func.count(Usuario.id)
+    ).join(Usuario, Usuario.rol_id == Rol.id).filter(Usuario.activo == True).group_by(Rol.nombre).all()
+
     desglose_personal = {'Docentes': 0, 'Administrativos': 0, 'Obreros': 0, 'Cocina': 0, 'Vigilantes': 0}
-    for r in registros_pers_hoy:
-        if r.categoria in desglose_personal: desglose_personal[r.categoria] += r.asistentes
+    for nombre_rol, cantidad in conteo_por_rol:
+        categoria = mapa_categorias_rol.get(nombre_rol)
+        if categoria:
+            desglose_personal[categoria] += cantidad
+
+    total_personal = sum(desglose_personal.values())
+    mat_pers_hoy = total_personal
+    porc_pers_hoy = round((asist_pers_hoy / mat_pers_hoy) * 100, 1) if mat_pers_hoy > 0 else 0.0
 
     conteo_genero = db.session.query(
         Estudiante.genero, func.count(Estudiante.id)
@@ -228,7 +247,7 @@ def index():
                            total_v=total_v, total_h=total_h, anuncios=ultimos_anuncios,
                            labels_g=labels_g, datos_g=datos_g, mat_pers_hoy=mat_pers_hoy,
                            asist_pers_hoy=asist_pers_hoy, porc_pers_hoy=porc_pers_hoy,
-                           desglose_personal=desglose_personal, 
+                           desglose_personal=desglose_personal, total_personal=total_personal,
                            solicitudes_pendientes=solicitudes_pendientes,
                            actualizaciones_pendientes=actualizaciones_pendientes, 
                            solicitudes_defensoria=solicitudes_defensoria,

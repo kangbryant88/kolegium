@@ -267,6 +267,11 @@
         <td>
             <div class="user-cell">
                 <span class="name">{{ usuario.nombre_completo }}</span>
+                {% if usuario.activo %}
+                <span class="badge bg-success" style="font-size:0.6rem; vertical-align:middle; margin-left:6px;">Activo</span>
+                {% else %}
+                <span class="badge bg-secondary" style="font-size:0.6rem; vertical-align:middle; margin-left:6px;">Inactivo</span>
+                {% endif %}
                 <small class="email">{{ usuario.email }}</small>
             </div>
         </td>
@@ -358,7 +363,12 @@
                             <form action="{{ url_for('admin.modificar_usuario', id=usuario.id) }}" method="POST" id="formEditUser{{ usuario.id }}">
                                 <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Nombre de Usuario</label>
                                 <input type="text" name="username" value="{{ usuario.username }}" class="edu-input mb-3" style="width: 100%;" required placeholder="Nuevo usuario">
-                                
+
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="activo_{{ usuario.id }}" name="activo" {% if usuario.activo %}checked{% endif %}>
+                                    <label class="form-check-label" for="activo_{{ usuario.id }}" style="font-size:0.8rem;">Usuario Activo</label>
+                                </div>
+
                                 {% if 'Administrativo' in (usuario.area_trabajo or '') or 'Especialista' in (usuario.area_trabajo or '') %}
                                 <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Departamento Asignado</label>
                                 <select name="departamento_asignado" class="edu-select mb-3" style="width: 100%;">

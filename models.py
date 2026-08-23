@@ -45,6 +45,7 @@ class Usuario(db.Model):
     password = db.Column(db.String(200), nullable=False)
     rol_id = db.Column(db.Integer, db.ForeignKey('rol.id'), nullable=True)
     departamento_asignado = db.Column(db.String(50), nullable=True)
+    activo = db.Column(db.Boolean, default=True)
     # Autogestión MPPE y Expediente Digital
     usuario_autogestion = db.Column(db.String(100), nullable=True)
     clave_autogestion = db.Column(db.String(100), nullable=True)

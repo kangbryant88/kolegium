@@ -181,9 +181,18 @@ def modificar_usuario(id):
     usuario = Usuario.query.get_or_404(id)
     nuevo_username = request.form.get('username')
     nuevo_departamento = request.form.get('departamento_asignado')
-    
+    nuevo_activo = 'activo' in request.form
+
     cambios_realizados = []
-    
+
+    if usuario.id == 1:
+        flash("No puedes desactivar al creador del sistema.", "error")
+        return redirect(url_for('admin.admin_usuarios'))
+
+    if usuario.activo != nuevo_activo:
+        usuario.activo = nuevo_activo
+        cambios_realizados.append(f"Estatus cambiado a {'Activo' if nuevo_activo else 'Inactivo'}")
+
     if nuevo_username:
         nuevo_username_raw = nuevo_username
         if ' ' in nuevo_username_raw:
