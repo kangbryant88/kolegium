@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, make_response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import OperationalError
+from sqlalchemy import func
 from flask_migrate import Migrate
 from datetime import datetime, date, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -175,8 +176,15 @@ def index():
     asist_hoy = sum(r.asistentes for r in registros_hoy)
     porc_hoy = round((asist_hoy / mat_hoy) * 100, 1) if mat_hoy > 0 else 0.0
 
-    total_v = sum(g.total_varones for g in Grado.query.all())
-    total_h = sum(g.total_hembras for g in Grado.query.all())
+    conteo_genero = db.session.query(
+        Estudiante.genero, func.count(Estudiante.id)
+    ).filter(
+        Estudiante.estatus == 'Activo'
+    ).group_by(Estudiante.genero).all()
+
+    conteo_dict = dict(conteo_genero)
+    total_v = conteo_dict.get('Masculino', 0)
+    total_h = conteo_dict.get('Femenino', 0)
     ultimos_anuncios = Anuncio.query.order_by(Anuncio.fecha.desc()).limit(3).all()
 
     if 'dashboard' not in permisos.split(','):
@@ -195,8 +203,15 @@ def index():
     for r in registros_pers_hoy:
         if r.categoria in desglose_personal: desglose_personal[r.categoria] += r.asistentes
 
-    total_v = sum(g.total_varones for g in Grado.query.all())
-    total_h = sum(g.total_hembras for g in Grado.query.all())
+    conteo_genero = db.session.query(
+        Estudiante.genero, func.count(Estudiante.id)
+    ).filter(
+        Estudiante.estatus == 'Activo'
+    ).group_by(Estudiante.genero).all()
+
+    conteo_dict = dict(conteo_genero)
+    total_v = conteo_dict.get('Masculino', 0)
+    total_h = conteo_dict.get('Femenino', 0)
     ultimos_anuncios = Anuncio.query.order_by(Anuncio.fecha.desc()).limit(3).all()
 
     historico = AsistenciaDiaria.query.order_by(AsistenciaDiaria.fecha.desc()).limit(5).all()
@@ -238,8 +253,15 @@ def ver_dashboard_general():
     asist_hoy = sum(r.asistentes for r in registros_hoy)
     porc_hoy = round((asist_hoy / mat_hoy) * 100, 1) if mat_hoy > 0 else 0.0
 
-    total_v = sum(g.total_varones for g in Grado.query.all())
-    total_h = sum(g.total_hembras for g in Grado.query.all())
+    conteo_genero = db.session.query(
+        Estudiante.genero, func.count(Estudiante.id)
+    ).filter(
+        Estudiante.estatus == 'Activo'
+    ).group_by(Estudiante.genero).all()
+
+    conteo_dict = dict(conteo_genero)
+    total_v = conteo_dict.get('Masculino', 0)
+    total_h = conteo_dict.get('Femenino', 0)
     ultimos_anuncios = Anuncio.query.order_by(Anuncio.fecha.desc()).limit(3).all()
 
     config_inst = ConfiguracionInstitucional.query.first()

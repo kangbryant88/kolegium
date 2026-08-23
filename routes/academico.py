@@ -594,7 +594,7 @@ def mi_aula():
         else:
             grado_seleccionado = Grado.query.get(grado_id)
             if grado_seleccionado and session.get('usuario_id') in [d.id for d in grado_seleccionado.docentes]:
-                estudiantes = Estudiante.query.filter_by(grado_id=grado_seleccionado.id).order_by(Estudiante.nombre_completo.asc()).all()
+                estudiantes = Estudiante.query.filter_by(grado_id=grado_seleccionado.id, estatus='Activo').order_by(Estudiante.nombre_completo.asc()).all()
             else:
                 flash("No tienes acceso a este salón.", "danger")
                 return redirect(url_for('index'))
@@ -603,7 +603,7 @@ def mi_aula():
         if grado_id:
             grado_seleccionado = Grado.query.get(grado_id)
             if grado_seleccionado:
-                estudiantes = Estudiante.query.filter_by(grado_id=grado_seleccionado.id).order_by(Estudiante.nombre_completo.asc()).all()
+                estudiantes = Estudiante.query.filter_by(grado_id=grado_seleccionado.id, estatus='Activo').order_by(Estudiante.nombre_completo.asc()).all()
 
     for est in estudiantes:
         total_dias = AsistenciaEstudiante.query.filter_by(estudiante_id=est.id).count() or 0
