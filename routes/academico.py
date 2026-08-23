@@ -10,7 +10,7 @@ from docx import Document
 from fpdf import FPDF
 import urllib.parse
 import uuid
-from models import db, Bitacora, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Estudiante, Representante, Incidencia, AsistenciaEstudiante, AlertaDefensoria, EnlaceTemporal, SolicitudEnlace, SolicitudActualizacion, ProyectoAula, BancoIndicador, EvaluacionEstudiante
+from models import db, Bitacora, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Estudiante, Representante, Incidencia, AsistenciaEstudiante, AlertaDefensoria, EnlaceTemporal, SolicitudEnlace, SolicitudActualizacion, ProyectoAula, BancoIndicador, EvaluacionEstudiante, ProyectoAprendizaje, ProyectoArea, ProyectoEvaluacion
 
 academico_bp = Blueprint('academico', __name__, url_prefix='/academico')
 
@@ -926,6 +926,102 @@ def eliminar_indicador(id):
     db.session.commit()
     flash('Indicador eliminado del banco.', 'success')
     return redirect(url_for('academico.mi_aula', grado_id=grado_id))
+
+
+@academico_bp.route('/proyecto_aprendizaje/nuevo', methods=['GET', 'POST'])
+def crear_proyecto_aprendizaje():
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    if request.method == 'POST':
+        grado_id = request.form.get('grado_id')
+        tema = request.form.get('tema', '').strip()
+        momento_pedagogico = request.form.get('momento_pedagogico')
+
+        if not grado_id or not tema or not momento_pedagogico:
+            flash('Debe indicar el grado, el tema y el momento pedagógico.', 'danger')
+            return redirect(url_for('academico.crear_proyecto_aprendizaje'))
+
+        fecha_inicio = request.form.get('fecha_inicio')
+        fecha_culminacion = request.form.get('fecha_culminacion')
+        fecha_entrega = request.form.get('fecha_entrega')
+
+        proyecto = ProyectoAprendizaje(
+            docente_id=session['usuario_id'],
+            grado_id=grado_id,
+            tema=tema,
+            momento_pedagogico=momento_pedagogico,
+            fecha_inicio=datetime.strptime(fecha_inicio, '%Y-%m-%d').date() if fecha_inicio else None,
+            fecha_culminacion=datetime.strptime(fecha_culminacion, '%Y-%m-%d').date() if fecha_culminacion else None,
+            fecha_entrega=datetime.strptime(fecha_entrega, '%Y-%m-%d').date() if fecha_entrega else None,
+            diagnostico_pedagogico=request.form.get('diagnostico_pedagogico'),
+            proposito_integral=request.form.get('proposito_integral'),
+            cierre_demostracion=request.form.get('cierre_demostracion'),
+            cierre_dramatizacion=request.form.get('cierre_dramatizacion'),
+            cierre_muestra=request.form.get('cierre_muestra'),
+        )
+        db.session.add(proyecto)
+        db.session.flush()  # asigna proyecto.id sin cerrar la transacción
+
+        # --- Matriz de Áreas (Tab 2): una entrada por área añadida en el formulario ---
+        tema_indispensable_l = request.form.getlist('tema_indispensable[]')
+        area_formacion_l = request.form.getlist('area_formacion[]')
+        enfasis_l = request.form.getlist('enfasis[]')
+        componente_l = request.form.getlist('componente[]')
+        contenidos_l = request.form.getlist('contenidos[]')
+        estrategia_pedagogica_l = request.form.getlist('estrategia_pedagogica[]')
+        actividades_l = request.form.getlist('actividades[]')
+        aprendizajes_esperados_l = request.form.getlist('aprendizajes_esperados[]')
+        observaciones_l = request.form.getlist('observaciones[]')
+
+        # --- Evaluación de cada área (misma posición/índice que la lista de áreas) ---
+        estrategias_evaluacion_l = request.form.getlist('estrategias_evaluacion[]')
+        indicadores_evaluar_l = request.form.getlist('indicadores_evaluar[]')
+        tecnicas_evaluacion_l = request.form.getlist('tecnicas_evaluacion[]')
+        instrumentos_evaluacion_l = request.form.getlist('instrumentos_evaluacion[]')
+        tipos_evaluacion_l = request.form.getlist('tipos_evaluacion[]')
+        formas_participacion_l = request.form.getlist('formas_participacion[]')
+        recursos_materiales_l = request.form.getlist('recursos_materiales[]')
+
+        def campo(lista, i):
+            return lista[i].strip() if i < len(lista) and lista[i].strip() else None
+
+        for i, nombre_area in enumerate(area_formacion_l):
+            if not nombre_area.strip():
+                continue  # bloque de área vacío (ej. clonado y no rellenado)
+
+            area = ProyectoArea(
+                proyecto_id=proyecto.id,
+                tema_indispensable=campo(tema_indispensable_l, i),
+                area_formacion=nombre_area.strip(),
+                enfasis=campo(enfasis_l, i),
+                componente=campo(componente_l, i),
+                contenidos=campo(contenidos_l, i),
+                estrategia_pedagogica=campo(estrategia_pedagogica_l, i),
+                actividades=campo(actividades_l, i),
+                aprendizajes_esperados=campo(aprendizajes_esperados_l, i),
+                observaciones=campo(observaciones_l, i),
+            )
+            db.session.add(area)
+            db.session.flush()  # asigna area.id para la evaluación anidada
+
+            evaluacion = ProyectoEvaluacion(
+                area_id=area.id,
+                estrategias_evaluacion=campo(estrategias_evaluacion_l, i),
+                indicadores_evaluar=campo(indicadores_evaluar_l, i),
+                tecnicas_evaluacion=campo(tecnicas_evaluacion_l, i),
+                instrumentos_evaluacion=campo(instrumentos_evaluacion_l, i),
+                tipos_evaluacion=campo(tipos_evaluacion_l, i),
+                formas_participacion=campo(formas_participacion_l, i),
+                recursos_materiales=campo(recursos_materiales_l, i),
+            )
+            db.session.add(evaluacion)
+
+        db.session.commit()
+        flash('Proyecto de Aprendizaje creado correctamente.', 'success')
+        return redirect(url_for('academico.crear_proyecto_aprendizaje'))
+
+    grados = Grado.query.order_by(Grado.nombre).all()
+    return render_template('academico/crear_proyecto_aprendizaje.html', grados=grados)
 
 
 @academico_bp.route('/guardar_evaluacion/<int:estudiante_id>', methods=['POST'])

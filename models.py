@@ -375,3 +375,63 @@ class EvaluacionEstudiante(db.Model):
     __table_args__ = (
         db.UniqueConstraint('estudiante_id', 'momento', name='uq_evaluacion_estudiante_momento'),
     )
+
+
+# ==========================================
+# --- PROYECTO DE APRENDIZAJE (PA) - FORMATO OFICIAL ---
+# ==========================================
+
+class ProyectoAprendizaje(db.Model):
+    """Cabecera y datos globales del Proyecto de Aprendizaje (PA) formal, por docente/grado/momento."""
+    id = db.Column(db.Integer, primary_key=True)
+    docente_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    grado_id = db.Column(db.Integer, db.ForeignKey('grado.id'), nullable=False)
+
+    tema = db.Column(db.String(200), nullable=False)
+    momento_pedagogico = db.Column(db.String(10), nullable=False)  # I, II, III
+    fecha_inicio = db.Column(db.Date, nullable=True)
+    fecha_culminacion = db.Column(db.Date, nullable=True)
+    fecha_entrega = db.Column(db.Date, nullable=True)
+
+    diagnostico_pedagogico = db.Column(db.Text)
+    proposito_integral = db.Column(db.Text)
+
+    cierre_demostracion = db.Column(db.Text)
+    cierre_dramatizacion = db.Column(db.Text)
+    cierre_muestra = db.Column(db.Text)
+
+    docente = db.relationship('Usuario', backref='proyectos_aprendizaje')
+    grado = db.relationship('Grado', backref='proyectos_aprendizaje')
+    areas = db.relationship('ProyectoArea', backref='proyecto', cascade='all, delete-orphan', lazy=True)
+
+
+class ProyectoArea(db.Model):
+    """Matriz de contenidos: una fila por área de formación dentro de un Proyecto de Aprendizaje."""
+    id = db.Column(db.Integer, primary_key=True)
+    proyecto_id = db.Column(db.Integer, db.ForeignKey('proyecto_aprendizaje.id'), nullable=False)
+
+    tema_indispensable = db.Column(db.String(200))
+    area_formacion = db.Column(db.String(100))
+    enfasis = db.Column(db.String(150))
+    componente = db.Column(db.String(150))
+    contenidos = db.Column(db.Text)
+    estrategia_pedagogica = db.Column(db.Text)
+    actividades = db.Column(db.Text)
+    aprendizajes_esperados = db.Column(db.Text)
+    observaciones = db.Column(db.Text)
+
+    evaluaciones = db.relationship('ProyectoEvaluacion', backref='area', cascade='all, delete-orphan', lazy=True)
+
+
+class ProyectoEvaluacion(db.Model):
+    """Plan de evaluación asociado a un área específica del Proyecto de Aprendizaje."""
+    id = db.Column(db.Integer, primary_key=True)
+    area_id = db.Column(db.Integer, db.ForeignKey('proyecto_area.id'), nullable=False)
+
+    estrategias_evaluacion = db.Column(db.Text)
+    indicadores_evaluar = db.Column(db.Text)
+    tecnicas_evaluacion = db.Column(db.Text)
+    instrumentos_evaluacion = db.Column(db.Text)
+    tipos_evaluacion = db.Column(db.String(100))  # ej. Formativa
+    formas_participacion = db.Column(db.String(100))  # ej. Coevaluación
+    recursos_materiales = db.Column(db.Text)

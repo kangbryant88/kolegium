@@ -1,0 +1,410 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Proyecto de Aprendizaje - Kolegium{% endblock %}
+{% block header_title %}Nuevo Proyecto de Aprendizaje{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edu-label {
+        font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1px; color: var(--on-surface-variant); margin-bottom: 6px; display: block;
+    }
+
+    .edu-input, .edu-select, .edu-textarea {
+        width: 100%; padding: 0.65rem 0.9rem; border-radius: 10px;
+        border: none; background: var(--surface-container-high); font-size: 0.85rem;
+        font-family: 'Inter', sans-serif; color: var(--on-surface);
+        transition: all 0.2s; outline: none; min-width: 0;
+    }
+
+    .edu-textarea { resize: vertical; min-height: 90px; }
+
+    .edu-input:focus, .edu-select:focus, .edu-textarea:focus {
+        background: var(--surface); box-shadow: 0 0 0 3px rgba(70,72,212,0.12);
+    }
+
+    .form-card {
+        background: var(--surface-container-lowest); border-radius: 16px;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.04); overflow: hidden;
+    }
+
+    .form-card .card-body-inner { padding: 24px; }
+
+    .pa-tabs { border-bottom: 1px solid var(--border-color); padding: 0 24px; background: var(--surface-container-lowest); border-radius: 16px 16px 0 0; }
+
+    .pa-tabs .nav-link {
+        border: none; color: var(--on-surface-variant); font-weight: 700; font-size: 0.82rem;
+        padding: 16px 6px; margin-right: 24px; border-bottom: 2px solid transparent;
+        background: transparent; display: flex; align-items: center; gap: 6px;
+    }
+
+    .pa-tabs .nav-link i { width: 15px; height: 15px; }
+    .pa-tabs .nav-link.active { color: var(--primary); border-bottom-color: var(--primary); background: transparent; }
+
+    .area-card {
+        background: var(--surface); border: 1px solid var(--border-color); border-radius: 14px;
+        padding: 20px; margin-bottom: 20px;
+    }
+
+    .area-card-header {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+    }
+
+    .area-card-header h6 {
+        font-weight: 800; font-size: 0.88rem; margin: 0; color: var(--primary);
+        display: flex; align-items: center; gap: 6px;
+    }
+
+    .area-card-header h6 i { width: 16px; height: 16px; }
+
+    .btn-remove-area {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 5px 12px; border-radius: 999px; border: none;
+        background: rgba(239,68,68,0.08); color: #ef4444; font-size: 0.72rem; font-weight: 700;
+        cursor: pointer; transition: all 0.2s;
+    }
+
+    .btn-remove-area:hover { background: rgba(239,68,68,0.16); }
+    .btn-remove-area i { width: 12px; height: 12px; }
+
+    .eval-subbox {
+        background: rgba(70,72,212,0.04); border-radius: 12px; padding: 16px; margin-top: 16px;
+    }
+
+    .eval-subbox .eval-title {
+        font-weight: 800; font-size: 0.76rem; color: var(--primary); text-transform: uppercase;
+        letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+    }
+
+    .eval-subbox .eval-title i { width: 14px; height: 14px; }
+
+    .btn-add-area {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 10px 20px; border-radius: 12px; border: 1px dashed var(--primary);
+        background: rgba(70,72,212,0.06); color: var(--primary); font-weight: 700; font-size: 0.83rem;
+        cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; width: 100%;
+        justify-content: center;
+    }
+
+    .btn-add-area:hover { background: rgba(70,72,212,0.12); }
+    .btn-add-area i { width: 16px; height: 16px; }
+
+    .btn-save {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 11px 28px; border-radius: 12px; border: none;
+        background: linear-gradient(135deg, var(--primary), var(--primary-container));
+        color: #fff; font-weight: 700; font-size: 0.85rem;
+        cursor: pointer; transition: all 0.25s; font-family: 'Inter', sans-serif;
+    }
+
+    .btn-save:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(70,72,212,0.3); }
+    .btn-save i { width: 16px; height: 16px; }
+
+    .pa-nav-footer {
+        display: flex; justify-content: space-between; align-items: center;
+        padding-top: 20px; margin-top: 8px; border-top: 1px solid var(--border-color);
+    }
+
+    .btn-tab-nav {
+        padding: 9px 18px; border-radius: 10px; border: 1px solid var(--surface-container-high);
+        background: var(--surface); font-weight: 700; font-size: 0.8rem; cursor: pointer;
+        color: var(--on-surface); font-family: 'Inter', sans-serif; transition: all 0.2s;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+
+    .btn-tab-nav i { width: 14px; height: 14px; }
+    .btn-tab-nav:hover { background: var(--surface-container-high); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="w-100 px-4 px-md-5">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show border-0 rounded-4 shadow-sm" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('academico.crear_proyecto_aprendizaje') }}" method="POST" id="formProyectoAprendizaje">
+
+        <ul class="nav pa-tabs" id="paTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-generales-btn" data-bs-toggle="tab" data-bs-target="#tab-generales" type="button" role="tab">
+                    <i data-lucide="file-text"></i> 1. Datos Generales
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-matriz-btn" data-bs-toggle="tab" data-bs-target="#tab-matriz" type="button" role="tab">
+                    <i data-lucide="table"></i> 2. Matriz de Áreas y Evaluación
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-cierre-btn" data-bs-toggle="tab" data-bs-target="#tab-cierre" type="button" role="tab">
+                    <i data-lucide="flag"></i> 3. Cierre del Proyecto
+                </button>
+            </li>
+        </ul>
+
+        <div class="form-card" style="border-radius: 0 0 16px 16px;">
+            <div class="card-body-inner">
+                <div class="tab-content" id="paTabsContent">
+
+                    <!-- ===================== TAB 1: DATOS GENERALES ===================== -->
+                    <div class="tab-pane fade show active" id="tab-generales" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="edu-label">Grado / Sección</label>
+                                <select name="grado_id" class="edu-select" required>
+                                    <option value="" disabled selected>-- Seleccione --</option>
+                                    {% for grado in grados %}
+                                    <option value="{{ grado.id }}">{{ grado.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="edu-label">Momento Pedagógico</label>
+                                <select name="momento_pedagogico" class="edu-select">
+                                    <option value="" disabled selected>-- Seleccione --</option>
+                                    <option value="I">I</option>
+                                    <option value="II">II</option>
+                                    <option value="III">III</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="edu-label">Tema del Proyecto de Aprendizaje</label>
+                                <input type="text" name="tema" class="edu-input" placeholder="Ej. Cuidemos nuestro planeta" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="edu-label">Fecha de Inicio</label>
+                                <input type="date" name="fecha_inicio" class="edu-input">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="edu-label">Fecha de Culminación</label>
+                                <input type="date" name="fecha_culminacion" class="edu-input">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="edu-label">Fecha de Entrega</label>
+                                <input type="date" name="fecha_entrega" class="edu-input">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="edu-label">Diagnóstico Pedagógico</label>
+                                <textarea name="diagnostico_pedagogico" class="edu-textarea" style="min-height: 140px;" placeholder="Describa la situación diagnóstica del grupo..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="edu-label">Propósito Integral</label>
+                                <textarea name="proposito_integral" class="edu-textarea" style="min-height: 140px;" placeholder="Describa el propósito integral del proyecto..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="pa-nav-footer">
+                            <span></span>
+                            <button type="button" class="btn-tab-nav btn-next-tab" data-next="tab-matriz-btn">
+                                Siguiente: Matriz de Áreas <i data-lucide="arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ===================== TAB 2: MATRIZ DE ÁREAS Y EVALUACIÓN ===================== -->
+                    <div class="tab-pane fade" id="tab-matriz" role="tabpanel">
+
+                        <div id="areasContainer">
+                            <!-- Los bloques de área se insertan aquí (uno ya viene renderizado por defecto) -->
+                        </div>
+
+                        <button type="button" class="btn-add-area" id="btnAddArea">
+                            <i data-lucide="plus-circle"></i> Añadir otra Área
+                        </button>
+
+                        <div class="pa-nav-footer">
+                            <button type="button" class="btn-tab-nav btn-prev-tab" data-prev="tab-generales-btn">
+                                <i data-lucide="arrow-left"></i> Atrás
+                            </button>
+                            <button type="button" class="btn-tab-nav btn-next-tab" data-next="tab-cierre-btn">
+                                Siguiente: Cierre <i data-lucide="arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ===================== TAB 3: CIERRE DEL PROYECTO ===================== -->
+                    <div class="tab-pane fade" id="tab-cierre" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="edu-label">Demostración</label>
+                                <textarea name="cierre_demostracion" class="edu-textarea" placeholder="Describa la actividad de demostración de cierre..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="edu-label">Dramatización</label>
+                                <textarea name="cierre_dramatizacion" class="edu-textarea" placeholder="Describa la actividad de dramatización de cierre..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="edu-label">Muestra Cultural</label>
+                                <textarea name="cierre_muestra" class="edu-textarea" placeholder="Describa la muestra cultural de cierre..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="pa-nav-footer">
+                            <button type="button" class="btn-tab-nav btn-prev-tab" data-prev="tab-matriz-btn">
+                                <i data-lucide="arrow-left"></i> Atrás
+                            </button>
+                            <button type="submit" class="btn-save">
+                                <i data-lucide="save"></i> Guardar Proyecto
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- ===================== PLANTILLA DE UN BLOQUE DE ÁREA (usada por JS para clonar) ===================== -->
+<template id="areaBlockTemplate">
+    <div class="area-card" data-area-block>
+        <div class="area-card-header">
+            <h6><i data-lucide="layers"></i> <span class="area-index-label">Área de Formación</span></h6>
+            <button type="button" class="btn-remove-area" data-remove-area>
+                <i data-lucide="trash-2"></i> Eliminar Área
+            </button>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="edu-label">Tema Indispensable</label>
+                <input type="text" name="tema_indispensable[]" class="edu-input">
+            </div>
+            <div class="col-md-6">
+                <label class="edu-label">Área de Formación</label>
+                <input type="text" name="area_formacion[]" class="edu-input" placeholder="Ej. Matemáticas">
+            </div>
+            <div class="col-md-6">
+                <label class="edu-label">Énfasis</label>
+                <input type="text" name="enfasis[]" class="edu-input">
+            </div>
+            <div class="col-md-6">
+                <label class="edu-label">Componente</label>
+                <input type="text" name="componente[]" class="edu-input">
+            </div>
+            <div class="col-12">
+                <label class="edu-label">Contenidos</label>
+                <textarea name="contenidos[]" class="edu-textarea"></textarea>
+            </div>
+            <div class="col-12">
+                <label class="edu-label">Estrategia Pedagógica</label>
+                <textarea name="estrategia_pedagogica[]" class="edu-textarea"></textarea>
+            </div>
+            <div class="col-12">
+                <label class="edu-label">Actividades</label>
+                <textarea name="actividades[]" class="edu-textarea"></textarea>
+            </div>
+            <div class="col-12">
+                <label class="edu-label">Aprendizajes Esperados</label>
+                <textarea name="aprendizajes_esperados[]" class="edu-textarea"></textarea>
+            </div>
+            <div class="col-12">
+                <label class="edu-label">Observaciones</label>
+                <textarea name="observaciones[]" class="edu-textarea" style="min-height: 60px;"></textarea>
+            </div>
+        </div>
+
+        <div class="eval-subbox">
+            <div class="eval-title"><i data-lucide="clipboard-check"></i> Plan de Evaluación de esta Área</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="edu-label">Estrategias de Evaluación</label>
+                    <textarea name="estrategias_evaluacion[]" class="edu-textarea" style="min-height: 70px;"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="edu-label">Indicadores a Evaluar</label>
+                    <textarea name="indicadores_evaluar[]" class="edu-textarea" style="min-height: 70px;"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="edu-label">Técnicas de Evaluación</label>
+                    <textarea name="tecnicas_evaluacion[]" class="edu-textarea" style="min-height: 70px;"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="edu-label">Instrumentos de Evaluación</label>
+                    <textarea name="instrumentos_evaluacion[]" class="edu-textarea" style="min-height: 70px;"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="edu-label">Tipo de Evaluación</label>
+                    <input type="text" name="tipos_evaluacion[]" class="edu-input" placeholder="Ej. Formativa">
+                </div>
+                <div class="col-md-6">
+                    <label class="edu-label">Forma de Participación</label>
+                    <input type="text" name="formas_participacion[]" class="edu-input" placeholder="Ej. Coevaluación">
+                </div>
+                <div class="col-12">
+                    <label class="edu-label">Recursos y Materiales</label>
+                    <textarea name="recursos_materiales[]" class="edu-textarea" style="min-height: 60px;"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        var container = document.getElementById('areasContainer');
+        var template = document.getElementById('areaBlockTemplate');
+        var btnAdd = document.getElementById('btnAddArea');
+
+        function renumberAreas() {
+            var bloques = container.querySelectorAll('[data-area-block]');
+            bloques.forEach(function (bloque, idx) {
+                bloque.querySelector('.area-index-label').textContent = 'Área de Formación #' + (idx + 1);
+                var btnRemove = bloque.querySelector('[data-remove-area]');
+                // Siempre debe quedar al menos un área en el proyecto
+                btnRemove.style.display = bloques.length > 1 ? 'inline-flex' : 'none';
+            });
+        }
+
+        function agregarBloqueArea() {
+            var clone = template.content.cloneNode(true);
+            container.appendChild(clone);
+            renumberAreas();
+            if (window.lucide) { lucide.createIcons(); }
+        }
+
+        container.addEventListener('click', function (e) {
+            var btnRemove = e.target.closest('[data-remove-area]');
+            if (!btnRemove) return;
+            var bloque = btnRemove.closest('[data-area-block]');
+            if (container.querySelectorAll('[data-area-block]').length > 1) {
+                bloque.remove();
+                renumberAreas();
+            }
+        });
+
+        btnAdd.addEventListener('click', agregarBloqueArea);
+
+        // Navegación entre pestañas con los botones "Siguiente" / "Atrás"
+        document.querySelectorAll('.btn-next-tab').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var target = document.getElementById(btn.dataset.next);
+                bootstrap.Tab.getOrCreateInstance(target).show();
+            });
+        });
+        document.querySelectorAll('.btn-prev-tab').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var target = document.getElementById(btn.dataset.prev);
+                bootstrap.Tab.getOrCreateInstance(target).show();
+            });
+        });
+
+        // El proyecto siempre arranca con una primera Área ya visible
+        agregarBloqueArea();
+    })();
+</script>
+{% endblock %}
