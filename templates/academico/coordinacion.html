@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Coordinación Pedagógica - Kolegium{% endblock %}
+{% block header_title %}Coordinación Pedagógica{% endblock %}
+
+{% block content %}
+<div class="w-100 px-4 px-md-5">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show border-0 rounded-4 shadow-sm" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="mb-4">
+        <h2 class="h3 fw-bold mb-0 d-flex align-items-center">
+            <i data-lucide="inbox" class="text-primary me-2" style="width:28px;height:28px;"></i>
+            Panel de Coordinación Pedagógica
+        </h2>
+        <p class="text-muted mb-0">Registro, estadísticas y seguimiento de los Proyectos de Aprendizaje por grado.</p>
+    </div>
+
+    <!-- ===================== TARJETAS DE ESTADÍSTICAS ===================== -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold text-uppercase mb-1">Proyectos Entregados</p>
+                        <span class="fs-2 fw-bold text-success">{{ total_proyectos }}</span>
+                    </div>
+                    <div class="bg-success bg-opacity-10 text-success rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                        <i class="fas fa-folder-open" style="font-size: 24px;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold text-uppercase mb-1">Matrícula Total</p>
+                        <span class="fs-2 fw-bold text-primary">{{ total_matricula }}</span>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                        <i class="fas fa-users" style="font-size: 24px;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted small fw-bold text-uppercase mb-1">Boletines Procesados</p>
+                        <span class="fs-2 fw-bold text-warning">0</span>
+                        <p class="text-muted small mb-0">Próximamente</p>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                        <i class="fas fa-file-lines" style="font-size: 24px;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== BANDEJA DE PROYECTOS ===================== -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+                <h5 class="fw-bold m-0 d-flex align-items-center" style="color: var(--on-surface);">
+                    <i data-lucide="clipboard-list" class="text-primary me-2" style="width:20px;height:20px;"></i>
+                    Proyectos de Aprendizaje Entregados
+                </h5>
+                <select id="filtroGrado" class="form-select w-auto rounded-pill">
+                    <option value="">Todos los Grados</option>
+                    <option value="1ero">1ero</option>
+                    <option value="2do">2do</option>
+                    <option value="3ero">3ero</option>
+                    <option value="4to">4to</option>
+                    <option value="5to">5to</option>
+                    <option value="6to">6to</option>
+                </select>
+            </div>
+
+            {% if proyectos_entregados %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0" id="tablaProyectosEntregados">
+                    <thead>
+                        <tr class="text-muted small text-uppercase">
+                            <th>Fecha de Entrega</th>
+                            <th>Docente</th>
+                            <th>Grado y Sección</th>
+                            <th>Tema del Proyecto</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for proyecto in proyectos_entregados %}
+                        <tr>
+                            <td>{{ proyecto.fecha_entrega_coordinacion.strftime('%d/%m/%Y %H:%M') if proyecto.fecha_entrega_coordinacion else '—' }}</td>
+                            <td class="fw-semibold">{{ proyecto.docente.nombre_completo if proyecto.docente else 'No asignado' }}</td>
+                            <td>{{ proyecto.grado.nombre if proyecto.grado else '—' }}</td>
+                            <td>{{ proyecto.tema }}</td>
+                            <td class="text-end">
+                                <a href="{{ url_for('academico.generar_proyecto_aprendizaje_pdf', proyecto_id=proyecto.id) }}" target="_blank" class="btn btn-sm btn-primary rounded-pill px-3 fw-bold d-inline-flex align-items-center">
+                                    <i data-lucide="file-down" class="me-1" style="width:14px;height:14px;"></i> Descargar PDF
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <p class="text-muted small mb-0 mt-3 d-none" id="filtroSinResultados">Ningún proyecto entregado corresponde al grado seleccionado.</p>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex mx-auto align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                    <i data-lucide="inbox" style="width: 40px; height: 40px;"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Aún no hay proyectos entregados</h5>
+                <p class="text-muted mb-0">Cuando un docente marque un Proyecto de Aprendizaje como "Entregado" desde Mi Aula, aparecerá aquí.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filtro por grado (frontend, sobre las filas ya renderizadas): no
+    // recarga la página, solo oculta las filas cuya columna "Grado y
+    // Sección" no empiece por el prefijo elegido (ej. "5to" -> "5to Grado
+    // Sección B").
+    (function () {
+        var filtro = document.getElementById('filtroGrado');
+        var tabla = document.getElementById('tablaProyectosEntregados');
+        if (!filtro || !tabla) return;
+
+        var mensajeSinResultados = document.getElementById('filtroSinResultados');
+
+        filtro.addEventListener('change', function () {
+            var valor = filtro.value.trim().toLowerCase();
+            var filas = tabla.querySelectorAll('tbody tr');
+            var visibles = 0;
+
+            filas.forEach(function (fila) {
+                var celdaGrado = fila.cells[2]; // 0: Fecha, 1: Docente, 2: Grado y Sección
+                var textoGrado = celdaGrado ? celdaGrado.textContent.trim().toLowerCase() : '';
+                var coincide = !valor || textoGrado.indexOf(valor) === 0;
+                fila.style.display = coincide ? '' : 'none';
+                if (coincide) visibles++;
+            });
+
+            if (mensajeSinResultados) {
+                mensajeSinResultados.classList.toggle('d-none', visibles !== 0);
+            }
+        });
+    })();
+</script>
+{% endblock %}

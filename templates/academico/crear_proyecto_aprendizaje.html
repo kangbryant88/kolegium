@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}Nuevo Proyecto de Aprendizaje - Kolegium{% endblock %}
-{% block header_title %}Nuevo Proyecto de Aprendizaje{% endblock %}
+{% block title %}{{ 'Editar' if proyecto else 'Nuevo' }} Proyecto de Aprendizaje - Kolegium{% endblock %}
+{% block header_title %}{{ 'Editar' if proyecto else 'Nuevo' }} Proyecto de Aprendizaje{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -131,7 +131,7 @@
       {% endif %}
     {% endwith %}
 
-    <form action="{{ url_for('academico.crear_proyecto_aprendizaje') }}" method="POST" id="formProyectoAprendizaje">
+    <form action="{{ url_for('academico.editar_proyecto_aprendizaje', id=proyecto.id) if proyecto else url_for('academico.crear_proyecto_aprendizaje') }}" method="POST" id="formProyectoAprendizaje">
 
         <ul class="nav pa-tabs" id="paTabs" role="tablist">
             <li class="nav-item" role="presentation">
@@ -161,47 +161,55 @@
                             <div class="col-md-6">
                                 <label class="edu-label">Grado / Sección</label>
                                 <select name="grado_id" class="edu-select" required>
-                                    <option value="" disabled selected>-- Seleccione --</option>
+                                    <option value="" disabled {{ '' if proyecto else 'selected' }}>-- Seleccione --</option>
                                     {% for grado in grados %}
-                                    <option value="{{ grado.id }}">{{ grado.nombre }}</option>
+                                    <option value="{{ grado.id }}" {{ 'selected' if proyecto and proyecto.grado_id == grado.id else '' }}>{{ grado.nombre }}</option>
                                     {% endfor %}
                                 </select>
+                                <small class="form-text text-muted">Grado y sección para el que se elabora este proyecto. Determina la matrícula que aparecerá en la portada del PDF.</small>
                             </div>
                             <div class="col-md-6">
                                 <label class="edu-label">Momento Pedagógico</label>
                                 <select name="momento_pedagogico" class="edu-select">
-                                    <option value="" disabled selected>-- Seleccione --</option>
-                                    <option value="I">I</option>
-                                    <option value="II">II</option>
-                                    <option value="III">III</option>
+                                    <option value="" disabled {{ '' if proyecto else 'selected' }}>-- Seleccione --</option>
+                                    <option value="I" {{ 'selected' if proyecto and proyecto.momento_pedagogico == 'I' else '' }}>I</option>
+                                    <option value="II" {{ 'selected' if proyecto and proyecto.momento_pedagogico == 'II' else '' }}>II</option>
+                                    <option value="III" {{ 'selected' if proyecto and proyecto.momento_pedagogico == 'III' else '' }}>III</option>
                                 </select>
+                                <small class="form-text text-muted">Lapso escolar al que corresponde este proyecto (I, II o III momento).</small>
                             </div>
 
                             <div class="col-12">
                                 <label class="edu-label">Tema del Proyecto de Aprendizaje</label>
-                                <input type="text" name="tema" class="edu-input" placeholder="Ej. Cuidemos nuestro planeta" required>
+                                <input type="text" name="tema" class="edu-input" placeholder="Ej. Cuidemos nuestro planeta" value="{{ proyecto.tema if proyecto else '' }}" required>
+                                <small class="form-text text-muted">Nombre del proyecto tal como debe aparecer, en mayúsculas, en la portada del documento impreso.</small>
                             </div>
 
                             <div class="col-md-4">
                                 <label class="edu-label">Fecha de Inicio</label>
-                                <input type="date" name="fecha_inicio" class="edu-input">
+                                <input type="date" name="fecha_inicio" class="edu-input" value="{{ proyecto.fecha_inicio.strftime('%Y-%m-%d') if proyecto and proyecto.fecha_inicio else '' }}">
+                                <small class="form-text text-muted">Día en que arranca la ejecución del proyecto en el aula.</small>
                             </div>
                             <div class="col-md-4">
                                 <label class="edu-label">Fecha de Culminación</label>
-                                <input type="date" name="fecha_culminacion" class="edu-input">
+                                <input type="date" name="fecha_culminacion" class="edu-input" value="{{ proyecto.fecha_culminacion.strftime('%Y-%m-%d') if proyecto and proyecto.fecha_culminacion else '' }}">
+                                <small class="form-text text-muted">Día previsto para finalizar las actividades del proyecto.</small>
                             </div>
                             <div class="col-md-4">
                                 <label class="edu-label">Fecha de Entrega</label>
-                                <input type="date" name="fecha_entrega" class="edu-input">
+                                <input type="date" name="fecha_entrega" class="edu-input" value="{{ proyecto.fecha_entrega.strftime('%Y-%m-%d') if proyecto and proyecto.fecha_entrega else '' }}">
+                                <small class="form-text text-muted">Fecha límite planificada para consignar el proyecto impreso ante Coordinación.</small>
                             </div>
 
                             <div class="col-12">
                                 <label class="edu-label">Diagnóstico Pedagógico</label>
-                                <textarea name="diagnostico_pedagogico" class="edu-textarea" style="min-height: 140px;" placeholder="Describa la situación diagnóstica del grupo..."></textarea>
+                                <textarea name="diagnostico_pedagogico" class="edu-textarea" style="min-height: 140px;" placeholder="Describa la situación diagnóstica del grupo..." maxlength="1200">{{ proyecto.diagnostico_pedagogico if proyecto else '' }}</textarea>
+                                <small class="form-text text-muted">Explica brevemente qué necesidades, intereses o situación del grupo motivan este proyecto. Sé conciso: el texto se imprime completo en una sola página del PDF.</small>
                             </div>
                             <div class="col-12">
                                 <label class="edu-label">Propósito Integral</label>
-                                <textarea name="proposito_integral" class="edu-textarea" style="min-height: 140px;" placeholder="Describa el propósito integral del proyecto..."></textarea>
+                                <textarea name="proposito_integral" class="edu-textarea" style="min-height: 140px;" placeholder="Describa el propósito integral del proyecto..." maxlength="1000">{{ proyecto.proposito_integral if proyecto else '' }}</textarea>
+                                <small class="form-text text-muted">Indica qué se espera lograr con el proyecto y cómo se relaciona con las áreas de formación a trabajar.</small>
                             </div>
                         </div>
 
@@ -239,15 +247,18 @@
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="edu-label">Demostración</label>
-                                <textarea name="cierre_demostracion" class="edu-textarea" placeholder="Describa la actividad de demostración de cierre..."></textarea>
+                                <textarea name="cierre_demostracion" class="edu-textarea" placeholder="Describa la actividad de demostración de cierre..." maxlength="300">{{ proyecto.cierre_demostracion if proyecto else '' }}</textarea>
+                                <small class="form-text text-muted">Actividad práctica donde los estudiantes muestran lo aprendido (ej. experimento, exposición). Sé breve y concreto.</small>
                             </div>
                             <div class="col-12">
                                 <label class="edu-label">Dramatización</label>
-                                <textarea name="cierre_dramatizacion" class="edu-textarea" placeholder="Describa la actividad de dramatización de cierre..."></textarea>
+                                <textarea name="cierre_dramatizacion" class="edu-textarea" placeholder="Describa la actividad de dramatización de cierre..." maxlength="300">{{ proyecto.cierre_dramatizacion if proyecto else '' }}</textarea>
+                                <small class="form-text text-muted">Actividad de representación o juego de roles relacionada con el tema del proyecto.</small>
                             </div>
                             <div class="col-12">
                                 <label class="edu-label">Muestra Cultural</label>
-                                <textarea name="cierre_muestra" class="edu-textarea" placeholder="Describa la muestra cultural de cierre..."></textarea>
+                                <textarea name="cierre_muestra" class="edu-textarea" placeholder="Describa la muestra cultural de cierre..." maxlength="300">{{ proyecto.cierre_muestra if proyecto else '' }}</textarea>
+                                <small class="form-text text-muted">Exhibición final abierta a la comunidad educativa (ej. cartelera, maqueta, feria).</small>
                             </div>
                         </div>
 
@@ -255,9 +266,14 @@
                             <button type="button" class="btn-tab-nav btn-prev-tab" data-prev="tab-matriz-btn">
                                 <i data-lucide="arrow-left"></i> Atrás
                             </button>
-                            <button type="submit" class="btn-save">
-                                <i data-lucide="save"></i> Guardar Proyecto
-                            </button>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="{{ url_for('academico.mi_aula') }}" class="btn-tab-nav">
+                                    <i data-lucide="arrow-left-circle"></i> Volver a Mi Aula
+                                </a>
+                                <button type="submit" class="btn-save">
+                                    <i data-lucide="save"></i> {{ 'Actualizar Proyecto' if proyecto else 'Guardar Proyecto' }}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -284,31 +300,38 @@
             </div>
             <div class="col-md-6">
                 <label class="edu-label">Área de Formación</label>
-                <input type="text" name="area_formacion[]" class="edu-input" placeholder="Ej. Matemáticas">
+                <input type="text" name="area_formacion[]" class="edu-input" list="lista_areas" placeholder="Ej. Matemática para la Vida">
+                <small class="form-text text-muted">Escribe el nombre oficial del área; el navegador te sugiere las opciones ya registradas para mantener el mismo criterio entre proyectos.</small>
             </div>
             <div class="col-md-6">
                 <label class="edu-label">Énfasis</label>
                 <input type="text" name="enfasis[]" class="edu-input">
+                <small class="form-text text-muted">Aspecto específico del área que se va a profundizar en este proyecto.</small>
             </div>
             <div class="col-md-6">
                 <label class="edu-label">Componente</label>
                 <input type="text" name="componente[]" class="edu-input">
+                <small class="form-text text-muted">Subdivisión curricular del área trabajada (según el currículo oficial del grado).</small>
             </div>
             <div class="col-12">
                 <label class="edu-label">Contenidos</label>
-                <textarea name="contenidos[]" class="edu-textarea"></textarea>
+                <textarea name="contenidos[]" class="edu-textarea" placeholder="1. Primer contenido&#10;2. Segundo contenido&#10;3. Tercer contenido"></textarea>
+                <small class="form-text text-muted">Usa números (1., 2., 3.) o guiones para separar los ítems. Asegúrate de que el ítem 1 de Contenido corresponda con el ítem 1 de Estrategia y Actividad, para mantener el orden en el documento impreso.</small>
             </div>
             <div class="col-12">
                 <label class="edu-label">Estrategia Pedagógica</label>
-                <textarea name="estrategia_pedagogica[]" class="edu-textarea"></textarea>
+                <textarea name="estrategia_pedagogica[]" class="edu-textarea" placeholder="1. Primera estrategia&#10;2. Segunda estrategia&#10;3. Tercera estrategia"></textarea>
+                <small class="form-text text-muted">Usa números (1., 2., 3.) o guiones para separar los ítems. Asegúrate de que el ítem 1 de Contenido corresponda con el ítem 1 de Estrategia y Actividad, para mantener el orden en el documento impreso.</small>
             </div>
             <div class="col-12">
                 <label class="edu-label">Actividades</label>
-                <textarea name="actividades[]" class="edu-textarea"></textarea>
+                <textarea name="actividades[]" class="edu-textarea" placeholder="1. Primera actividad&#10;2. Segunda actividad&#10;3. Tercera actividad"></textarea>
+                <small class="form-text text-muted">Usa números (1., 2., 3.) o guiones para separar los ítems. Asegúrate de que el ítem 1 de Contenido corresponda con el ítem 1 de Estrategia y Actividad, para mantener el orden en el documento impreso.</small>
             </div>
             <div class="col-12">
                 <label class="edu-label">Aprendizajes Esperados</label>
-                <textarea name="aprendizajes_esperados[]" class="edu-textarea"></textarea>
+                <textarea name="aprendizajes_esperados[]" class="edu-textarea" placeholder="1. Primer aprendizaje esperado&#10;2. Segundo aprendizaje esperado"></textarea>
+                <small class="form-text text-muted">Usa números (1., 2., 3.) o guiones para separar los ítems. Asegúrate de que el ítem 1 de Contenido corresponda con el ítem 1 de Estrategia y Actividad, para mantener el orden en el documento impreso.</small>
             </div>
             <div class="col-12">
                 <label class="edu-label">Observaciones</label>
@@ -321,19 +344,23 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="edu-label">Estrategias de Evaluación</label>
-                    <textarea name="estrategias_evaluacion[]" class="edu-textarea" style="min-height: 70px;"></textarea>
+                    <textarea name="estrategias_evaluacion[]" class="edu-textarea" style="min-height: 70px;" placeholder="1. Primera estrategia de evaluación&#10;2. Segunda estrategia de evaluación"></textarea>
+                    <small class="form-text text-muted">Usa números (1., 2., 3.) o guiones para separar los ítems. Asegúrate de que el ítem 1 de Contenido corresponda con el ítem 1 de Estrategia y Actividad, para mantener el orden en el documento impreso.</small>
                 </div>
                 <div class="col-md-6">
                     <label class="edu-label">Indicadores a Evaluar</label>
-                    <textarea name="indicadores_evaluar[]" class="edu-textarea" style="min-height: 70px;"></textarea>
+                    <textarea name="indicadores_evaluar[]" class="edu-textarea" style="min-height: 70px;" placeholder="1. Primer indicador&#10;2. Segundo indicador"></textarea>
+                    <small class="form-text text-muted">Usa números (1., 2., 3.) o guiones para separar los ítems. Asegúrate de que el ítem 1 de Contenido corresponda con el ítem 1 de Estrategia y Actividad, para mantener el orden en el documento impreso.</small>
                 </div>
                 <div class="col-md-6">
                     <label class="edu-label">Técnicas de Evaluación</label>
-                    <textarea name="tecnicas_evaluacion[]" class="edu-textarea" style="min-height: 70px;"></textarea>
+                    <textarea name="tecnicas_evaluacion[]" class="edu-textarea" style="min-height: 70px;" placeholder="1. Primera técnica&#10;2. Segunda técnica"></textarea>
+                    <small class="form-text text-muted">Usa números (1., 2., 3.) o guiones para separar los ítems. Asegúrate de que el ítem 1 de Contenido corresponda con el ítem 1 de Estrategia y Actividad, para mantener el orden en el documento impreso.</small>
                 </div>
                 <div class="col-md-6">
                     <label class="edu-label">Instrumentos de Evaluación</label>
-                    <textarea name="instrumentos_evaluacion[]" class="edu-textarea" style="min-height: 70px;"></textarea>
+                    <textarea name="instrumentos_evaluacion[]" class="edu-textarea" style="min-height: 70px;" placeholder="1. Primer instrumento&#10;2. Segundo instrumento"></textarea>
+                    <small class="form-text text-muted">Usa números (1., 2., 3.) o guiones para separar los ítems. Asegúrate de que el ítem 1 de Contenido corresponda con el ítem 1 de Estrategia y Actividad, para mantener el orden en el documento impreso.</small>
                 </div>
                 <div class="col-md-6">
                     <label class="edu-label">Tipo de Evaluación</label>
@@ -351,10 +378,26 @@
         </div>
     </div>
 </template>
+
+<!-- Sugerencias del navegador para "Área de Formación": unifica el criterio -->
+<!-- entre docentes sin impedir que se escriba un nombre distinto si hace falta. -->
+<datalist id="lista_areas">
+    <option value="Ciencias Naturales">
+    <option value="Lenguaje y Comunicación">
+    <option value="Matemática para la Vida">
+    <option value="Ciencia y Tecnología">
+    <option value="Ciencias Sociales">
+    <option value="Identidad y Orientación Vocacional">
+    <option value="Cultura e Idiomas">
+    <option value="Educación Física">
+</datalist>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    // Áreas ya guardadas del proyecto (modo edición); vacío al crear uno nuevo.
+    var AREAS_INICIALES = {{ areas_data | default([]) | tojson }};
+
     (function () {
         var container = document.getElementById('areasContainer');
         var template = document.getElementById('areaBlockTemplate');
@@ -370,9 +413,23 @@
             });
         }
 
-        function agregarBloqueArea() {
+        // Rellena los campos de un bloque de área recién clonado con los
+        // datos de una fila existente (modo edición). Los nombres de los
+        // <input>/<textarea> del bloque son idénticos a las claves del dict
+        // que genera `_areas_data_json` en el backend, salvo por el sufijo "[]".
+        function rellenarBloqueArea(bloque, datos) {
+            if (!datos) return;
+            Object.keys(datos).forEach(function (campo) {
+                var el = bloque.querySelector('[name="' + campo + '[]"]');
+                if (el) el.value = datos[campo];
+            });
+        }
+
+        function agregarBloqueArea(datos) {
             var clone = template.content.cloneNode(true);
+            var bloque = clone.querySelector('[data-area-block]');
             container.appendChild(clone);
+            rellenarBloqueArea(bloque, datos);
             renumberAreas();
             if (window.lucide) { lucide.createIcons(); }
         }
@@ -387,7 +444,7 @@
             }
         });
 
-        btnAdd.addEventListener('click', agregarBloqueArea);
+        btnAdd.addEventListener('click', function () { agregarBloqueArea(null); });
 
         // Navegación entre pestañas con los botones "Siguiente" / "Atrás"
         document.querySelectorAll('.btn-next-tab').forEach(function (btn) {
@@ -403,8 +460,30 @@
             });
         });
 
-        // El proyecto siempre arranca con una primera Área ya visible
-        agregarBloqueArea();
+        // En edición, un bloque de área por cada una ya guardada; al crear
+        // uno nuevo, arranca con una primera Área vacía ya visible.
+        if (AREAS_INICIALES.length) {
+            AREAS_INICIALES.forEach(function (datos) { agregarBloqueArea(datos); });
+        } else {
+            agregarBloqueArea(null);
+        }
+    })();
+
+    // Contador dinámico de caracteres para los textarea con límite (evita
+    // desbordamientos en el PDF): "450 / 1200 caracteres" bajo cada campo.
+    (function () {
+        document.querySelectorAll('textarea[maxlength]').forEach(function (textarea) {
+            var max = textarea.getAttribute('maxlength');
+            var contador = document.createElement('small');
+            contador.className = 'form-text text-muted d-block text-end';
+            textarea.insertAdjacentElement('afterend', contador);
+
+            function actualizar() {
+                contador.textContent = textarea.value.length + ' / ' + max + ' caracteres';
+            }
+            textarea.addEventListener('input', actualizar);
+            actualizar();
+        });
     })();
 </script>
 {% endblock %}

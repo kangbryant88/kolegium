@@ -649,6 +649,12 @@ def mi_aula():
         banco_indicadores = BancoIndicador.query.filter_by(docente_id=session['usuario_id']) \
             .order_by(BancoIndicador.momento.asc(), BancoIndicador.nivel.asc(), BancoIndicador.fecha_creacion.desc()).all()
 
+    # Proyectos de Aprendizaje oficiales creados por el docente actual
+    proyectos_oficiales = []
+    if session.get('usuario_id'):
+        proyectos_oficiales = ProyectoAprendizaje.query.filter_by(docente_id=session['usuario_id']) \
+            .order_by(ProyectoAprendizaje.fecha_creacion.desc()).all()
+
     # Evaluaciones ya guardadas por estudiante, agrupadas por momento: {estudiante_id: {momento: EvaluacionEstudiante}}
     evaluaciones_por_estudiante = {}
     if estudiantes:
@@ -714,6 +720,7 @@ def mi_aula():
                            estado_solicitudes=estado_solicitudes,
                            proyectos_aula=proyectos_aula,
                            banco_indicadores=banco_indicadores,
+                           proyectos_oficiales=proyectos_oficiales,
                            evaluaciones_por_estudiante=evaluaciones_por_estudiante)
 
 @academico_bp.route('/guardar_asistencia_aula', methods=['POST'])
@@ -928,6 +935,142 @@ def eliminar_indicador(id):
     return redirect(url_for('academico.mi_aula', grado_id=grado_id))
 
 
+def _capitalizar_corto(texto):
+    """
+    Normaliza campos de texto corto (ej. Área de Formación, Componente) antes
+    de guardarlos: quita espacios sobrantes y capitaliza cada palabra, para
+    que "lenguaje Y comunicación" quede "Lenguaje Y Comunicación" -limpio y
+    presentable en el PDF- sin importar cómo lo haya tipeado el docente.
+    """
+    return texto.strip().title() if texto else texto
+
+
+def _volcar_datos_generales_proyecto(proyecto):
+    """
+    Copia los campos de las pestañas 1 y 3 del formulario (Datos Generales y
+    Cierre) sobre `proyecto`. Se usa tanto al crear como al editar -en
+    edición, `proyecto` ya existe y esto simplemente sobrescribe sus campos-.
+    """
+    fecha_inicio = request.form.get('fecha_inicio')
+    fecha_culminacion = request.form.get('fecha_culminacion')
+    fecha_entrega = request.form.get('fecha_entrega')
+
+    proyecto.grado_id = request.form.get('grado_id')
+    proyecto.tema = request.form.get('tema', '').strip()
+    proyecto.momento_pedagogico = request.form.get('momento_pedagogico')
+    proyecto.fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date() if fecha_inicio else None
+    proyecto.fecha_culminacion = datetime.strptime(fecha_culminacion, '%Y-%m-%d').date() if fecha_culminacion else None
+    proyecto.fecha_entrega = datetime.strptime(fecha_entrega, '%Y-%m-%d').date() if fecha_entrega else None
+    proyecto.diagnostico_pedagogico = request.form.get('diagnostico_pedagogico')
+    proyecto.proposito_integral = request.form.get('proposito_integral')
+    proyecto.cierre_demostracion = request.form.get('cierre_demostracion')
+    proyecto.cierre_dramatizacion = request.form.get('cierre_dramatizacion')
+    proyecto.cierre_muestra = request.form.get('cierre_muestra')
+
+
+def _reconstruir_areas_proyecto(proyecto):
+    """
+    Reemplaza por completo las Áreas de Formación (y sus Evaluaciones
+    anidadas) de `proyecto` con lo enviado en la pestaña 2 del formulario.
+
+    En edición, borrar y volver a crear es más simple y confiable que
+    intentar emparejar cada fila existente con su índice del formulario
+    -sobre todo porque el docente puede añadir/quitar bloques de área
+    libremente en el cliente-. La cascada del modelo (`cascade='all,
+    delete-orphan'`) se encarga de las evaluaciones asociadas.
+    """
+    for area_existente in list(proyecto.areas):
+        db.session.delete(area_existente)
+    db.session.flush()
+
+    tema_indispensable_l = request.form.getlist('tema_indispensable[]')
+    area_formacion_l = request.form.getlist('area_formacion[]')
+    enfasis_l = request.form.getlist('enfasis[]')
+    componente_l = request.form.getlist('componente[]')
+    contenidos_l = request.form.getlist('contenidos[]')
+    estrategia_pedagogica_l = request.form.getlist('estrategia_pedagogica[]')
+    actividades_l = request.form.getlist('actividades[]')
+    aprendizajes_esperados_l = request.form.getlist('aprendizajes_esperados[]')
+    observaciones_l = request.form.getlist('observaciones[]')
+
+    # --- Evaluación de cada área (misma posición/índice que la lista de áreas) ---
+    estrategias_evaluacion_l = request.form.getlist('estrategias_evaluacion[]')
+    indicadores_evaluar_l = request.form.getlist('indicadores_evaluar[]')
+    tecnicas_evaluacion_l = request.form.getlist('tecnicas_evaluacion[]')
+    instrumentos_evaluacion_l = request.form.getlist('instrumentos_evaluacion[]')
+    tipos_evaluacion_l = request.form.getlist('tipos_evaluacion[]')
+    formas_participacion_l = request.form.getlist('formas_participacion[]')
+    recursos_materiales_l = request.form.getlist('recursos_materiales[]')
+
+    def campo(lista, i):
+        return lista[i].strip() if i < len(lista) and lista[i].strip() else None
+
+    for i, nombre_area in enumerate(area_formacion_l):
+        if not nombre_area.strip():
+            continue  # bloque de área vacío (ej. clonado y no rellenado)
+
+        area = ProyectoArea(
+            proyecto_id=proyecto.id,
+            tema_indispensable=campo(tema_indispensable_l, i),
+            area_formacion=_capitalizar_corto(nombre_area.strip()),
+            enfasis=campo(enfasis_l, i),
+            componente=_capitalizar_corto(campo(componente_l, i)),
+            contenidos=campo(contenidos_l, i),
+            estrategia_pedagogica=campo(estrategia_pedagogica_l, i),
+            actividades=campo(actividades_l, i),
+            aprendizajes_esperados=campo(aprendizajes_esperados_l, i),
+            observaciones=campo(observaciones_l, i),
+        )
+        db.session.add(area)
+        db.session.flush()  # asigna area.id para la evaluación anidada
+
+        evaluacion = ProyectoEvaluacion(
+            area_id=area.id,
+            estrategias_evaluacion=campo(estrategias_evaluacion_l, i),
+            indicadores_evaluar=campo(indicadores_evaluar_l, i),
+            tecnicas_evaluacion=campo(tecnicas_evaluacion_l, i),
+            instrumentos_evaluacion=campo(instrumentos_evaluacion_l, i),
+            tipos_evaluacion=campo(tipos_evaluacion_l, i),
+            formas_participacion=campo(formas_participacion_l, i),
+            recursos_materiales=campo(recursos_materiales_l, i),
+        )
+        db.session.add(evaluacion)
+
+
+def _areas_data_json(proyecto):
+    """
+    Serializa las Áreas de Formación (y su Evaluación anidada) de `proyecto`
+    a una lista de dicts simple, lista para pasarla al template y que el JS
+    del formulario pre-cargue un bloque de área por cada una -en modo
+    edición-. Devuelve lista vacía si `proyecto` es None (creación).
+    """
+    if not proyecto:
+        return []
+
+    datos = []
+    for area in proyecto.areas:
+        evaluacion = area.evaluaciones[0] if area.evaluaciones else None
+        datos.append({
+            'tema_indispensable': area.tema_indispensable or '',
+            'area_formacion': area.area_formacion or '',
+            'enfasis': area.enfasis or '',
+            'componente': area.componente or '',
+            'contenidos': area.contenidos or '',
+            'estrategia_pedagogica': area.estrategia_pedagogica or '',
+            'actividades': area.actividades or '',
+            'aprendizajes_esperados': area.aprendizajes_esperados or '',
+            'observaciones': area.observaciones or '',
+            'estrategias_evaluacion': evaluacion.estrategias_evaluacion if evaluacion else '',
+            'indicadores_evaluar': evaluacion.indicadores_evaluar if evaluacion else '',
+            'tecnicas_evaluacion': evaluacion.tecnicas_evaluacion if evaluacion else '',
+            'instrumentos_evaluacion': evaluacion.instrumentos_evaluacion if evaluacion else '',
+            'tipos_evaluacion': evaluacion.tipos_evaluacion if evaluacion else '',
+            'formas_participacion': evaluacion.formas_participacion if evaluacion else '',
+            'recursos_materiales': evaluacion.recursos_materiales if evaluacion else '',
+        })
+    return datos
+
+
 @academico_bp.route('/proyecto_aprendizaje/nuevo', methods=['GET', 'POST'])
 def crear_proyecto_aprendizaje():
     if not session.get('logeado'): return redirect(url_for('auth.login'))
@@ -941,87 +1084,800 @@ def crear_proyecto_aprendizaje():
             flash('Debe indicar el grado, el tema y el momento pedagógico.', 'danger')
             return redirect(url_for('academico.crear_proyecto_aprendizaje'))
 
-        fecha_inicio = request.form.get('fecha_inicio')
-        fecha_culminacion = request.form.get('fecha_culminacion')
-        fecha_entrega = request.form.get('fecha_entrega')
-
-        proyecto = ProyectoAprendizaje(
-            docente_id=session['usuario_id'],
-            grado_id=grado_id,
-            tema=tema,
-            momento_pedagogico=momento_pedagogico,
-            fecha_inicio=datetime.strptime(fecha_inicio, '%Y-%m-%d').date() if fecha_inicio else None,
-            fecha_culminacion=datetime.strptime(fecha_culminacion, '%Y-%m-%d').date() if fecha_culminacion else None,
-            fecha_entrega=datetime.strptime(fecha_entrega, '%Y-%m-%d').date() if fecha_entrega else None,
-            diagnostico_pedagogico=request.form.get('diagnostico_pedagogico'),
-            proposito_integral=request.form.get('proposito_integral'),
-            cierre_demostracion=request.form.get('cierre_demostracion'),
-            cierre_dramatizacion=request.form.get('cierre_dramatizacion'),
-            cierre_muestra=request.form.get('cierre_muestra'),
-        )
+        proyecto = ProyectoAprendizaje(docente_id=session['usuario_id'])
+        _volcar_datos_generales_proyecto(proyecto)
         db.session.add(proyecto)
         db.session.flush()  # asigna proyecto.id sin cerrar la transacción
 
-        # --- Matriz de Áreas (Tab 2): una entrada por área añadida en el formulario ---
-        tema_indispensable_l = request.form.getlist('tema_indispensable[]')
-        area_formacion_l = request.form.getlist('area_formacion[]')
-        enfasis_l = request.form.getlist('enfasis[]')
-        componente_l = request.form.getlist('componente[]')
-        contenidos_l = request.form.getlist('contenidos[]')
-        estrategia_pedagogica_l = request.form.getlist('estrategia_pedagogica[]')
-        actividades_l = request.form.getlist('actividades[]')
-        aprendizajes_esperados_l = request.form.getlist('aprendizajes_esperados[]')
-        observaciones_l = request.form.getlist('observaciones[]')
-
-        # --- Evaluación de cada área (misma posición/índice que la lista de áreas) ---
-        estrategias_evaluacion_l = request.form.getlist('estrategias_evaluacion[]')
-        indicadores_evaluar_l = request.form.getlist('indicadores_evaluar[]')
-        tecnicas_evaluacion_l = request.form.getlist('tecnicas_evaluacion[]')
-        instrumentos_evaluacion_l = request.form.getlist('instrumentos_evaluacion[]')
-        tipos_evaluacion_l = request.form.getlist('tipos_evaluacion[]')
-        formas_participacion_l = request.form.getlist('formas_participacion[]')
-        recursos_materiales_l = request.form.getlist('recursos_materiales[]')
-
-        def campo(lista, i):
-            return lista[i].strip() if i < len(lista) and lista[i].strip() else None
-
-        for i, nombre_area in enumerate(area_formacion_l):
-            if not nombre_area.strip():
-                continue  # bloque de área vacío (ej. clonado y no rellenado)
-
-            area = ProyectoArea(
-                proyecto_id=proyecto.id,
-                tema_indispensable=campo(tema_indispensable_l, i),
-                area_formacion=nombre_area.strip(),
-                enfasis=campo(enfasis_l, i),
-                componente=campo(componente_l, i),
-                contenidos=campo(contenidos_l, i),
-                estrategia_pedagogica=campo(estrategia_pedagogica_l, i),
-                actividades=campo(actividades_l, i),
-                aprendizajes_esperados=campo(aprendizajes_esperados_l, i),
-                observaciones=campo(observaciones_l, i),
-            )
-            db.session.add(area)
-            db.session.flush()  # asigna area.id para la evaluación anidada
-
-            evaluacion = ProyectoEvaluacion(
-                area_id=area.id,
-                estrategias_evaluacion=campo(estrategias_evaluacion_l, i),
-                indicadores_evaluar=campo(indicadores_evaluar_l, i),
-                tecnicas_evaluacion=campo(tecnicas_evaluacion_l, i),
-                instrumentos_evaluacion=campo(instrumentos_evaluacion_l, i),
-                tipos_evaluacion=campo(tipos_evaluacion_l, i),
-                formas_participacion=campo(formas_participacion_l, i),
-                recursos_materiales=campo(recursos_materiales_l, i),
-            )
-            db.session.add(evaluacion)
+        _reconstruir_areas_proyecto(proyecto)
 
         db.session.commit()
         flash('Proyecto de Aprendizaje creado correctamente.', 'success')
-        return redirect(url_for('academico.crear_proyecto_aprendizaje'))
+        return redirect(url_for('academico.mi_aula', grado_id=grado_id))
 
     grados = Grado.query.order_by(Grado.nombre).all()
-    return render_template('academico/crear_proyecto_aprendizaje.html', grados=grados)
+    return render_template('academico/crear_proyecto_aprendizaje.html', grados=grados, proyecto=None, areas_data=[])
+
+
+@academico_bp.route('/proyecto_aprendizaje/editar/<int:id>', methods=['GET', 'POST'])
+def editar_proyecto_aprendizaje(id):
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    proyecto = ProyectoAprendizaje.query.get_or_404(id)
+
+    es_propietario = proyecto.docente_id == session.get('usuario_id')
+    es_admin = session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)']
+    if not (es_propietario or es_admin):
+        flash('No tiene permiso para editar este proyecto.', 'danger')
+        return redirect(url_for('academico.mi_aula'))
+
+    if request.method == 'POST':
+        grado_id = request.form.get('grado_id')
+        tema = request.form.get('tema', '').strip()
+        momento_pedagogico = request.form.get('momento_pedagogico')
+
+        if not grado_id or not tema or not momento_pedagogico:
+            flash('Debe indicar el grado, el tema y el momento pedagógico.', 'danger')
+            return redirect(url_for('academico.editar_proyecto_aprendizaje', id=id))
+
+        _volcar_datos_generales_proyecto(proyecto)
+        _reconstruir_areas_proyecto(proyecto)
+
+        db.session.commit()
+        flash('Proyecto de Aprendizaje actualizado correctamente.', 'success')
+        return redirect(url_for('academico.mi_aula', grado_id=grado_id))
+
+    grados = Grado.query.order_by(Grado.nombre).all()
+    return render_template('academico/crear_proyecto_aprendizaje.html', grados=grados, proyecto=proyecto, areas_data=_areas_data_json(proyecto))
+
+
+@academico_bp.route('/proyecto_aprendizaje/entregar/<int:id>', methods=['POST'])
+def entregar_proyecto_aprendizaje(id):
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    proyecto = ProyectoAprendizaje.query.get_or_404(id)
+
+    es_propietario = proyecto.docente_id == session.get('usuario_id')
+    es_admin = session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)']
+    if not (es_propietario or es_admin):
+        flash('No tiene permiso para marcar este proyecto como entregado.', 'danger')
+        return redirect(url_for('academico.mi_aula'))
+
+    proyecto.entregado = True
+    proyecto.fecha_entrega_coordinacion = datetime.utcnow()
+    db.session.commit()
+    flash('Proyecto marcado como entregado a Coordinación.', 'success')
+    return redirect(url_for('academico.mi_aula'))
+
+
+@academico_bp.route('/coordinacion_pedagogica')
+def coordinacion_pedagogica():
+    """
+    Panel de Coordinación Pedagógica: lista de solo lectura de los Proyectos
+    de Aprendizaje ya entregados por los docentes -más sus métricas base-,
+    para que Coordinación y el equipo administrativo de apoyo puedan
+    revisarlos y descargar su PDF sin entrar al aula de cada uno.
+    """
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    # Roles con acceso: el rango directivo/administrativo del plantel más el
+    # rol dedicado de Coordinación Pedagógica (aún no dado de alta como
+    # usuario en este entorno, pero ya validado aquí para cuando se cree).
+    rol = session.get('nombre_rol')
+    if rol not in ['Administrador Supremo', 'Equipo Directivo (Dirección)', 'Coordinador Pedagógico', 'Administrativo']:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('academico.mi_aula'))
+
+    proyectos_entregados = ProyectoAprendizaje.query.filter_by(entregado=True) \
+        .order_by(ProyectoAprendizaje.fecha_entrega_coordinacion.desc()).all()
+
+    total_proyectos = ProyectoAprendizaje.query.filter_by(entregado=True).count()
+    total_matricula = Estudiante.query.count()
+
+    return render_template(
+        'academico/coordinacion.html',
+        proyectos_entregados=proyectos_entregados,
+        total_proyectos=total_proyectos,
+        total_matricula=total_matricula,
+    )
+
+
+@academico_bp.route('/generar_proyecto_prueba')
+def generar_proyecto_prueba():
+    """
+    RUTA TEMPORAL (data seeder): inserta un Proyecto de Aprendizaje completo
+    con datos realistas -tema, narrativa larga, un área y su plan de
+    evaluación- para poder revisar el PDF final sin tener que llenar el
+    formulario a mano. Se asigna al docente de la sesión activa.
+    """
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    usuario_id = session['usuario_id']
+    grado = Grado.query.filter(Grado.docentes.any(id=usuario_id)).first() or Grado.query.first()
+    if not grado:
+        flash('No hay ningún grado registrado en el sistema para asignar el proyecto de prueba.', 'danger')
+        return redirect(url_for('academico.mi_aula'))
+
+    lorem_diagnostico = (
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
+        "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. "
+        "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. "
+        "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. "
+        "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam."
+    )
+    lorem_proposito = (
+        "Curabitur pretium tincidunt lacus, et sagittis magna porttitor eget. Aliquam erat volutpat. "
+        "Nunc eget lorem dolor sed viverra ipsum nunc aliquet bibendum enim facilisis gravida neque. "
+        "Cras ultricies ligula sed magna dictum porta, morbi leo risus, porta ac consectetur ac vestibulum. "
+        "Vivamus suscipit tortor eget felis porttitor volutpat, curabitur aliquet quam id dui posuere blandit. "
+        "Praesent sapien massa, convallis a pellentesque nec, egestas non nisi, id cursus nisi."
+    )
+
+    proyecto = ProyectoAprendizaje(
+        docente_id=usuario_id,
+        grado_id=grado.id,
+        tema='SISTEMA DEL CUERPO HUMANO',
+        momento_pedagogico='I',
+        fecha_inicio=date.today(),
+        fecha_culminacion=date.today() + timedelta(days=30),
+        fecha_entrega=date.today() + timedelta(days=35),
+        diagnostico_pedagogico=lorem_diagnostico,
+        proposito_integral=lorem_proposito,
+        cierre_demostracion='Los estudiantes realizarán una demostración práctica sobre el funcionamiento del sistema muscular y óseo del cuerpo humano.',
+        cierre_dramatizacion='Dramatización de una consulta médica donde se explican, en lenguaje sencillo, los sistemas del cuerpo humano trabajados.',
+        cierre_muestra='Exposición de maquetas y carteleras elaboradas por los estudiantes sobre el sistema del cuerpo humano.',
+    )
+    db.session.add(proyecto)
+    db.session.flush()  # asigna proyecto.id sin cerrar la transacción
+
+    # Contenidos y sus campos "hermanos" (Estrategia/Actividades/Aprendizajes)
+    # se cargan con 3 ítems sincronizados uno a uno -así se puede comprobar
+    # que la lógica de "compartimentos" del PDF funciona: cada ítem debe
+    # imprimirse en su propia fila apilada, con línea divisoria propia.
+    area = ProyectoArea(
+        proyecto_id=proyecto.id,
+        tema_indispensable='PRESERVACIÓN DE LA VIDA EN EL PLANETA',
+        area_formacion='CIENCIAS NATURALES',
+        enfasis='Educación ambiental y promoción de la salud integral',
+        componente='*Salud',
+        contenidos='1. Sistema Muscular\n2. Sistema Óseo\n3. Sistema Nervioso',
+        estrategia_pedagogica='1. Taller en grupo\n2. Demostración práctica\n3. Juego didáctico',
+        actividades=(
+            '1. El Esqueleto de Cartón: Construir un brazo mecánico utilizando cartón, sujetadores mariposa y cordones.\n'
+            '2. Palpación guiada de los huesos principales del cuerpo sobre una lámina anatómica.\n'
+            '3. Dinámica "Simón dice" moviendo distintos grupos musculares al nombrarlos.'
+        ),
+        aprendizajes_esperados=(
+            '1. Comprende que el movimiento del cuerpo depende de la acción conjunta de huesos y músculos.\n'
+            '2. Identifica los huesos principales del esqueleto humano.\n'
+            '3. Reconoce la importancia de cuidar el sistema nervioso.'
+        ),
+        observaciones='',
+    )
+    db.session.add(area)
+    db.session.flush()  # asigna area.id para la evaluación anidada
+
+    evaluacion = ProyectoEvaluacion(
+        area_id=area.id,
+        estrategias_evaluacion=(
+            '1. Observación directa durante la construcción del brazo mecánico.\n'
+            '2. Participación activa en el taller grupal.\n'
+            '3. Autoevaluación oral al cierre de la actividad.'
+        ),
+        indicadores_evaluar=(
+            '1. Identifica los huesos y músculos principales que intervienen en el movimiento del brazo.\n'
+            '2. Explica con sus palabras cómo se mueve el cuerpo humano.\n'
+            '3. Trabaja en equipo respetando el turno de sus compañeros.'
+        ),
+        tecnicas_evaluacion='Observación y análisis de producto',
+        instrumentos_evaluacion='Lista de cotejo',
+        tipos_evaluacion='Formativa',
+        formas_participacion='Coevaluación',
+        recursos_materiales='Cartón, sujetadores mariposa, cordones, tijeras, marcadores',
+    )
+    db.session.add(evaluacion)
+
+    db.session.commit()
+    flash('Proyecto de prueba "SISTEMA DEL CUERPO HUMANO" creado correctamente.', 'success')
+    return redirect(url_for('academico.mi_aula'))
+
+
+def _dividir_texto_pdf(pdf, texto, ancho_util):
+    """
+    Envuelve `texto` en líneas que quepan dentro de `ancho_util` mm, replicando
+    a mano el wrap de multi_cell (PyFPDF 1.7.2 no expone un modo "dry run" para
+    medir cuántas líneas ocupará un texto sin imprimirlo). Se usa para calcular
+    la altura de cada celda ANTES de dibujar la fila de la tabla, de modo que
+    todas las columnas de una misma fila queden con el mismo alto.
+    """
+    texto = (texto or '').strip()
+    if not texto:
+        return ['-']
+
+    lineas = []
+    for parrafo in texto.split('\n'):
+        parrafo = parrafo.strip()
+        if not parrafo:
+            lineas.append('')
+            continue
+        actual = ''
+        for palabra in parrafo.split(' '):
+            candidato = f"{actual} {palabra}".strip()
+            if pdf.get_string_width(candidato) <= ancho_util:
+                actual = candidato
+                continue
+            if actual:
+                lineas.append(actual)
+            if pdf.get_string_width(palabra) <= ancho_util:
+                actual = palabra
+            else:
+                # Palabra más ancha que la columna completa: se corta por caracteres.
+                trozo = ''
+                for ch in palabra:
+                    if pdf.get_string_width(trozo + ch) <= ancho_util:
+                        trozo += ch
+                    else:
+                        lineas.append(trozo)
+                        trozo = ch
+                actual = trozo
+        if actual:
+            lineas.append(actual)
+    return lineas or ['-']
+
+
+def _fila_tabla_pdf(pdf, x_inicio, anchos, textos, line_h=5, font=('Arial', '', 7.5), alto_min=9, borde_inferior=True):
+    """
+    Dibuja una fila de tabla "tipo multi_cell" con bordes regulares (sin
+    rellenos de color): cada columna puede ocupar varias líneas, pero todas
+    las celdas de la fila quedan con la misma altura (la de la columna con
+    más texto). Las cabeceras de tabla se distinguen solo por fuente en
+    negrita, pasando `font=('Arial', 'B', N)`. `alto_min` garantiza que cada
+    fila luzca como un "cuadro predeterminado" (altura generosa) aunque el
+    texto sea corto. `borde_inferior=False` deja las columnas "abiertas"
+    hacia abajo (sin la raya horizontal justo debajo del texto) -para filas
+    que luego se prolongan con `_anclar_fondo_tabla_pdf` y no deben mostrar
+    un cierre duplicado-. Hace salto de página automático si la fila no cabe
+    en el espacio restante. Devuelve el alto (mm) dibujado.
+    """
+    pdf.set_font(*font)
+    lineas_por_columna = [_dividir_texto_pdf(pdf, texto, ancho - 2) for texto, ancho in zip(textos, anchos)]
+    num_lineas = max(len(lineas) for lineas in lineas_por_columna)
+    alto_fila = max(num_lineas * line_h + 1.5, alto_min)
+
+    if pdf.get_y() + alto_fila > pdf.h - pdf.b_margin:
+        pdf.add_page()
+
+    y = pdf.get_y()
+    x = x_inicio
+    pdf.set_draw_color(120, 120, 120)
+    pdf.set_text_color(0, 0, 0)
+    for ancho, lineas in zip(anchos, lineas_por_columna):
+        if borde_inferior:
+            pdf.rect(x, y, ancho, alto_fila)
+        else:
+            pdf.line(x, y, x, y + alto_fila)                    # borde izquierdo
+            pdf.line(x + ancho, y, x + ancho, y + alto_fila)    # borde derecho
+            pdf.line(x, y, x + ancho, y)                        # borde superior (sin el inferior)
+        y_linea = y + 1.2
+        for linea in lineas:
+            pdf.set_xy(x + 1, y_linea)
+            pdf.cell(ancho - 2, line_h, linea, border=0, align='L')
+            y_linea += line_h
+        x += ancho
+
+    pdf.set_xy(x_inicio, y + alto_fila)
+    return alto_fila
+
+
+def _anclar_fondo_tabla_pdf(pdf, x_inicio, anchos, y_fondo):
+    """
+    "Cuadrícula anclada": toma la Y donde terminó de imprimirse el texto de
+    la última fila dibujada (pdf.get_y() en ese momento) y extiende las
+    líneas verticales de cada columna -calculadas a partir de `anchos`-
+    desde ahí hasta la coordenada FIJA `y_fondo`, cerrando con una línea
+    horizontal en esa misma Y. Así la tabla siempre llega hasta el fondo de
+    la hoja (o hasta la mitad, según `y_fondo`), sin importar si el docente
+    escribió poco texto. No hace nada si el contenido real ya alcanzó o
+    superó `y_fondo` (no se dibujan líneas de longitud negativa).
+    """
+    current_y = pdf.get_y()
+    if y_fondo <= current_y:
+        return
+
+    pdf.set_draw_color(0, 0, 0)
+    x = x_inicio
+    pdf.line(x, current_y, x, y_fondo)
+    for ancho in anchos:
+        x += ancho
+        pdf.line(x, current_y, x, y_fondo)
+
+    pdf.line(x_inicio, y_fondo, x, y_fondo)
+    pdf.set_xy(x_inicio, y_fondo)
+
+
+def _limites_columnas_pdf(x_inicio, anchos):
+    """Devuelve la lista de coordenadas X acumuladas (bordes de cada columna),
+    empezando en `x_inicio` y terminando en el borde derecho del bloque."""
+    limites = [x_inicio]
+    for ancho in anchos:
+        limites.append(limites[-1] + ancho)
+    return limites
+
+
+def _dividir_items_pdf(texto):
+    """
+    Divide un campo de texto en una lista de "ítems" (uno por línea no
+    vacía), para simular varias filas/compartimentos dentro de una misma
+    columna -ej. una lista numerada "1. ...\\n2. ...\\n3. ...". Si el texto
+    no tiene saltos de línea reales, se trata como un único ítem.
+    """
+    items = [linea.strip() for linea in (texto or '').split('\n') if linea.strip()]
+    return items or ['-']
+
+
+def _imprimir_valor_columna_pdf(pdf, x, ancho, texto, y_inicio, font, line_h, y_fondo=None):
+    """
+    Imprime UN SOLO valor (puede ocupar varias líneas por word-wrap) en una
+    columna, sin bordes propios -para las columnas que son "una sola por
+    página" (ej. Área/Énfasis/Componente, o Técnicas/Instrumentos)-.
+
+    Si `y_fondo` se indica, el valor se centra verticalmente dentro del
+    compartimento fijo que va desde `y_inicio` hasta `y_fondo` (altura
+    disponible menos la altura real que ocupa el texto, repartida como
+    margen superior). Si se omite, el texto queda alineado arriba (comportamiento
+    original).
+    """
+    pdf.set_font(*font)
+    lineas = _dividir_texto_pdf(pdf, texto or '-', ancho - 2)
+
+    if y_fondo is not None:
+        altura_disponible = y_fondo - y_inicio
+        altura_texto = len(lineas) * line_h
+        margen_y = max((altura_disponible - altura_texto) / 2, 0)
+        y_linea = y_inicio + margen_y
+    else:
+        y_linea = y_inicio + 1.5
+
+    for linea in lineas:
+        pdf.set_xy(x + 1, y_linea)
+        pdf.cell(ancho - 2, line_h, linea, border=0, align='L')
+        y_linea += line_h
+
+
+def _dibujar_compartimentos_pdf(pdf, y_inicio, x_divisor_izq, x_divisor_der, columnas, font, line_h):
+    """
+    Dibuja los "compartimentos" de un grupo de columnas que comparten el
+    mismo listado de ítems paralelos (ej. Contenidos/Estrategia/Actividades/
+    Aprendizajes/Observaciones, o Estrategias/Indicadores). `columnas` es una
+    lista de tuplas (x, ancho, items); se usa la lista más larga como
+    "maestra" para el número de filas. Después de cada fila se dibuja una
+    línea horizontal OBLIGATORIA entre `x_divisor_izq` y `x_divisor_der`
+    -y NUNCA más allá de ese rango-, creando el efecto visual de
+    compartimentos apilados. Devuelve la Y donde terminó el último.
+    """
+    pdf.set_font(*font)
+    num_filas = max(len(items) for _, _, items in columnas)
+    y_cursor = y_inicio
+    for i in range(num_filas):
+        y_fila_inicio = y_cursor
+        y_fin_fila = y_fila_inicio
+        for x, ancho, items in columnas:
+            texto = items[i] if i < len(items) else ''
+            if not texto:
+                continue
+            lineas = _dividir_texto_pdf(pdf, texto, ancho - 2)
+            y_linea = y_fila_inicio + 1.5
+            for linea in lineas:
+                pdf.set_xy(x + 1, y_linea)
+                pdf.cell(ancho - 2, line_h, linea, border=0, align='L')
+                y_linea += line_h
+            y_fin_fila = max(y_fin_fila, y_linea)
+
+        if y_fin_fila == y_fila_inicio:
+            y_fin_fila += line_h  # compartimento vacío: igual reserva una línea de alto
+
+        pdf.set_draw_color(0, 0, 0)
+        pdf.line(x_divisor_izq, y_fin_fila, x_divisor_der, y_fin_fila)
+        y_cursor = y_fin_fila
+
+    return y_cursor
+
+
+def _bloque_metadatos_portada_pdf(pdf, margin, filas, x_izq=15, x_der=160, col_w=105, alto_fila=8, font_size=12, y_offset=10):
+    """
+    Bloque de metadatos de la portada: columnas separadas radicalmente hacia
+    los márgenes de la hoja (NO centradas en un bloque angosto) -columna
+    izquierda forzada en X=`x_izq`, columna derecha forzada en X=`x_der`-.
+    Cada fila es una tupla (par_izquierdo, par_derecho); `par_derecho` puede
+    ser None para dejar esa mitad vacía (ej. la fila del Docente). Cada par
+    es (etiqueta, valor). `y_offset` baja el punto de partida del bloque
+    para separarlo del título que va justo encima.
+    """
+    pdf.ln(y_offset)
+    pdf.set_text_color(0, 0, 0)
+    for izquierda, derecha in filas:
+        y_fila = pdf.get_y()
+        for x, par in ((x_izq, izquierda), (x_der, derecha)):
+            if par is None:
+                continue
+            etiqueta, valor = par
+            pdf.set_xy(x, y_fila)
+            pdf.set_x(x)  # fuerza explícitamente el arranque de la columna en X
+            pdf.set_font('Arial', 'B', font_size)
+            ancho_etiqueta = pdf.get_string_width(etiqueta) + 2
+            pdf.cell(ancho_etiqueta, alto_fila, etiqueta, ln=0)
+            pdf.set_font('Arial', '', font_size)
+            pdf.cell(col_w - ancho_etiqueta, alto_fila, valor, ln=0)
+        pdf.set_xy(margin, y_fila + alto_fila)
+
+
+def _dibujar_cabecera_proyecto_pdf(pdf, margin):
+    """
+    Membrete institucional de la portada: logos a los costados y debajo la
+    República, el Ministerio, el nombre del plantel y la ciudad, todos
+    centrados. NO imprime el título del documento -eso lo hace el caller
+    después de su propio salto de línea, para controlar el espaciado
+    milimétrico de la portada-. Devuelve la Y donde terminó de imprimirse.
+    """
+    page_w = pdf.w
+    usable_w = page_w - (2 * margin)
+
+    logo_ministerio_w, logo_ministerio_h = 65, 26
+    logo_eep_w, logo_eep_h = 40, 40
+    logo_h_max = max(logo_ministerio_h, logo_eep_h)
+    logo_inset = 6
+    logo_ministerio = os.path.join(current_app.root_path, 'static', 'img', 'LogoMInisterioDeEducacion.png')
+    logo_eep = os.path.join(current_app.root_path, 'static', 'img', 'LogoEEP.png')
+    y_logo = margin
+    y_logo_ministerio = y_logo + (logo_h_max - logo_ministerio_h) / 2
+    y_logo_eep = y_logo + (logo_h_max - logo_eep_h) / 2
+    logo_x_izq = margin + logo_inset
+    logo_x_der = page_w - margin - logo_inset - logo_eep_w
+
+    if os.path.exists(logo_ministerio):
+        pdf.image(logo_ministerio, x=logo_x_izq, y=y_logo_ministerio, w=logo_ministerio_w, h=logo_ministerio_h, type=_tipo_imagen(logo_ministerio))
+    if os.path.exists(logo_eep):
+        pdf.image(logo_eep, x=logo_x_der, y=y_logo_eep, w=logo_eep_w, h=logo_eep_h, type=_tipo_imagen(logo_eep))
+
+    # Todo el membrete al mismo tamaño (14pt), incluida la ciudad -en negro,
+    # como el resto-, para que se lea como un bloque institucional uniforme.
+    pdf.set_xy(margin, y_logo)
+    pdf.set_font('Arial', 'B', 14)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(usable_w, 6.5, 'República Bolivariana de Venezuela', ln=2, align='C')
+    pdf.set_x(margin)
+    pdf.cell(usable_w, 6.5, 'Ministerio del Poder Popular para la Educación', ln=2, align='C')
+    pdf.set_x(margin)
+    pdf.cell(usable_w, 6.5, "Escuela de Educación Primaria Daniel O'Leary", ln=2, align='C')
+    pdf.set_x(margin)
+    pdf.set_font('Arial', '', 14)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(usable_w, 6.5, 'San Fernando-Edo Apure', ln=2, align='C')
+
+    pdf.set_xy(margin, y_logo + logo_h_max)
+    return pdf.get_y()
+
+
+def _construir_pdf_proyecto_aprendizaje(proyecto):
+    """
+    Genera el PDF oficial (Carta, horizontal) del Proyecto de Aprendizaje.
+    Paginación estricta: portada sola, narrativa sola, y por cada área DOS
+    hojas (una para la matriz de Áreas de Formación, otra -obligatoria- para
+    su Plan de Evaluación apilado), y cierre solo en la última.
+    """
+    margin = 10
+    pdf = FPDF(orientation='L', unit='mm', format='Letter')
+    pdf.set_auto_page_break(auto=True, margin=margin)
+    pdf.set_margins(margin, margin, margin)
+    usable_w = pdf.w - (2 * margin)
+
+    # Margen lateral compartido por la portada (bloque de metadatos) y la
+    # narrativa ('Diagnóstico Pedagógico' / 'Propósito Integral'), para que
+    # ambas páginas queden alineadas exactamente en el mismo margen X -una
+    # sola fuente de verdad en vez de dos números repetidos por separado-.
+    margin_narrativa = margin + 10
+    ancho_narrativa = usable_w - 2 * 10
+
+    # ── Matrícula dinámica (estudiantes activos del grado del proyecto) ──
+    estudiantes_activos = Estudiante.query.filter_by(grado_id=proyecto.grado_id, estatus='Activo').all()
+    hembras = sum(1 for e in estudiantes_activos if e.genero == 'Femenino')
+    varones = sum(1 for e in estudiantes_activos if e.genero == 'Masculino')
+    total_matricula = len(estudiantes_activos)
+
+    docente_nombre = proyecto.docente.nombre_completo if proyecto.docente else 'No asignado'
+    grado_nombre = proyecto.grado.nombre if proyecto.grado else '-'
+    fecha_inicio = proyecto.fecha_inicio.strftime('%d/%m/%Y') if proyecto.fecha_inicio else '--/--/----'
+    fecha_culminacion = proyecto.fecha_culminacion.strftime('%d/%m/%Y') if proyecto.fecha_culminacion else '--/--/----'
+
+    # ══════════════════════════ PÁGINA 1: PORTADA (exclusiva) ══════════════════════════
+    pdf.add_page()
+    pdf.set_font('Arial', '', 12)
+    _dibujar_cabecera_proyecto_pdf(pdf, margin)
+
+    # Título dinámico: si el proyecto tiene tema, se imprime SOLO el tema (en
+    # mayúsculas); el genérico 'PROYECTO DE APRENDIZAJE' solo aparece como
+    # respaldo cuando no hay tema cargado.
+    pdf.set_y(70)
+    pdf.set_x(margin)
+    pdf.set_font('Arial', 'B', 20)
+    pdf.set_text_color(0, 0, 0)
+    if proyecto.tema:
+        pdf.cell(usable_w, 10, proyecto.tema.upper(), ln=1, align='C')
+    else:
+        pdf.cell(usable_w, 10, 'PROYECTO DE APRENDIZAJE', ln=1, align='C')
+
+    # Bloque de metadatos, empujado al centro-abajo de la hoja (Y=120),
+    # independiente de dónde terminó el título, para que la portada quede
+    # repartida en cuartos: Membrete / Título / Metadatos / Firmas.
+    #
+    # Márgenes laterales: la columna izquierda arranca exactamente en
+    # `margin_narrativa` -el mismo margen X que usa 'Diagnóstico Pedagógico'
+    # en la página 2-, y la columna derecha es su espejo exacto respecto al
+    # borde de la hoja (pdf.w - margin_narrativa - col_w), de modo que el
+    # bloque completo quede tan simétrico y ancho como el de la narrativa.
+    metadatos_col_w = 100
+    x_izq_metadatos = margin_narrativa
+    x_der_metadatos = pdf.w - margin_narrativa - metadatos_col_w
+    pdf.set_y(120)
+    _bloque_metadatos_portada_pdf(pdf, margin, [
+        (('GRADO: ', grado_nombre), ('MOMENTO PEDAGÓGICO: ', proyecto.momento_pedagogico or '-')),
+        (('MATRÍCULA: ', f"H: {hembras}   V: {varones}   TOTAL: {total_matricula}"), ('FECHA DE CULMINACIÓN: ', fecha_culminacion)),
+        (('FECHA DE INICIO: ', fecha_inicio), ('DOCENTE: ', docente_nombre)),
+    ], x_izq=x_izq_metadatos, x_der=x_der_metadatos, col_w=metadatos_col_w, font_size=12, y_offset=0)
+
+    # Firmas ancladas al fondo de la hoja (posición absoluta, no relativa a
+    # dónde terminó el bloque de metadatos), para que siempre queden abajo.
+    pdf.set_y(175)
+    pdf.set_x(margin)
+    pdf.set_font('Arial', '', 10)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(80, 10, 'ENLACE PEDAGÓGICO: ____________', align='C')
+    pdf.cell(80, 10, 'DIRECTORA (E) DAISSY REYNA: ____________', align='C')
+    pdf.cell(80, 10, 'FECHA DE ENTREGA: ____________', align='C')
+
+    # ══════════════════════════ PÁGINA 2: NARRATIVA (exclusiva) ══════════════════════════
+    pdf.add_page()
+
+    # 'Diagnóstico Pedagógico' sube, más cerca del margen superior.
+    # (margin_narrativa / ancho_narrativa se definieron al inicio de la
+    # función para compartirlos con el bloque de metadatos de la portada).
+    pdf.set_y(25)
+    pdf.set_x(margin_narrativa)
+    pdf.set_font('Arial', 'B', 12)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(ancho_narrativa, 7, 'Diagnóstico Pedagógico', ln=1, align='C')
+    pdf.set_x(margin_narrativa)
+    pdf.set_font('Arial', '', 10)
+    pdf.multi_cell(ancho_narrativa, 5, proyecto.diagnostico_pedagogico or 'No especificado.', align='J')
+
+    # 'Propósito Integral' arranca bien separado del bloque anterior (buen
+    # espaciado vertical entre ambos), en Y=95.
+    pdf.set_y(95)
+    pdf.set_x(margin_narrativa)
+    pdf.set_font('Arial', 'B', 12)
+    pdf.cell(ancho_narrativa, 7, 'Propósito Integral', ln=1, align='C')
+    pdf.set_x(margin_narrativa)
+    pdf.set_font('Arial', '', 10)
+    pdf.multi_cell(ancho_narrativa, 5, proyecto.proposito_integral or 'No especificado.', align='J')
+
+    # ══════════════════════ CICLO DE ÁREAS: una página nueva por área ══════════════════════
+    # COMPONENTE +4 puntos (9->13) para que la palabra quepa en una sola
+    # línea de cabecera; se le restan a OBSERVACIONES (16->12).
+    anchos_area = [p / 100 * usable_w for p in (10, 9, 13, 14, 14, 14, 14, 12)]
+    encabezados_area = [
+        'ÁREAS DE FORMACIÓN', 'ÉNFASIS', 'COMPONENTE', 'CONTENIDOS',
+        'ESTRATEGIA PEDAGÓGICA', 'ACTIVIDADES', 'APRENDIZAJES ESPERADOS', 'OBSERVACIONES',
+    ]
+
+    anchos_eval_sup = [usable_w / 4] * 4
+    encabezados_eval_sup = ['ESTRATEGIAS', 'INDICADORES', 'TÉCNICAS', 'INSTRUMENTOS']
+
+    anchos_eval_inf = [usable_w / 3] * 3
+    encabezados_eval_inf = ['TIPOS', 'FORMAS DE PARTICIPACIÓN', 'RECURSOS']
+
+    if not proyecto.areas:
+        pdf.add_page()
+        pdf.set_x(margin)
+        pdf.set_font('Arial', 'I', 10)
+        pdf.cell(usable_w, 6, 'Este proyecto no tiene áreas de formación registradas.', ln=1)
+
+    # Fuente fija para las celdas del Plan de Evaluación (no lleva auto-escalado).
+    FONT_EVAL_DATO = ('Arial', '', 12)
+    LINE_H_EVAL = 6
+
+    limites_area = _limites_columnas_pdf(margin, anchos_area)
+    x_contenidos_inicio = limites_area[3]   # borde izquierdo de la columna CONTENIDOS
+    x_borde_derecho_area = limites_area[-1]  # borde derecho de la última columna (OBSERVACIONES)
+
+    limites_eval_sup = _limites_columnas_pdf(margin, anchos_eval_sup)
+    x_estrategias_inicio = limites_eval_sup[0]
+    x_indicadores_fin = limites_eval_sup[2]  # borde derecho de INDICADORES (antes de TÉCNICAS)
+
+    for area in proyecto.areas:
+        pdf.add_page()
+
+        # "TEMAS INDISPENSABLES" ya no es texto rojo suelto: es una celda con
+        # borde que ocupa todo el ancho de la tabla y hace de "techo" de la
+        # matriz -las cabeceras se dibujan inmediatamente debajo, sin saltos-.
+        pdf.set_x(margin)
+        pdf.set_font('Arial', 'B', 10)
+        pdf.set_text_color(0, 0, 0)
+        tema_indisp = area.tema_indispensable or 'No especificado'
+        pdf.cell(usable_w, 7, f"TEMAS INDISPENSABLES: {tema_indisp.upper()}", border=1, ln=1, align='L')
+
+        # Cabecera de la matriz (fuente más grande, 11pt) -llena mejor el espacio-.
+        pdf.set_x(margin)
+        _fila_tabla_pdf(pdf, margin, anchos_area, encabezados_area, font=('Arial', 'B', 11), alto_min=10)
+
+        # ── COMPARTIMENTOS: Área/Énfasis/Componente son UN SOLO valor por
+        # página; Contenidos y sus campos hermanos pueden ser varios ítems
+        # (uno por línea) y se dibujan como filas apiladas, cada una cerrada
+        # por una línea horizontal que va SOLO de Contenidos al borde derecho
+        # -nunca cruza sobre Área/Énfasis/Componente-. ──
+        y_inicio_datos = pdf.get_y()
+
+        # Auto-escalado de fuente según cuántos contenidos hay, para evitar
+        # desbordamientos cuando el docente carga muchos ítems.
+        contenidos_items = _dividir_items_pdf(area.contenidos)
+        if len(contenidos_items) <= 3:
+            font_area_datos = ('Arial', '', 10)
+            line_h_area = 5
+        else:
+            font_area_datos = ('Arial', '', 8)
+            line_h_area = 4.2
+
+        _imprimir_valor_columna_pdf(pdf, limites_area[0], anchos_area[0], area.area_formacion, y_inicio_datos, font_area_datos, line_h_area, y_fondo=185)
+        _imprimir_valor_columna_pdf(pdf, limites_area[1], anchos_area[1], area.enfasis, y_inicio_datos, font_area_datos, line_h_area, y_fondo=185)
+        _imprimir_valor_columna_pdf(pdf, limites_area[2], anchos_area[2], area.componente, y_inicio_datos, font_area_datos, line_h_area, y_fondo=185)
+
+        columnas_compartimento = [
+            (limites_area[3], anchos_area[3], contenidos_items),
+            (limites_area[4], anchos_area[4], _dividir_items_pdf(area.estrategia_pedagogica)),
+            (limites_area[5], anchos_area[5], _dividir_items_pdf(area.actividades)),
+            (limites_area[6], anchos_area[6], _dividir_items_pdf(area.aprendizajes_esperados)),
+            (limites_area[7], anchos_area[7], _dividir_items_pdf(area.observaciones)),
+        ]
+        _dibujar_compartimentos_pdf(pdf, y_inicio_datos, x_contenidos_inicio, x_borde_derecho_area, columnas_compartimento, font_area_datos, line_h_area)
+
+        # Cuadrícula anclada: las verticales de TODAS las columnas se dibujan
+        # desde el tope de la fila (y_inicio_datos) hasta el fondo fijo
+        # Y=185, cerrando con una horizontal completa -así Área/Énfasis/
+        # Componente se ven como una única celda alta, y toda la matriz llena
+        # la página sin importar cuánto texto real haya-.
+        pdf.set_y(y_inicio_datos)
+        _anclar_fondo_tabla_pdf(pdf, margin, anchos_area, y_fondo=185)
+
+        # Salto de página OBLIGATORIO: el Plan de Evaluación de esta área
+        # siempre arranca en una hoja nueva, separada de su matriz. Cada área
+        # ocupa entonces 2 hojas completas.
+        pdf.add_page()
+
+        pdf.set_x(margin)
+        pdf.set_font('Arial', 'B', 10)
+        pdf.cell(usable_w, 6, 'PLAN DE EVALUACIÓN', ln=1, align='C')
+
+        evaluacion = area.evaluaciones[0] if area.evaluaciones else None
+
+        if evaluacion:
+            # ── Tabla superior: Estrategias / Indicadores / Técnicas / Instrumentos.
+            # Técnicas e Instrumentos son UN SOLO valor; Estrategias e Indicadores
+            # se compartimentan igual que la matriz (línea divisoria SOLO entre
+            # Estrategias e Indicadores, sin invadir Técnicas/Instrumentos).
+            # RE-PROPORCIÓN: esta tabla ahora queda anclada hasta Y=150, dándole
+            # mucho más espacio (antes la inferior le "robaba" espacio de sobra).
+            pdf.set_x(margin)
+            _fila_tabla_pdf(pdf, margin, anchos_eval_sup, encabezados_eval_sup, font=('Arial', 'B', 11), alto_min=10)
+
+            y_inicio_sup = pdf.get_y()
+            _imprimir_valor_columna_pdf(pdf, limites_eval_sup[2], anchos_eval_sup[2], evaluacion.tecnicas_evaluacion, y_inicio_sup, FONT_EVAL_DATO, LINE_H_EVAL)
+            _imprimir_valor_columna_pdf(pdf, limites_eval_sup[3], anchos_eval_sup[3], evaluacion.instrumentos_evaluacion, y_inicio_sup, FONT_EVAL_DATO, LINE_H_EVAL)
+
+            columnas_compartimento_eval = [
+                (limites_eval_sup[0], anchos_eval_sup[0], _dividir_items_pdf(evaluacion.estrategias_evaluacion)),
+                (limites_eval_sup[1], anchos_eval_sup[1], _dividir_items_pdf(evaluacion.indicadores_evaluar)),
+            ]
+            _dibujar_compartimentos_pdf(pdf, y_inicio_sup, x_estrategias_inicio, x_indicadores_fin, columnas_compartimento_eval, FONT_EVAL_DATO, LINE_H_EVAL)
+
+            pdf.set_y(y_inicio_sup)
+            _anclar_fondo_tabla_pdf(pdf, margin, anchos_eval_sup, y_fondo=150)
+
+            # Salto fuerte: la tabla inferior arranca en Y=155 (deja aire tras
+            # el cierre en Y=150 de la tabla superior) y queda anclada hasta
+            # Y=185 -un bloque pequeño, solo para el cierre de la hoja-.
+            pdf.set_y(155)
+            pdf.set_x(margin)
+            _fila_tabla_pdf(pdf, margin, anchos_eval_inf, encabezados_eval_inf, font=('Arial', 'B', 11), alto_min=10)
+            # Sin borde inferior: las columnas quedan "abiertas" hacia abajo,
+            # limitadas solo por las verticales y el cierre final del anclaje
+            # en Y=185 -evita la raya sobrante justo debajo del texto-.
+            pdf.set_x(margin)
+            _fila_tabla_pdf(pdf, margin, anchos_eval_inf, [
+                evaluacion.tipos_evaluacion or '-',
+                evaluacion.formas_participacion or '-',
+                evaluacion.recursos_materiales or '-',
+            ], font=FONT_EVAL_DATO, borde_inferior=False)
+
+            _anclar_fondo_tabla_pdf(pdf, margin, anchos_eval_inf, y_fondo=185)
+        else:
+            pdf.set_x(margin)
+            pdf.set_font('Arial', 'I', 9)
+            pdf.cell(usable_w, 6, 'Esta área no tiene un plan de evaluación registrado.', ln=1)
+
+    # ══════════════════════════ PÁGINA FINAL: CIERRE (exclusiva) ══════════════════════════
+    pdf.add_page()
+    pdf.set_x(margin)
+    pdf.set_font('Arial', 'B', 14)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(usable_w, 8, 'CIERRE DEL PROYECTO', ln=1, align='C')
+    pdf.ln(4)
+
+    # Demostración / Dramatización / Muestra Cultural: tres cuadros grandes con
+    # borde (no texto libre). Se rellena con líneas en blanco hasta un mínimo
+    # de MIN_LINEAS para que la caja se vea "grande" aunque el texto sea corto.
+    MIN_LINEAS = 7
+    LINE_H = 5
+    for etiqueta, texto in [
+        ('Demostración', proyecto.cierre_demostracion),
+        ('Dramatización', proyecto.cierre_dramatizacion),
+        ('Muestra Cultural', proyecto.cierre_muestra),
+    ]:
+        pdf.set_x(margin)
+        pdf.set_font('Arial', 'B', 11)
+        pdf.cell(usable_w, 6, etiqueta, ln=1, align='C')
+
+        contenido = texto or 'No especificado.'
+        pdf.set_font('Arial', '', 10)
+        lineas = _dividir_texto_pdf(pdf, contenido, usable_w - 4)
+        lineas_faltantes = max(0, MIN_LINEAS - len(lineas))
+        contenido_caja = contenido + ('\n' * lineas_faltantes)
+
+        pdf.set_x(margin)
+        pdf.multi_cell(usable_w, LINE_H, contenido_caja, border=1, align='J')
+        pdf.ln(4)
+
+    return pdf
+
+
+@academico_bp.route('/proyecto_aprendizaje/pdf/<int:proyecto_id>')
+def generar_proyecto_aprendizaje_pdf(proyecto_id):
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    proyecto = ProyectoAprendizaje.query.get_or_404(proyecto_id)
+
+    es_propietario = proyecto.docente_id == session.get('usuario_id')
+    es_admin = session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)']
+    if not (es_propietario or es_admin):
+        flash('No tiene permiso para generar el PDF de este proyecto.', 'danger')
+        return redirect(url_for('academico.mi_aula'))
+
+    pdf = _construir_pdf_proyecto_aprendizaje(proyecto)
+
+    grado_txt = (proyecto.grado.nombre if proyecto.grado else 'Grado').strip().replace(' ', '_')
+    momento_txt = (proyecto.momento_pedagogico or '').strip().replace(' ', '_')
+    nombre_archivo = f"Proyecto_Aprendizaje_{grado_txt}_{momento_txt}.pdf"
+
+    response = make_response(pdf.output(dest='S').encode('latin1'))
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename="{nombre_archivo}"'
+    return response
+
+
+@academico_bp.route('/proyecto_aprendizaje/eliminar/<int:proyecto_id>', methods=['POST'])
+def eliminar_proyecto_aprendizaje(proyecto_id):
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+
+    proyecto = ProyectoAprendizaje.query.get_or_404(proyecto_id)
+
+    es_propietario = proyecto.docente_id == session.get('usuario_id')
+    es_admin = session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)']
+    if not (es_propietario or es_admin):
+        flash('No tiene permiso para eliminar este proyecto.', 'danger')
+        return redirect(url_for('academico.mi_aula'))
+
+    db.session.delete(proyecto)  # cascada: elimina también sus áreas y evaluaciones
+    db.session.commit()
+    flash('Proyecto de Aprendizaje eliminado correctamente.', 'success')
+    return redirect(url_for('academico.mi_aula'))
 
 
 @academico_bp.route('/guardar_evaluacion/<int:estudiante_id>', methods=['POST'])

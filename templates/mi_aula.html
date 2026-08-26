@@ -76,9 +76,6 @@
                     <button class="btn btn-outline-primary btn-lg shadow-sm rounded-pill px-4 fw-bold d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalConfigurarLapso" style="letter-spacing: 0.5px;">
                         <i data-lucide="calendar-range" class="me-2" style="width:20px;height:20px;"></i> Configurar Lapso
                     </button>
-                    <a href="{{ url_for('academico.crear_proyecto_aprendizaje') }}" class="btn btn-primary btn-lg shadow rounded-pill px-4 fw-bold d-flex align-items-center" style="letter-spacing: 0.5px;">
-                        <i data-lucide="clipboard-list" class="me-2" style="width:20px;height:20px;"></i> + Crear Proyecto de Aprendizaje Oficial
-                    </a>
                     <button class="btn btn-outline-primary btn-lg shadow-sm rounded-pill px-4 fw-bold d-flex align-items-center" data-bs-toggle="offcanvas" data-bs-target="#offcanvasBancoIndicadores" style="letter-spacing: 0.5px;">
                         <i data-lucide="library-big" class="me-2" style="width:20px;height:20px;"></i> Banco de Indicadores
                     </button>
@@ -90,8 +87,99 @@
             </div>
         </div>
 
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0 d-flex align-items-center" style="color: var(--on-surface);">
+                        <i data-lucide="clipboard-list" class="text-primary me-2" style="width:20px;height:20px;"></i>
+                        Proyectos de Aprendizaje Oficiales
+                    </h5>
+                    <a href="{{ url_for('academico.crear_proyecto_aprendizaje') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold d-flex align-items-center">
+                        <i data-lucide="plus" class="me-1" style="width:14px;height:14px;"></i> Nuevo Proyecto
+                    </a>
+                </div>
+                {% if proyectos_oficiales %}
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr class="text-muted small text-uppercase">
+                                <th>Tema</th>
+                                <th>Momento Pedagógico</th>
+                                <th>Fecha de Creación</th>
+                                <th>Entrega</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for proyecto in proyectos_oficiales %}
+                            <tr>
+                                <td class="fw-semibold">{{ proyecto.tema }}</td>
+                                <td>{{ proyecto.momento_pedagogico }}</td>
+                                <td>{{ proyecto.fecha_creacion.strftime('%d/%m/%Y') if proyecto.fecha_creacion else '—' }}</td>
+                                <td>
+                                    {% if proyecto.entregado %}
+                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 border border-success border-opacity-25">
+                                        <i data-lucide="check-circle-2" style="width:12px;height:12px;margin-right:4px;"></i>
+                                        Entregado a Coordinación el {{ proyecto.fecha_entrega_coordinacion.strftime('%d/%m/%Y') if proyecto.fecha_entrega_coordinacion else '—' }}
+                                    </span>
+                                    {% else %}
+                                    <form action="{{ url_for('academico.entregar_proyecto_aprendizaje', id=proyecto.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold d-inline-flex align-items-center">
+                                            <i data-lucide="check" class="me-1" style="width:14px;height:14px;"></i> Marcar como Entregado
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex align-items-center gap-1">
+                                        <a href="{{ url_for('academico.generar_proyecto_aprendizaje_pdf', proyecto_id=proyecto.id) }}" target="_blank" class="btn btn-sm btn-success rounded-pill px-3 fw-bold d-inline-flex align-items-center">
+                                            <i data-lucide="file-down" class="me-1" style="width:14px;height:14px;"></i> Generar PDF
+                                        </a>
+                                        <a href="{{ url_for('academico.editar_proyecto_aprendizaje', id=proyecto.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-bold d-inline-flex align-items-center">
+                                            <i data-lucide="pencil" class="me-1" style="width:14px;height:14px;"></i> Editar
+                                        </a>
+                                        <form id="form-eliminar-proyecto-{{ proyecto.id }}" action="{{ url_for('academico.eliminar_proyecto_aprendizaje', proyecto_id=proyecto.id) }}" method="POST" class="d-inline">
+                                            <button type="button" class="btn btn-sm btn-danger rounded-pill px-3 fw-bold d-inline-flex align-items-center" onclick="confirmarEliminarProyecto('form-eliminar-proyecto-{{ proyecto.id }}')">
+                                                <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted small mb-0">Aún no has creado ningún Proyecto de Aprendizaje oficial para este salón.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <script>
+            function confirmarEliminarProyecto(formId) {
+                Swal.fire({
+                    title: '<span class="text-danger fw-bold" style="font-size: 1.2rem;"><i class="fas fa-exclamation-triangle"></i> Confirmar eliminación</span>',
+                    html: '¿Estás seguro de que deseas eliminar este registro de proyecto?<br>Esta acción no se puede deshacer.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, borrar',
+                    cancelButtonText: 'Cancelar',
+                    reverseButtons: true,
+                    buttonsStyling: false,
+                    customClass: {
+                        confirmButton: 'btn btn-light text-danger rounded-pill px-4 ms-2 fw-bold',
+                        cancelButton: 'btn btn-outline-dark rounded-pill px-4'
+                    }
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        document.getElementById(formId).submit();
+                    }
+                });
+            }
+        </script>
+
         <div class="card border-0 shadow-sm rounded-4">
-            
+
             <div class="row g-4 px-4 pt-4 pb-2">
                 <!-- Asistencia -->
                 <div class="col-12 col-md-6 col-lg-4 mb-4">

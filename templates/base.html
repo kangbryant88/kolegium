@@ -11,6 +11,7 @@
         rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css" rel="stylesheet">
 
     <!-- Tipografía Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -93,6 +94,14 @@
                     class="sidebar-link {% if request.path == '/academico/mi_aula' %}active{% endif %}">
                     <i data-lucide="book-open"></i>
                     <span class="link-label">Mi Aula</span>
+                </a>
+                {% endif %}
+
+                {% if session.get('nombre_rol') in ['Administrador Supremo', 'Equipo Directivo (Dirección)', 'Coordinador Pedagógico', 'Administrativo'] %}
+                <a href="{{ url_for('academico.coordinacion_pedagogica') }}"
+                    class="sidebar-link {% if request.path == '/academico/coordinacion_pedagogica' %}active{% endif %}">
+                    <i data-lucide="inbox"></i>
+                    <span class="link-label">Coordinación Pedagógica</span>
                 </a>
                 {% endif %}
 

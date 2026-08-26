@@ -392,6 +392,12 @@ class ProyectoAprendizaje(db.Model):
     fecha_inicio = db.Column(db.Date, nullable=True)
     fecha_culminacion = db.Column(db.Date, nullable=True)
     fecha_entrega = db.Column(db.Date, nullable=True)
+    fecha_creacion = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # Seguimiento de la entrega física/formal a Coordinación (distinto de
+    # `fecha_entrega`, que es la fecha límite planificada por el docente).
+    entregado = db.Column(db.Boolean, default=False, nullable=False)
+    fecha_entrega_coordinacion = db.Column(db.DateTime, nullable=True)
 
     diagnostico_pedagogico = db.Column(db.Text)
     proposito_integral = db.Column(db.Text)
