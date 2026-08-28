@@ -118,7 +118,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="w-100 px-4 px-md-5">
+<div class="w-100 px-2 px-md-4 px-lg-5">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -213,9 +213,9 @@
                             </div>
                         </div>
 
-                        <div class="pa-nav-footer">
+                        <div class="pa-nav-footer flex-wrap gap-2">
                             <span></span>
-                            <button type="button" class="btn-tab-nav btn-next-tab" data-next="tab-matriz-btn">
+                            <button type="button" class="btn-tab-nav btn-next-tab w-100 w-md-auto" data-next="tab-matriz-btn">
                                 Siguiente: Matriz de Áreas <i data-lucide="arrow-right"></i>
                             </button>
                         </div>
@@ -232,11 +232,11 @@
                             <i data-lucide="plus-circle"></i> Añadir otra Área
                         </button>
 
-                        <div class="pa-nav-footer">
-                            <button type="button" class="btn-tab-nav btn-prev-tab" data-prev="tab-generales-btn">
+                        <div class="pa-nav-footer flex-wrap gap-2">
+                            <button type="button" class="btn-tab-nav btn-prev-tab w-100 w-md-auto" data-prev="tab-generales-btn">
                                 <i data-lucide="arrow-left"></i> Atrás
                             </button>
-                            <button type="button" class="btn-tab-nav btn-next-tab" data-next="tab-cierre-btn">
+                            <button type="button" class="btn-tab-nav btn-next-tab w-100 w-md-auto" data-next="tab-cierre-btn">
                                 Siguiente: Cierre <i data-lucide="arrow-right"></i>
                             </button>
                         </div>
@@ -262,15 +262,15 @@
                             </div>
                         </div>
 
-                        <div class="pa-nav-footer">
-                            <button type="button" class="btn-tab-nav btn-prev-tab" data-prev="tab-matriz-btn">
+                        <div class="pa-nav-footer flex-wrap gap-2">
+                            <button type="button" class="btn-tab-nav btn-prev-tab w-100 w-md-auto" data-prev="tab-matriz-btn">
                                 <i data-lucide="arrow-left"></i> Atrás
                             </button>
-                            <div class="d-flex align-items-center gap-2">
-                                <a href="{{ url_for('academico.mi_aula') }}" class="btn-tab-nav">
+                            <div class="d-flex flex-column-reverse flex-md-row align-items-stretch align-items-md-center gap-2 w-100 w-md-auto">
+                                <a href="{{ url_for('academico.mi_aula') }}" class="btn-tab-nav w-100 w-md-auto">
                                     <i data-lucide="arrow-left-circle"></i> Volver a Mi Aula
                                 </a>
-                                <button type="submit" class="btn-save">
+                                <button type="submit" class="btn-save w-100 w-md-auto">
                                     <i data-lucide="save"></i> {{ 'Actualizar Proyecto' if proyecto else 'Guardar Proyecto' }}
                                 </button>
                             </div>
