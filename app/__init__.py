@@ -41,7 +41,6 @@ def create_app(config_name=None):
 def _seed_datos_iniciales():
     from app.models import Rol, Usuario
 
-    db.create_all()  # Inicialización Automática: Crea las tablas faltantes si el archivo db es nuevo
     # Mapa maestro de permisos por rol
     PERMISOS_POR_ROL = {
         'Administrador Supremo': 'dashboard,planificador,asistencia,defensoria,configuracion,admin,anuncios',
