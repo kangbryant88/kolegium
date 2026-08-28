@@ -10,9 +10,10 @@ load_dotenv(env_path)
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-fallback-key-cambiar-en-produccion')
     
-    # Forzamos la ruta al archivo que está dentro de la raíz
+    # En producción (PythonAnywhere) DATABASE_URL apunta a MySQL Live. Si no
+    # existe (entorno local), cae de vuelta al SQLite de siempre.
     db_path = os.path.join(basedir, 'roboclass.db')
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + db_path
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///' + db_path)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Carpeta para guardar los documentos privados

@@ -34,6 +34,11 @@ def main():
     app = create_app()
 
     with app.app_context():
+        # Garantiza que las tablas existan en el MariaDB de producción la
+        # primera vez que se corre este script ahí (idempotente: no toca
+        # nada si ya existen).
+        db.create_all()
+
         rol = Rol.query.filter_by(nombre=ROL_NOMBRE).first()
         if not rol:
             sys.exit(
