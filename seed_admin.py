@@ -6,9 +6,10 @@ desde el resto de la app.
 Uso:
     python seed_admin.py
 
-Usa los modelos de SQLAlchemy vía create_app(), asi que escribe en lo que
-sea que SQLALCHEMY_DATABASE_URI apunte en ese momento (hoy: SQLite local
-en roboclass.db; el dia que migren a MariaDB, este script no cambia).
+Usa los modelos de SQLAlchemy vía create_app() para conectarse al SQLite
+existente (roboclass.db, local y en producción). No crea tablas ni toca
+el esquema -- solo inyecta/actualiza este usuario sobre la base de datos
+tal como está, con la matrícula real ya cargada.
 
 La contraseña se pide de forma interactiva (getpass) y nunca queda escrita
 en este archivo ni en el historial de git -- no hardcodees credenciales
@@ -34,11 +35,6 @@ def main():
     app = create_app()
 
     with app.app_context():
-        # Garantiza que las tablas existan en el MariaDB de producción la
-        # primera vez que se corre este script ahí (idempotente: no toca
-        # nada si ya existen).
-        db.create_all()
-
         rol = Rol.query.filter_by(nombre=ROL_NOMBRE).first()
         if not rol:
             sys.exit(
