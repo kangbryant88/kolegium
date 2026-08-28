@@ -23,11 +23,13 @@ def create_app(config_name=None):
     from app.web.academico import academico_bp
     from app.web.main import register_routes
     from app.api import api_bp
+    from app.api.auth import auth_api_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(academico_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(auth_api_bp)
     register_routes(app)
 
     with app.app_context():
