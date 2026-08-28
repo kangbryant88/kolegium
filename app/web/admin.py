@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from flask_mail import Message
 from werkzeug.security import generate_password_hash
-from models import db, Usuario, Rol
+from app.models import db, Usuario, Rol
 
 # Importamos 'mail' desde extensions (patrón Factory)
-from extensions import mail
+from app.extensions import mail
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 

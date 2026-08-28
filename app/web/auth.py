@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Message
-from models import db, Usuario, Rol, TokenRecuperacion
-from extensions import mail
+from app.models import db, Usuario, Rol, TokenRecuperacion
+from app.extensions import mail
 from datetime import datetime, timedelta
 import secrets
 

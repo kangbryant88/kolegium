@@ -1,7 +1,6 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
 
-db = SQLAlchemy()
+from app.extensions import db
 
 # ==========================================
 # --- MODELOS DE BASE DE DATOS ---

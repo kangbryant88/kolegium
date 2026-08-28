@@ -25,3 +25,23 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USER', 'eepdanieloleary9@gmail.com')
     MAIL_PASSWORD = os.environ.get('MAIL_PASS', '')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_USER', 'eepdanieloleary9@gmail.com')
+
+
+class DevelopmentConfig(Config):
+    DEBUG = True
+
+
+class ProductionConfig(Config):
+    DEBUG = False
+
+
+class TestingConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+
+
+config_by_name = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'testing': TestingConfig,
+}

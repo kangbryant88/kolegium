@@ -10,7 +10,7 @@ from docx import Document
 from fpdf import FPDF
 import urllib.parse
 import uuid
-from models import db, Bitacora, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Estudiante, Representante, Incidencia, AsistenciaEstudiante, AlertaDefensoria, EnlaceTemporal, SolicitudEnlace, SolicitudActualizacion, ProyectoAula, BancoIndicador, EvaluacionEstudiante, ProyectoAprendizaje, ProyectoArea, ProyectoEvaluacion
+from app.models import db, Bitacora, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Estudiante, Representante, Incidencia, AsistenciaEstudiante, AlertaDefensoria, EnlaceTemporal, SolicitudEnlace, SolicitudActualizacion, ProyectoAula, BancoIndicador, EvaluacionEstudiante, ProyectoAprendizaje, ProyectoArea, ProyectoEvaluacion
 
 academico_bp = Blueprint('academico', __name__, url_prefix='/academico')
 
