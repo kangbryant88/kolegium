@@ -9,7 +9,11 @@ load_dotenv(env_path)
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-fallback-key-cambiar-en-produccion')
-    
+
+    # Token de acceso para la API móvil (cabecera "Authorization: Bearer <token>").
+    # Debe coincidir con el token que /api/v1/auth/login entrega a la app.
+    APP_API_TOKEN = os.environ.get('APP_API_TOKEN', 'token_temporal_123')
+
     # Forzamos la ruta al archivo que está dentro de la raíz
     db_path = os.path.join(basedir, 'roboclass.db')
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + db_path

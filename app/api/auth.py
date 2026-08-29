@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 from werkzeug.security import check_password_hash
 
 from app.models import Usuario
@@ -21,5 +21,5 @@ def login():
         id=usuario.id,
         nombre_completo=usuario.nombre_completo,
         username=usuario.username,
-        token='token_temporal_123',
+        token=current_app.config['APP_API_TOKEN'],
     ), 200
