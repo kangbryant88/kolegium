@@ -6,7 +6,7 @@ lugar de render_template. Protegida con el token de acceso de la app.
 """
 from datetime import date, timedelta
 
-from flask import jsonify
+from flask import jsonify, request
 
 from app.api import api_bp
 from app.api.security import token_required
@@ -16,6 +16,8 @@ from app.models import (
     Grado,
     Incidencia,
     ProyectoAprendizaje,
+    Usuario,
+    db,
 )
 
 # Mismas categorías que usa la vista web.
@@ -142,3 +144,105 @@ def mi_aula(grado_id):
             for p in proyectos_oficiales
         ],
     ), 200
+
+
+@api_bp.route('/mi_aula/<int:grado_id>/asistencia', methods=['POST'])
+@token_required
+def guardar_asistencia(grado_id):
+    """Pase de asistencia del día.
+
+    Body: ``{"presentes": [id, id, ...]}``. Misma lógica de upsert por fecha
+    que ``academico.guardar_asistencia_aula``: los estudiantes del grado que
+    no estén en la lista quedan como 'Ausente'.
+    """
+    grado = Grado.query.get(grado_id)
+    if grado is None:
+        return jsonify(error='Grado no encontrado.'), 404
+
+    data = request.get_json(silent=True) or {}
+    presentes = data.get('presentes')
+    if not isinstance(presentes, list):
+        return jsonify(error='Se esperaba {"presentes": [ids...]}.'), 400
+    try:
+        presentes_ids = {int(x) for x in presentes}
+    except (TypeError, ValueError):
+        return jsonify(error='"presentes" debe contener IDs numéricos.'), 400
+
+    estudiantes = Estudiante.query.filter_by(grado_id=grado.id).all()
+    fecha_hoy = date.today()
+
+    for est in estudiantes:
+        estatus = 'Presente' if est.id in presentes_ids else 'Ausente'
+        registro = AsistenciaEstudiante.query.filter_by(
+            estudiante_id=est.id, fecha=fecha_hoy
+        ).first()
+        if registro:
+            registro.estatus = estatus
+            registro.grado_id = grado.id
+        else:
+            db.session.add(AsistenciaEstudiante(
+                fecha=fecha_hoy,
+                estatus=estatus,
+                estudiante_id=est.id,
+                grado_id=grado.id,
+            ))
+
+    db.session.commit()
+    return jsonify(
+        ok=True,
+        fecha=fecha_hoy.isoformat(),
+        total=len(estudiantes),
+        presentes=sum(1 for e in estudiantes if e.id in presentes_ids),
+    ), 200
+
+
+@api_bp.route('/mi_aula/incidencia', methods=['POST'])
+@token_required
+def agregar_incidencia():
+    """Registra una incidencia ('Añadir Nota').
+
+    Body: ``{"estudiante_id", "grado_id", "categoria", "descripcion"}``.
+    Misma lógica que ``academico.agregar_incidencia``.
+    """
+    data = request.get_json(silent=True) or {}
+    estudiante_id = data.get('estudiante_id')
+    grado_id = data.get('grado_id')
+    categoria = (data.get('categoria') or '').strip()
+    descripcion = (data.get('descripcion') or '').strip()
+
+    if not estudiante_id or not categoria or not descripcion:
+        return jsonify(
+            error='Faltan campos: estudiante_id, categoria y descripcion.'
+        ), 400
+    if categoria not in CATEGORIAS_INCIDENCIA:
+        return jsonify(
+            error='Categoría inválida. Use una de: '
+                  + ', '.join(CATEGORIAS_INCIDENCIA) + '.'
+        ), 400
+
+    estudiante = Estudiante.query.get(estudiante_id)
+    if estudiante is None:
+        return jsonify(error='Estudiante no encontrado.'), 404
+
+    # La API aún no lleva identidad de usuario: la incidencia se atribuye al
+    # docente titular del grado (o al primer usuario del sistema como último
+    # recurso), ya que Incidencia.usuario_id es obligatorio.
+    autor_id = None
+    grado = Grado.query.get(grado_id) if grado_id else None
+    if grado and grado.docentes:
+        autor_id = grado.docentes[0].id
+    if autor_id is None:
+        primer_usuario = Usuario.query.order_by(Usuario.id.asc()).first()
+        autor_id = primer_usuario.id if primer_usuario else None
+    if autor_id is None:
+        return jsonify(error='No hay un usuario al cual atribuir la nota.'), 500
+
+    incidencia = Incidencia(
+        categoria=categoria,
+        descripcion=descripcion,
+        estudiante_id=estudiante.id,
+        usuario_id=autor_id,
+    )
+    db.session.add(incidencia)
+    db.session.commit()
+    return jsonify(ok=True, id=incidencia.id), 200
