@@ -2861,3 +2861,76 @@ def eliminar_alerta(id):
     if referer and "defensoria" in referer and "alertas_defensoria" not in referer:
         return redirect(url_for('defensoria'))
     return redirect(url_for('academico.alertas_defensoria'))
+
+
+# ==========================================
+# --- REPORTE DOTACIÓN DE UNIFORMES ---
+# ==========================================
+
+@academico_bp.route('/reporte_dotacion')
+def reporte_dotacion():
+    """Genera el reporte de solicitud de dotación de uniformes y calzados."""
+    if not session.get('logeado'):
+        return redirect(url_for('auth.login'))
+
+    # Obtener todos los estudiantes activos
+    estudiantes_activos = Estudiante.query.filter_by(estatus='Activo').all()
+
+    # Estructuras: { talla: {'V': n, 'H': n} }
+    franelas  = {}
+    pantalones = {}
+    calzados  = {}
+
+    matricula_varones = 0
+    matricula_hembras = 0
+
+    def sort_key(t):
+        try:
+            return (0, float(t))
+        except (ValueError, TypeError):
+            return (1, str(t))
+
+    for est in estudiantes_activos:
+        gen = (est.genero or '').strip().lower()
+        es_varon = gen in ['masculino', 'varones', 'varon', 'varón', 'masc', 'm']
+        genero_key = 'V' if es_varon else 'H'
+
+        if es_varon:
+            matricula_varones += 1
+        else:
+            matricula_hembras += 1
+
+        # --- Franela (talla_camisa) ---
+        tf = (est.talla_camisa or '').strip() or 'S/T'
+        if tf not in franelas:
+            franelas[tf] = {'V': 0, 'H': 0}
+        franelas[tf][genero_key] += 1
+
+        # --- Pantalón (talla_pantalon) ---
+        tp = (est.talla_pantalon or '').strip() or 'S/T'
+        if tp not in pantalones:
+            pantalones[tp] = {'V': 0, 'H': 0}
+        pantalones[tp][genero_key] += 1
+
+        # --- Calzado ---
+        tz = (est.calzado or '').strip() or 'S/T'
+        if tz not in calzados:
+            calzados[tz] = {'V': 0, 'H': 0}
+        calzados[tz][genero_key] += 1
+
+    # Ordenar tallas numéricamente
+    franelas   = dict(sorted(franelas.items(),   key=lambda x: sort_key(x[0])))
+    pantalones = dict(sorted(pantalones.items(), key=lambda x: sort_key(x[0])))
+    calzados   = dict(sorted(calzados.items(),   key=lambda x: sort_key(x[0])))
+
+    matricula_general = matricula_varones + matricula_hembras
+
+    return render_template(
+        'reporte_dotacion.html',
+        matricula_general=matricula_general,
+        matricula_varones=matricula_varones,
+        matricula_hembras=matricula_hembras,
+        franelas=franelas,
+        pantalones=pantalones,
+        calzados=calzados,
+    )

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medidas de Uniforme y Calzados - E.E.P. Daniel O'Leary</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; background: #f0f0f0; color: #000; padding: 20px; }
+        .page-wrapper { max-width: 980px; margin: 0 auto; background: #fff; padding: 20px 30px 30px; border: 1px solid #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+
+        /* CABECERA */
+        .cabecera { text-align: center; margin-bottom: 14px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .cabecera p { line-height: 1.6; font-size: 10pt; }
+        .cabecera .titulo-principal { font-size: 13pt; font-weight: bold; text-transform: uppercase; margin-top: 4px; }
+        .cabecera .sub-titulo { font-size: 11.5pt; font-weight: bold; text-transform: uppercase; margin-top: 2px; }
+        .matricula-fila { display: flex; justify-content: center; gap: 40px; margin-top: 8px; font-size: 9.5pt; }
+        .matricula-fila span { font-weight: bold; font-size: 10.5pt; }
+
+        /* TABLAS */
+        .seccion { margin-bottom: 22px; }
+        .seccion-titulo { font-size: 11pt; font-weight: bold; text-transform: uppercase; background: #000; color: #fff; padding: 3px 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+        th, td { border: 1px solid #000; padding: 4px 6px; text-align: center; vertical-align: middle; }
+        thead th { background: #ddd; font-weight: bold; text-transform: uppercase; font-size: 9pt; }
+        tbody tr:nth-child(even) { background: #f9f9f9; }
+        .col-talla { font-weight: bold; background: #eee; width: 70px; }
+        .col-group { background: #bbb; font-weight: bold; }
+        .col-v { background: #dce8ff; }
+        .col-h { background: #ffe0ec; }
+        tfoot td { background: #ddd; font-weight: bold; }
+
+        /* EDITABLE */
+        span.editable { display: inline-block; min-width: 26px; padding: 1px 3px; background-color: #fffac9; border-radius: 2px; cursor: text; outline: none; }
+        span.editable:focus { background-color: #fff17a; box-shadow: 0 0 0 2px rgba(255,200,0,0.55); }
+
+        /* BOTON */
+        .btn-imprimir { display: block; margin: 0 auto 14px; padding: 8px 24px; background: #1a73e8; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; font-family: Arial, Helvetica, sans-serif; }
+        .btn-imprimir:hover { background: #1558b0; }
+        .hint-editable { text-align: center; font-size: 9pt; color: #555; margin-bottom: 14px; }
+        .hint-editable em { display: inline-block; background: #fffac9; padding: 1px 6px; border-radius: 2px; font-style: normal; font-weight: bold; }
+
+        /* FIRMAS */
+        .firma-section { margin-top: 40px; display: flex; justify-content: space-around; gap: 30px; }
+        .firma-box { text-align: center; flex: 1; }
+        .firma-line { border-top: 1px solid #000; margin: 0 10px 4px; padding-top: 4px; }
+        .firma-cargo { font-size: 9pt; text-transform: uppercase; }
+
+        /* IMPRESION */
+        @media print {
+            body { background: #fff; padding: 0; font-size: 10pt; }
+            .page-wrapper { max-width: 100%; border: none; box-shadow: none; padding: 0; }
+            .btn-imprimir, .hint-editable { display: none !important; }
+            span.editable { background-color: transparent !important; box-shadow: none !important; }
+            tr { page-break-inside: avoid; }
+            .seccion { page-break-inside: avoid; }
+            .col-v { background: transparent; }
+            .col-h { background: transparent; }
+        }
+    </style>
+</head>
+<body>
+<div class="page-wrapper">
+
+    <button class="btn-imprimir" onclick="window.print()">&#128424; Imprimir / Guardar como PDF</button>
+    <p class="hint-editable">Los valores con fondo <em>amarillo</em> son editables. Haz clic para corregir antes de imprimir.</p>
+
+    <!-- CABECERA -->
+    <div class="cabecera">
+        <p>REP&#218;BLICA BOLIVARIANA DE VENEZUELA</p>
+        <p>MINISTERIO DEL PODER POPULAR PARA LA EDUCACI&#211;N</p>
+        <p class="titulo-principal">E.E.P. DANIEL O&#39;LEARY</p>
+        <p class="sub-titulo">MEDIDAS DE UNIFORME Y CALZADOS</p>
+        <div class="matricula-fila">
+            <div>Matr&#237;cula General: <span contenteditable="true" class="editable">{{ matricula_general }}</span></div>
+            <div>Varones: <span contenteditable="true" class="editable">{{ matricula_varones }}</span></div>
+            <div>Hembras: <span contenteditable="true" class="editable">{{ matricula_hembras }}</span></div>
+        </div>
+    </div>
+
+    <!-- TABLA FRANELAS -->
+    <div class="seccion">
+        <div class="seccion-titulo">FRANELAS (TALLA CAMISA)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th rowspan="2" class="col-talla">TALLA</th>
+                    {% for talla in ['6', '8', '10', '12', '14', '16'] %}
+                    <th colspan="2" class="col-group">{{ talla }}</th>
+                    {% endfor %}
+                    {% if franelas %}
+                        {% for talla in franelas if talla not in ['6', '8', '10', '12', '14', '16'] %}
+                        <th colspan="2" class="col-group">{{ talla }}</th>
+                        {% endfor %}
+                    {% endif %}
+                    <th colspan="2" class="col-group">TOTAL</th>
+                </tr>
+                <tr>
+                    {% for talla in ['6', '8', '10', '12', '14', '16'] %}
+                    <th class="col-v">V</th><th class="col-h">H</th>
+                    {% endfor %}
+                    {% if franelas %}
+                        {% for talla in franelas if talla not in ['6', '8', '10', '12', '14', '16'] %}
+                        <th class="col-v">V</th><th class="col-h">H</th>
+                        {% endfor %}
+                    {% endif %}
+                    <th class="col-v">V</th><th class="col-h">H</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="col-talla">CANT.</td>
+                    {% for talla in ['6', '8', '10', '12', '14', '16'] %}
+                    <td class="col-v"><span contenteditable="true" class="editable">{{ franelas[talla]['V'] if talla in franelas else 0 }}</span></td>
+                    <td class="col-h"><span contenteditable="true" class="editable">{{ franelas[talla]['H'] if talla in franelas else 0 }}</span></td>
+                    {% endfor %}
+                    {% if franelas %}
+                        {% for talla, datos in franelas.items() if talla not in ['6', '8', '10', '12', '14', '16'] %}
+                        <td class="col-v"><span contenteditable="true" class="editable">{{ datos['V'] }}</span></td>
+                        <td class="col-h"><span contenteditable="true" class="editable">{{ datos['H'] }}</span></td>
+                        {% endfor %}
+                    {% endif %}
+                    <td class="col-v"><span contenteditable="true" class="editable">{{ franelas.values()|map(attribute='V')|sum }}</span></td>
+                    <td class="col-h"><span contenteditable="true" class="editable">{{ franelas.values()|map(attribute='H')|sum }}</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- TABLA PANTALONES -->
+    <div class="seccion">
+        <div class="seccion-titulo">PANTALONES (TALLA)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th rowspan="2" class="col-talla">TALLA</th>
+                    {% for talla in ['6', '8', '10', '12', '14', '16'] %}
+                    <th colspan="2" class="col-group">{{ talla }}</th>
+                    {% endfor %}
+                    {% if pantalones %}
+                        {% for talla in pantalones if talla not in ['6', '8', '10', '12', '14', '16'] %}
+                        <th colspan="2" class="col-group">{{ talla }}</th>
+                        {% endfor %}
+                    {% endif %}
+                    <th colspan="2" class="col-group">TOTAL</th>
+                </tr>
+                <tr>
+                    {% for talla in ['6', '8', '10', '12', '14', '16'] %}
+                    <th class="col-v">V</th><th class="col-h">H</th>
+                    {% endfor %}
+                    {% if pantalones %}
+                        {% for talla in pantalones if talla not in ['6', '8', '10', '12', '14', '16'] %}
+                        <th class="col-v">V</th><th class="col-h">H</th>
+                        {% endfor %}
+                    {% endif %}
+                    <th class="col-v">V</th><th class="col-h">H</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="col-talla">CANT.</td>
+                    {% for talla in ['6', '8', '10', '12', '14', '16'] %}
+                    <td class="col-v"><span contenteditable="true" class="editable">{{ pantalones[talla]['V'] if talla in pantalones else 0 }}</span></td>
+                    <td class="col-h"><span contenteditable="true" class="editable">{{ pantalones[talla]['H'] if talla in pantalones else 0 }}</span></td>
+                    {% endfor %}
+                    {% if pantalones %}
+                        {% for talla, datos in pantalones.items() if talla not in ['6', '8', '10', '12', '14', '16'] %}
+                        <td class="col-v"><span contenteditable="true" class="editable">{{ datos['V'] }}</span></td>
+                        <td class="col-h"><span contenteditable="true" class="editable">{{ datos['H'] }}</span></td>
+                        {% endfor %}
+                    {% endif %}
+                    <td class="col-v"><span contenteditable="true" class="editable">{{ pantalones.values()|map(attribute='V')|sum }}</span></td>
+                    <td class="col-h"><span contenteditable="true" class="editable">{{ pantalones.values()|map(attribute='H')|sum }}</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- TABLA CALZADOS (tallas dinámicas desde BD) -->
+    <div class="seccion">
+        <div class="seccion-titulo">CALZADOS (TALLA / N&#218;MERO)</div>
+        {% if calzados %}
+        <table>
+            <thead>
+                <tr>
+                    <th rowspan="2" class="col-talla">TALLA</th>
+                    {% for talla in calzados %}
+                    <th colspan="2" class="col-group">{{ talla }}</th>
+                    {% endfor %}
+                    <th colspan="2" class="col-group">TOTAL</th>
+                </tr>
+                <tr>
+                    {% for talla in calzados %}
+                    <th class="col-v">V</th><th class="col-h">H</th>
+                    {% endfor %}
+                    <th class="col-v">V</th><th class="col-h">H</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="col-talla">CANT.</td>
+                    {% for talla, datos in calzados.items() %}
+                    <td class="col-v"><span contenteditable="true" class="editable">{{ datos['V'] }}</span></td>
+                    <td class="col-h"><span contenteditable="true" class="editable">{{ datos['H'] }}</span></td>
+                    {% endfor %}
+                    <td class="col-v"><span contenteditable="true" class="editable">{{ calzados.values()|map(attribute='V')|sum }}</span></td>
+                    <td class="col-h"><span contenteditable="true" class="editable">{{ calzados.values()|map(attribute='H')|sum }}</span></td>
+                </tr>
+            </tbody>
+        </table>
+        {% else %}
+        <p style="padding:8px; font-style:italic;">Sin datos de calzado registrados.</p>
+        {% endif %}
+    </div>
+
+    <!-- RESUMEN GENERAL -->
+    <div class="seccion">
+        <div class="seccion-titulo">RESUMEN GENERAL</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>CONCEPTO</th>
+                    <th class="col-v">VARONES (V)</th>
+                    <th class="col-h">HEMBRAS (H)</th>
+                    <th>TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight:bold; text-align:left; padding-left:10px;">Franelas</td>
+                    <td class="col-v"><span contenteditable="true" class="editable">{{ franelas.values()|map(attribute='V')|sum }}</span></td>
+                    <td class="col-h"><span contenteditable="true" class="editable">{{ franelas.values()|map(attribute='H')|sum }}</span></td>
+                    <td><span contenteditable="true" class="editable">{{ (franelas.values()|map(attribute='V')|sum) + (franelas.values()|map(attribute='H')|sum) }}</span></td>
+                </tr>
+                <tr>
+                    <td style="font-weight:bold; text-align:left; padding-left:10px;">Pantalones</td>
+                    <td class="col-v"><span contenteditable="true" class="editable">{{ pantalones.values()|map(attribute='V')|sum }}</span></td>
+                    <td class="col-h"><span contenteditable="true" class="editable">{{ pantalones.values()|map(attribute='H')|sum }}</span></td>
+                    <td><span contenteditable="true" class="editable">{{ (pantalones.values()|map(attribute='V')|sum) + (pantalones.values()|map(attribute='H')|sum) }}</span></td>
+                </tr>
+                <tr>
+                    <td style="font-weight:bold; text-align:left; padding-left:10px;">Calzados</td>
+                    <td class="col-v"><span contenteditable="true" class="editable">{{ calzados.values()|map(attribute='V')|sum }}</span></td>
+                    <td class="col-h"><span contenteditable="true" class="editable">{{ calzados.values()|map(attribute='H')|sum }}</span></td>
+                    <td><span contenteditable="true" class="editable">{{ (calzados.values()|map(attribute='V')|sum) + (calzados.values()|map(attribute='H')|sum) }}</span></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td style="text-align:left; padding-left:10px;">MAT&#205;CULA GENERAL</td>
+                    <td class="col-v"><span contenteditable="true" class="editable">{{ matricula_varones }}</span></td>
+                    <td class="col-h"><span contenteditable="true" class="editable">{{ matricula_hembras }}</span></td>
+                    <td><span contenteditable="true" class="editable">{{ matricula_general }}</span></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+</div>
+</body>
+</html>
