@@ -12,33 +12,51 @@ auth_bp = Blueprint('auth', __name__)
 def login():
     if request.method == 'POST':
         username_limpio = request.form['username'].strip().lower()
+        password_ingresada = request.form['password']
         u = Usuario.query.filter_by(username=username_limpio).first()
-        if u and check_password_hash(u.password, request.form['password']):
+
+        if not u:
+            # Intentar búsqueda sin forzar minúsculas (por usuarios registrados antes del cambio)
+            u = Usuario.query.filter(
+                db.func.lower(Usuario.username) == username_limpio
+            ).first()
+
+        if u:
+            if not check_password_hash(u.password, password_ingresada):
+                print(f"[LOGIN FAIL] Usuario '{username_limpio}' — contraseña incorrecta.")
+                return render_template('login.html', error='Credenciales incorrectas.')
+            if not u.activo:
+                print(f"[LOGIN FAIL] Usuario '{username_limpio}' — cuenta inactiva.")
+                return render_template('login.html', error='Tu cuenta ha sido desactivada. Contacta al administrador.')
+            # --- Login exitoso ---
             session.update({
-                'logeado': True, 'usuario_id': u.id, 'username': u.username, 
+                'logeado': True, 'usuario_id': u.id, 'username': u.username,
                 'nombre_completo': u.nombre_completo, 'area_trabajo': u.area_trabajo,
                 'rol_id': u.rol_id, 'foto_perfil_path': u.foto_perfil_path,
                 'departamento_asignado': u.departamento_asignado
             })
             if u.rol_info:
                 session['permisos'], session['nombre_rol'] = u.rol_info.permisos, u.rol_info.nombre
-                
+
                 # Ajustes dinámicos por departamento
                 if u.rol_info.nombre == 'Docente Especialista' and u.departamento_asignado == 'CRA':
                     session['permisos'] = 'dashboard_general,planificador,asistencia,cra'
                 elif u.rol_info.nombre == 'Administrativo' and u.departamento_asignado == 'Defensoría':
                     session['permisos'] = 'dashboard_general,planificador,asistencia,defensoria'
                 elif u.rol_info.nombre == 'Administrativo' and u.departamento_asignado == 'Dirección':
-                    # Dirección admin gets specific limited base permissions (gestion_personal is handled explicitly in templates)
                     session['permisos'] = 'dashboard_general,asistencia,planificador'
 
                 if u.rol_info.nombre in ['Obrero', 'Personal de Cocina']:
                     return redirect(url_for('portal_trabajador'))
+                print(f"[LOGIN OK] Usuario '{u.username}' — rol: {u.rol_info.nombre}")
                 return redirect(url_for('index'))
             session['permisos'], session['nombre_rol'] = '', 'En Espera'
             return redirect(url_for('auth.en_espera'))
+
+        print(f"[LOGIN FAIL] Usuario '{username_limpio}' — no existe en la base de datos.")
         return render_template('login.html', error='Credenciales incorrectas.')
     return render_template('login.html')
+
 
 @auth_bp.route('/registro', methods=['GET', 'POST'])
 def registro():
