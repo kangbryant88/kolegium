@@ -71,6 +71,7 @@
         <p>MINISTERIO DEL PODER POPULAR PARA LA EDUCACI&#211;N</p>
         <p class="titulo-principal">E.E.P. DANIEL O&#39;LEARY</p>
         <p class="sub-titulo">MEDIDAS DE UNIFORME Y CALZADOS</p>
+        {% if grado %}<p style="font-size: 11pt; font-weight: bold; margin-top: 4px;">GRADO / SECCI&#211;N: {{ grado.nombre }}</p>{% endif %}
         <div class="matricula-fila">
             <div>Matr&#237;cula General: <span contenteditable="true" class="editable">{{ matricula_general }}</span></div>
             <div>Varones: <span contenteditable="true" class="editable">{{ matricula_varones }}</span></div>

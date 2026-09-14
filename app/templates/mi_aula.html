@@ -89,7 +89,7 @@
                         <i data-lucide="calendar-range" class="me-2" style="width:20px;height:20px;"></i> Configurar
                         Lapso
                     </button>
-                    <a href="{{ url_for('academico.reporte_dotacion') }}" target="_blank"
+                    <a href="{{ url_for('academico.reporte_dotacion', grado_id=grado.id) }}" target="_blank"
                         class="btn btn-outline-info btn-lg shadow-sm rounded-pill px-4 fw-bold d-flex align-items-center"
                         style="letter-spacing: 0.5px;">
                         <i data-lucide="clipboard-list" class="me-2" style="width:20px;height:20px;"></i> Reporte de

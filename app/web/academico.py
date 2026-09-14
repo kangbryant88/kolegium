@@ -2873,8 +2873,14 @@ def reporte_dotacion():
     if not session.get('logeado'):
         return redirect(url_for('auth.login'))
 
-    # Obtener todos los estudiantes activos
-    estudiantes_activos = Estudiante.query.filter_by(estatus='Activo').all()
+    grado_id = request.args.get('grado_id', type=int)
+    grado = Grado.query.get(grado_id) if grado_id else None
+
+    # Filtrar estudiantes activos por salón si se especificó grado_id
+    query = Estudiante.query.filter_by(estatus='Activo')
+    if grado_id:
+        query = query.filter_by(grado_id=grado_id)
+    estudiantes_activos = query.all()
 
     # Estructuras: { talla: {'V': n, 'H': n} }
     franelas  = {}
@@ -2927,6 +2933,7 @@ def reporte_dotacion():
 
     return render_template(
         'reporte_dotacion.html',
+        grado=grado,
         matricula_general=matricula_general,
         matricula_varones=matricula_varones,
         matricula_hembras=matricula_hembras,
