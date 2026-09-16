@@ -774,7 +774,7 @@ def descargar_inscripcion_inicial(grado_id):
     if not session.get('logeado'): return redirect(url_for('auth.login'))
     
     grado = Grado.query.get_or_404(grado_id)
-    estudiantes = Estudiante.query.filter_by(grado_id=grado.id).order_by(Estudiante.nombre_completo.asc()).all()
+    estudiantes = Estudiante.query.filter_by(grado_id=grado.id, estatus='Activo').order_by(Estudiante.nombre_completo.asc()).all()
     
     docente_nombre = ", ".join([d.nombre_completo for d in grado.docentes]) if grado.docentes else "No asignado"
     
