@@ -166,7 +166,7 @@ def resetear_password(id):
         return redirect(url_for('admin.admin_usuarios'))
     
     # Establecer contraseña temporal
-    clave_temporal = 'Kolegium2025'
+    clave_temporal = 'kolegium2025'
     usuario.password = generate_password_hash(clave_temporal, method='pbkdf2:sha256')
     db.session.commit()
     
