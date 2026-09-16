@@ -779,16 +779,18 @@ def descargar_inscripcion_inicial(grado_id):
     docente_nombre = ", ".join([d.nombre_completo for d in grado.docentes]) if grado.docentes else "No asignado"
     
     pdf = FPDF(orientation='L', unit='mm', format='Legal')
+    pdf.set_auto_page_break(auto=True, margin=5)
+    pdf.set_margins(left=5, top=5, right=5)
     pdf.add_page()
     
     # Membrete Oficial
-    pdf.set_font('Arial', 'B', 12)
-    pdf.cell(330, 7, f"INSCRIPCIÓN INICIAL - {date.today().year}", ln=1, align='C')
-    pdf.set_font('Arial', 'B', 9)
-    pdf.cell(330, 5, f"Grado y Sección: {grado.nombre} | Docente: {docente_nombre}", ln=1, align='C')
-    pdf.ln(5)
+    pdf.set_font('Arial', 'B', 11)
+    pdf.cell(345, 6, f"INSCRIPCIÓN INICIAL - {date.today().year}", ln=1, align='C')
+    pdf.set_font('Arial', 'B', 8)
+    pdf.cell(345, 4, f"Grado y Sección: {grado.nombre} | Docente: {docente_nombre}", ln=1, align='C')
+    pdf.ln(3)
     
-    pdf.set_font('Arial', 'B', 7)
+    pdf.set_font('Arial', 'B', 6)
     
     # Definición de anchos de las 19 columnas (~335mm disponibles, sumaremos 332)
     w = [6, 38, 16, 14, 8, 8, 24, 8, 38, 17, 18, 50, 45, 7, 7, 7, 7, 8, 8]
@@ -801,20 +803,22 @@ def descargar_inscripcion_inicial(grado_id):
     
     headers = ["N°", "Apellidos y Nombres", "C.I. / C.E.", "F. Nac.", "Edad", "Sexo", "Procedencia", "Repet.", "Representante", "C.I. Rep.", "Teléfono", "Correo Representante", "Dirección Habitación", "Lit.", "Talla", "Peso", "Calz.", "T. Cam.", "T. Pan."]
     for i in range(len(headers)):
-        pdf.cell(w[i], 6, headers[i], border=1, align='C')
+        pdf.cell(w[i], 5, headers[i], border=1, align='C')
     pdf.ln()
     
+    ROW_H = 5  # Altura de cada fila de datos
+    
     def imprimir_celda_ajustada(ancho, texto, alineacion='L'):
-        tamano_original = 7
+        tamano_original = 6.5
         tamano_actual = tamano_original
         pdf.set_font_size(tamano_actual)
         while pdf.get_string_width(texto) > (ancho - 1) and tamano_actual > 3:
             tamano_actual -= 0.5
             pdf.set_font_size(tamano_actual)
-        pdf.cell(ancho, 6, texto, border=1, align=alineacion)
+        pdf.cell(ancho, ROW_H, texto, border=1, align=alineacion)
         pdf.set_font_size(tamano_original)
 
-    pdf.set_font('Arial', '', 7)
+    pdf.set_font('Arial', '', 6.5)
     for i, est in enumerate(estudiantes, 1):
         rep_nombre = est.representante_info.nombre_completo if est.representante_info else "Sin registro"
         rep_ci = est.representante_info.cedula if est.representante_info else "Sin registro"
@@ -829,25 +833,25 @@ def descargar_inscripcion_inicial(grado_id):
         proc = est.plantel_procedencia or est.procedencia or est.institucion_procedencia
         proc_str = proc if proc else "Ninguna"
         
-        pdf.cell(w[0], 6, str(i), border=1, align='C')
+        pdf.cell(w[0], ROW_H, str(i), border=1, align='C')
         imprimir_celda_ajustada(w[1], nombre_str, 'L')
-        pdf.cell(w[2], 6, str(est.cedula_escolar), border=1, align='C')
-        pdf.cell(w[3], 6, est.fecha_nacimiento.strftime('%d/%m/%y') if est.fecha_nacimiento else 'S/F', border=1, align='C')
-        pdf.cell(w[4], 6, calc_edad(est.fecha_nacimiento), border=1, align='C')
-        pdf.cell(w[5], 6, "M" if est.genero == "Masculino" else ("F" if est.genero == "Femenino" else "-"), border=1, align='C')
+        pdf.cell(w[2], ROW_H, str(est.cedula_escolar), border=1, align='C')
+        pdf.cell(w[3], ROW_H, est.fecha_nacimiento.strftime('%d/%m/%y') if est.fecha_nacimiento else 'S/F', border=1, align='C')
+        pdf.cell(w[4], ROW_H, calc_edad(est.fecha_nacimiento), border=1, align='C')
+        pdf.cell(w[5], ROW_H, "M" if est.genero == "Masculino" else ("F" if est.genero == "Femenino" else "-"), border=1, align='C')
         imprimir_celda_ajustada(w[6], proc_str, 'L')
-        pdf.cell(w[7], 6, "Sí" if est.es_repetidor else "No", border=1, align='C')
+        pdf.cell(w[7], ROW_H, "Sí" if est.es_repetidor else "No", border=1, align='C')
         imprimir_celda_ajustada(w[8], rep_str, 'L')
-        pdf.cell(w[9], 6, str(rep_ci), border=1, align='C')
-        pdf.cell(w[10], 6, rep_tlf, border=1, align='C')
+        pdf.cell(w[9], ROW_H, str(rep_ci), border=1, align='C')
+        pdf.cell(w[10], ROW_H, rep_tlf, border=1, align='C')
         imprimir_celda_ajustada(w[11], email_str, 'L')
         imprimir_celda_ajustada(w[12], dir_str, 'L')
-        pdf.cell(w[13], 6, est.literal_escolar or est.literal or "-", border=1, align='C')
-        pdf.cell(w[14], 6, f"{est.talla or '-'}", border=1, align='C')
-        pdf.cell(w[15], 6, f"{est.peso or '-'}", border=1, align='C')
-        pdf.cell(w[16], 6, str(est.calzado or '-'), border=1, align='C')
-        pdf.cell(w[17], 6, str(est.talla_camisa or '-'), border=1, align='C')
-        pdf.cell(w[18], 6, str(est.talla_pantalon or '-'), border=1, align='C')
+        pdf.cell(w[13], ROW_H, est.literal_escolar or est.literal or "-", border=1, align='C')
+        pdf.cell(w[14], ROW_H, f"{est.talla or '-'}", border=1, align='C')
+        pdf.cell(w[15], ROW_H, f"{est.peso or '-'}", border=1, align='C')
+        pdf.cell(w[16], ROW_H, str(est.calzado or '-'), border=1, align='C')
+        pdf.cell(w[17], ROW_H, str(est.talla_camisa or '-'), border=1, align='C')
+        pdf.cell(w[18], ROW_H, str(est.talla_pantalon or '-'), border=1, align='C')
         pdf.ln()
 
     from flask import make_response
