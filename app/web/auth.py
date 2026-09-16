@@ -12,7 +12,7 @@ auth_bp = Blueprint('auth', __name__)
 def login():
     if request.method == 'POST':
         username_limpio = request.form['username'].strip().lower()
-        password_ingresada = request.form['password']
+        password_ingresada = request.form['password'].strip()
         u = Usuario.query.filter_by(username=username_limpio).first()
 
         if not u:
