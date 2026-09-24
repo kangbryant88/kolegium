@@ -311,7 +311,7 @@ def api_estudiantes_por_grado(grado_id):
         return jsonify({'error': 'No autorizado'}), 401
 
     grado = Grado.query.get_or_404(grado_id)
-    estudiantes = Estudiante.query.filter_by(grado_id=grado_id).order_by(Estudiante.nombre_completo.asc()).all()
+    estudiantes = Estudiante.query.filter_by(grado_id=grado_id, estatus='Activo').order_by(Estudiante.nombre_completo.asc()).all()
     
     resultado = {
         'grado_nombre': grado.nombre,
