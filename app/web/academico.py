@@ -603,9 +603,16 @@ def eliminar_estudiante(id):
     if not session.get('logeado'): return redirect(url_for('auth.login'))
     est = Estudiante.query.get_or_404(id)
 
-    # Soft Delete: NO se borra físicamente (rompía FKs de incidencias,
+    # Soft Delete: NUNCA se borra físicamente (rompía FKs de incidencias,
     # asistencias, evaluaciones, alertas, actas, etc. -> Error 500).
-    # En su lugar se marca como Egreso y se deja trazabilidad en la tabla
+
+    # Si ya está egresado, no se toca la BD de nuevo: evita registros
+    # duplicados en Egreso y el 500 al reintentar la acción.
+    if est.estatus == 'Egreso':
+        flash('El estudiante ya se encuentra egresado.', 'info')
+        return redirect(url_for('academico.estadistica_global'))
+
+    # Aún Activo: se marca como Egreso y se deja trazabilidad en la tabla
     # Egreso para que el movimiento quede registrado en el módulo de estadística.
     est.estatus = 'Egreso'
 
