@@ -10,7 +10,7 @@ from docx import Document
 from fpdf import FPDF
 import urllib.parse
 import uuid
-from app.models import db, Bitacora, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Estudiante, Representante, Incidencia, AsistenciaEstudiante, AlertaDefensoria, EnlaceTemporal, SolicitudEnlace, SolicitudActualizacion, ProyectoAula, BancoIndicador, EvaluacionEstudiante, ProyectoAprendizaje, ProyectoArea, ProyectoEvaluacion
+from app.models import db, Bitacora, Grado, Tema, AsistenciaDiaria, AsistenciaPersonal, Estudiante, Representante, Incidencia, AsistenciaEstudiante, AlertaDefensoria, EnlaceTemporal, SolicitudEnlace, SolicitudActualizacion, ProyectoAula, BancoIndicador, EvaluacionEstudiante, ProyectoAprendizaje, ProyectoArea, ProyectoEvaluacion, Egreso
 
 academico_bp = Blueprint('academico', __name__, url_prefix='/academico')
 
@@ -273,6 +273,36 @@ def estadistica_global():
                            ultimos_ingresos=ultimos_ingresos,
                            ultimos_egresos=ultimos_egresos,
                            grados=Grado.query.all() or [])
+
+@academico_bp.route('/api/historial/<string:tipo>')
+def api_historial_movimientos(tipo):
+    """API: devuelve el historial COMPLETO de ingresos o egresos (no solo los últimos 3)
+    para el botón 'Ver historial completo' del módulo de estadística."""
+    if not session.get('logeado'):
+        return jsonify({'error': 'No autorizado'}), 401
+
+    if tipo == 'egresos':
+        registros = Egreso.query.order_by(Egreso.fecha_egreso.desc()).all()
+        data = [{
+            'estudiante_id': r.estudiante_id,
+            'cedula_escolar': r.cedula_escolar,
+            'nombre_completo': r.nombre_completo,
+            'grado_nombre': r.grado_nombre or 'N/A',
+            'motivo': r.motivo or 'Egreso',
+            'fecha': r.fecha_egreso.strftime('%d/%m/%Y %I:%M %p') if r.fecha_egreso else 'N/A'
+        } for r in registros]
+    else:
+        registros = Estudiante.query.order_by(Estudiante.fecha_registro.desc()).all()
+        data = [{
+            'estudiante_id': e.id,
+            'cedula_escolar': e.cedula_escolar,
+            'nombre_completo': e.nombre_completo,
+            'grado_nombre': e.grado.nombre if e.grado else 'Sin Asignar',
+            'motivo': e.estatus or 'Activo',
+            'fecha': e.fecha_registro.strftime('%d/%m/%Y %I:%M %p') if e.fecha_registro else 'N/A'
+        } for e in registros]
+
+    return jsonify({'tipo': tipo, 'total': len(data), 'registros': data})
 
 @academico_bp.route('/api/estudiantes/<int:grado_id>')
 def api_estudiantes_por_grado(grado_id):
@@ -552,7 +582,19 @@ def editar_estudiante(id):
 def egresar_estudiante(id):
     if not session.get('logeado'): return redirect(url_for('auth.login'))
     est = Estudiante.query.get_or_404(id)
-    est.estatus = 'Activo' if est.estatus == 'Egreso' else 'Egreso'
+    va_a_egresar = est.estatus != 'Egreso'
+    est.estatus = 'Egreso' if va_a_egresar else 'Activo'
+
+    if va_a_egresar:
+        db.session.add(Egreso(
+            estudiante_id=est.id,
+            nombre_completo=est.nombre_completo,
+            cedula_escolar=est.cedula_escolar,
+            grado_nombre=est.grado.nombre if est.grado else None,
+            motivo='Egreso manual',
+            usuario_id=session.get('usuario_id')
+        ))
+
     db.session.commit()
     return redirect(url_for('academico.perfil_estudiante', id=est.id))
 
@@ -560,8 +602,24 @@ def egresar_estudiante(id):
 def eliminar_estudiante(id):
     if not session.get('logeado'): return redirect(url_for('auth.login'))
     est = Estudiante.query.get_or_404(id)
-    db.session.delete(est)
+
+    # Soft Delete: NO se borra físicamente (rompía FKs de incidencias,
+    # asistencias, evaluaciones, alertas, actas, etc. -> Error 500).
+    # En su lugar se marca como Egreso y se deja trazabilidad en la tabla
+    # Egreso para que el movimiento quede registrado en el módulo de estadística.
+    est.estatus = 'Egreso'
+
+    db.session.add(Egreso(
+        estudiante_id=est.id,
+        nombre_completo=est.nombre_completo,
+        cedula_escolar=est.cedula_escolar,
+        grado_nombre=est.grado.nombre if est.grado else None,
+        motivo='Eliminación / Retiro definitivo',
+        usuario_id=session.get('usuario_id')
+    ))
+
     db.session.commit()
+    flash(f'{est.nombre_completo} fue movido a Egresados. Su expediente se conserva por trazabilidad.', 'success')
     return redirect(url_for('academico.estadistica_global'))
 
 # ==========================================

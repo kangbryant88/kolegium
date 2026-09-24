@@ -480,6 +480,15 @@
                     </p>
                     {% endif %}
 
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold btn-copiar-representante" data-origen="madre">
+                            <i data-lucide="user-round" class="me-1" style="width:14px;"></i> Es la Madre
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold btn-copiar-representante" data-origen="padre">
+                            <i data-lucide="user-round" class="me-1" style="width:14px;"></i> Es el Padre
+                        </button>
+                    </div>
+
                     <div class="bg-body-tertiary rounded-4 p-3 mb-3">
                         <h6 class="fw-bold text-body-secondary text-uppercase mb-3" style="font-size:0.75rem;letter-spacing:1px;">
                             Representante Legal
@@ -635,6 +644,33 @@
                 }
                 sw.addEventListener('change', sync);
                 sync();
+            });
+
+            // Autocompletado rápido: copia los datos de la Madre o del Padre
+            // hacia los campos del Representante Legal.
+            var mapaCopiaRepresentante = {
+                nombre_representante: 'nombre',
+                cedula_representante: 'ci',
+                telefono_representante: 'telefono',
+                ocupacion_representante: 'ocupacion',
+                direccion_habitacion: 'direccion'
+            };
+            wrapper.querySelectorAll('.btn-copiar-representante').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var origen = btn.getAttribute('data-origen'); // 'madre' | 'padre'
+                    Object.keys(mapaCopiaRepresentante).forEach(function (campoRep) {
+                        var campoOrigen = origen + '_' + mapaCopiaRepresentante[campoRep];
+                        var inputOrigen = wrapper.querySelector('[name="' + campoOrigen + '"]');
+                        var inputDestino = wrapper.querySelector('[name="' + campoRep + '"]');
+                        if (inputOrigen && inputDestino) {
+                            inputDestino.value = inputOrigen.value;
+                        }
+                    });
+                    var selectParentesco = wrapper.querySelector('[name="parentesco"]');
+                    if (selectParentesco) {
+                        selectParentesco.value = origen === 'madre' ? 'Madre' : 'Padre';
+                    }
+                });
             });
         })();
     </script>

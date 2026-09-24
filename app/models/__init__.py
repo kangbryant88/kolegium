@@ -215,6 +215,21 @@ class Estudiante(db.Model):
     grado = db.relationship('Grado', backref='estudiantes')
     representante_id = db.Column(db.Integer, db.ForeignKey('representante.id'))
 
+class Egreso(db.Model):
+    """Bitácora histórica de egresos, independiente del 'estatus' actual del
+    estudiante (que puede reactivarse). Alimenta el historial completo del
+    módulo de estadística."""
+    id = db.Column(db.Integer, primary_key=True)
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+    nombre_completo = db.Column(db.String(150), nullable=False)
+    cedula_escolar = db.Column(db.String(30), nullable=False)
+    grado_nombre = db.Column(db.String(50))
+    motivo = db.Column(db.String(200), default='Retiro / Egreso')
+    fecha_egreso = db.Column(db.DateTime, default=datetime.now)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=True)
+
+    estudiante = db.relationship('Estudiante', backref='egresos_historial')
+
 class EnlaceTemporal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     token = db.Column(db.String(50), unique=True, nullable=False)

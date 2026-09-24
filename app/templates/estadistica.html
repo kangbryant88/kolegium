@@ -170,6 +170,11 @@
                 </div>
                 {% endfor %}
             </div>
+            <div class="text-center mt-3" style="position: relative; z-index: 10;">
+                <button type="button" class="btn btn-sm fw-semibold" style="color:#34d399;" data-bs-toggle="modal" data-bs-target="#modalHistorial" data-tipo="ingresos">
+                    Ver historial completo
+                </button>
+            </div>
         </div>
     </div>
 
@@ -198,6 +203,64 @@
                     <p style="font-size: 0.875rem; margin-bottom: 0;">No hay egresos recientes</p>
                 </div>
                 {% endfor %}
+            </div>
+            <div class="text-center mt-3" style="position: relative; z-index: 10;">
+                <button type="button" class="btn btn-sm fw-semibold" style="color:#fb7185;" data-bs-toggle="modal" data-bs-target="#modalHistorial" data-tipo="egresos">
+                    Ver historial completo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Historial Completo (Ingresos / Egresos) -->
+<div class="modal fade" id="modalHistorial" tabindex="-1" aria-labelledby="modalHistorialLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <h5 class="modal-title fw-bold" id="modalHistorialLabel">
+                    <span id="historial-titulo">Historial Completo</span>
+                    <span class="badge bg-primary ms-2 rounded-pill" id="historial-count">0</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="historial-loading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem;">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="text-muted mt-3 mb-0 fw-semibold">Cargando historial...</p>
+                </div>
+                <div id="historial-empty" class="d-none text-center py-5">
+                    <div class="d-flex flex-column align-items-center justify-content-center text-muted">
+                        <i data-lucide="inbox" style="width:32px;height:32px;opacity:0.5;margin-bottom:8px;"></i>
+                        <p class="mb-0">No hay movimientos registrados.</p>
+                    </div>
+                </div>
+                <div id="historial-table-wrapper" class="d-none">
+                    <div class="table-responsive border-0">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light sticky-top" style="z-index: 1;">
+                                <tr>
+                                    <th class="ps-4 text-nowrap">Cédula Escolar</th>
+                                    <th style="min-width: 180px;">Nombre</th>
+                                    <th class="text-nowrap">Grado</th>
+                                    <th class="text-nowrap">Estatus / Motivo</th>
+                                    <th class="pe-4 text-nowrap">Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historial-tbody">
+                                <!-- JS inyecta filas aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="historial-error" class="d-none text-center py-5">
+                    <div class="d-flex flex-column align-items-center justify-content-center text-danger">
+                        <i data-lucide="alert-triangle" style="width:32px;height:32px;"></i>
+                        <p class="mb-0 small text-muted mt-2">Error al cargar el historial.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -532,6 +595,69 @@
                     elError.classList.remove('d-none');
                 });
         });
+
+        // ============================================
+        // MODAL HISTORIAL COMPLETO (Ingresos / Egresos)
+        // ============================================
+        const modalHistorialEl = document.getElementById('modalHistorial');
+        if (modalHistorialEl) {
+            modalHistorialEl.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                const tipo = btn.getAttribute('data-tipo') || 'ingresos';
+
+                const elTitulo = document.getElementById('historial-titulo');
+                const elCount = document.getElementById('historial-count');
+                const elLoading = document.getElementById('historial-loading');
+                const elEmpty = document.getElementById('historial-empty');
+                const elTable = document.getElementById('historial-table-wrapper');
+                const elError = document.getElementById('historial-error');
+                const elBody = document.getElementById('historial-tbody');
+
+                elTitulo.textContent = tipo === 'egresos' ? 'Historial Completo de Egresos' : 'Historial Completo de Ingresos';
+                elCount.textContent = '...';
+                elLoading.classList.remove('d-none');
+                elEmpty.classList.add('d-none');
+                elTable.classList.add('d-none');
+                elError.classList.add('d-none');
+                elBody.innerHTML = '';
+
+                fetch(`/academico/api/historial/${tipo}`)
+                    .then(res => {
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        return res.json();
+                    })
+                    .then(data => {
+                        elLoading.classList.add('d-none');
+                        elCount.textContent = data.total;
+
+                        if (!data.registros.length) {
+                            elEmpty.classList.remove('d-none');
+                            return;
+                        }
+
+                        const fragment = document.createDocumentFragment();
+                        data.registros.forEach(r => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td class="ps-4 fw-medium text-nowrap">${r.cedula_escolar}</td>
+                                <td class="text-wrap">${r.nombre_completo}</td>
+                                <td class="text-nowrap">${r.grado_nombre}</td>
+                                <td class="text-nowrap">${r.motivo}</td>
+                                <td class="pe-4 text-nowrap">${r.fecha}</td>
+                            `;
+                            fragment.appendChild(tr);
+                        });
+
+                        elBody.appendChild(fragment);
+                        elTable.classList.remove('d-none');
+                    })
+                    .catch(err => {
+                        console.error('Error cargando historial:', err);
+                        elLoading.classList.add('d-none');
+                        elError.classList.remove('d-none');
+                    });
+            });
+        }
 
         // ============================================
         // VISOR DE AULAS DIGITAL (Fetch API)
