@@ -614,18 +614,27 @@ def eliminar_estudiante(id):
 
     # Aún Activo: se marca como Egreso y se deja trazabilidad en la tabla
     # Egreso para que el movimiento quede registrado en el módulo de estadística.
-    est.estatus = 'Egreso'
+    # Todos los campos NOT NULL de Egreso se pasan explícitamente con fallback.
+    motivo = (request.form.get('motivo') or '').strip() or 'Eliminado desde perfil'
 
-    db.session.add(Egreso(
-        estudiante_id=est.id,
-        nombre_completo=est.nombre_completo,
-        cedula_escolar=est.cedula_escolar,
-        grado_nombre=est.grado.nombre if est.grado else None,
-        motivo='Eliminación / Retiro definitivo',
-        usuario_id=session.get('usuario_id')
-    ))
+    try:
+        est.estatus = 'Egreso'
+        db.session.add(Egreso(
+            estudiante_id=est.id,
+            nombre_completo=est.nombre_completo or 'Sin nombre',
+            cedula_escolar=est.cedula_escolar or f'SIN-CEDULA-{est.id}',
+            grado_nombre=est.grado.nombre if est.grado else None,
+            motivo=motivo[:200],
+            fecha_egreso=datetime.now(),
+            usuario_id=session.get('usuario_id')
+        ))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception('Error al egresar estudiante %s', est.id)
+        flash('No se pudo mover el estudiante a Egresados. Intente nuevamente.', 'danger')
+        return redirect(url_for('academico.perfil_estudiante', id=id))
 
-    db.session.commit()
     flash(f'{est.nombre_completo} fue movido a Egresados. Su expediente se conserva por trazabilidad.', 'success')
     return redirect(url_for('academico.estadistica_global'))
 
