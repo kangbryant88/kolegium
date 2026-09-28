@@ -274,6 +274,27 @@
 
             <!-- Page Content -->
             <main class="content-area flex-grow-1 w-100 py-3 py-md-4 px-2 px-md-4 px-lg-5 d-flex flex-column" id="contenedor-principal">
+                <!-- Mensajes flash globales (success / error / warning / info) -->
+                {% with mensajes_flash = get_flashed_messages(with_categories=true) %}
+                    {% if mensajes_flash %}
+                        {% set estilos_flash = {
+                            'success': ('success', 'check-circle-2'),
+                            'error':   ('danger', 'alert-octagon'),
+                            'danger':  ('danger', 'alert-octagon'),
+                            'warning': ('warning', 'alert-triangle'),
+                        } %}
+                        <div class="w-100 mb-3">
+                            {% for categoria, mensaje in mensajes_flash %}
+                                {% set clase, icono = estilos_flash.get(categoria, ('info', 'info')) %}
+                                <div class="alert alert-{{ clase }} alert-dismissible fade show border-0 border-start border-4 border-{{ clase }} rounded-3 shadow-sm d-flex align-items-center gap-2" role="alert">
+                                    <i data-lucide="{{ icono }}" class="flex-shrink-0" style="width: 20px; height: 20px;"></i>
+                                    <div>{{ mensaje }}</div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
                 {% block content %}{% endblock %}
             </main>
         </div>

@@ -736,17 +736,29 @@ def register_routes(app):
         usuario = Usuario.query.get(session['usuario_id'])
     
         if request.method == 'POST':
-            nombre_completo = request.form.get('nombre_completo')
+            from app.web.perfil import formatear_nombre, formatear_cedula
+
             area_trabajo = request.form.get('area_trabajo')
             cedula = request.form.get('cedula')
             file = request.files.get('foto_perfil')
-        
-            if nombre_completo:
-                usuario.nombre_completo = nombre_completo
-                session['nombre_completo'] = nombre_completo
-            
+
+            # nombre_completo ya no se edita a mano: siempre es nombres + apellidos.
+            # Solo el formulario de Datos Personales envía estos campos.
+            if 'nombres' in request.form or 'apellidos' in request.form:
+                nombres = formatear_nombre(request.form.get('nombres'))
+                apellidos = formatear_nombre(request.form.get('apellidos'))
+                if not nombres or not apellidos:
+                    flash('Los nombres y apellidos son obligatorios.', 'error')
+                    return redirect(url_for('mi_perfil'))
+                usuario.nombres = nombres
+                usuario.apellidos = apellidos
+                usuario.nombre_completo = f"{nombres} {apellidos}"
+                session['nombre_completo'] = usuario.nombre_completo
+
             if cedula:
-                usuario.cedula = cedula
+                cedula = formatear_cedula(cedula)
+                if cedula:
+                    usuario.cedula = cedula
             
             if area_trabajo and area_trabajo != usuario.area_trabajo and not usuario.cargo_solicitado:
                 usuario.cargo_solicitado = area_trabajo

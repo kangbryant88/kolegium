@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kolegium | Completa tu Perfil</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --bg-color: #050505;
+            --card-bg: #121212;
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(120% 100% at top right, rgba(88, 28, 135, 0.15) 0%, var(--bg-color) 60%);
+            background-attachment: fixed;
+            color: #fff;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+        .perfil-card {
+            max-width: 760px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+        @media (max-width: 576px) { .perfil-card { padding: 1.25rem; } }
+        .seccion {
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .seccion-nivel-2 { border-color: rgba(245, 158, 11, 0.35); }
+        .seccion h2 { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: .5rem; }
+        .form-label { font-size: .8rem; font-weight: 600; text-transform: uppercase; color: #9ca3af; }
+        .obligatorio::after { content: " *"; color: #ef4444; }
+        .necesario::after { content: " ●"; color: #f59e0b; font-size: .7rem; vertical-align: middle; }
+        .campo-pendiente { border-color: rgba(245, 158, 11, 0.6) !important; }
+        .btn-primario {
+            background: var(--primary-gradient);
+            border: none;
+            color: #fff;
+            font-weight: 700;
+        }
+        .btn-primario:hover { color: #fff; opacity: .92; }
+    </style>
+</head>
+<body>
+{% set v = form or {} %}
+<div class="perfil-card">
+    <div class="text-center mb-4">
+        <i class="ph-duotone ph-identification-card" style="font-size: 3rem; color: #8b5cf6;"></i>
+        <h1 class="h4 fw-bold mt-2 mb-1">Completa tu perfil</h1>
+        {% if nivel_1_ok %}
+            <p class="text-secondary mb-0">Tus datos básicos están listos. Solo faltan los datos ministeriales.</p>
+        {% else %}
+            <p class="text-secondary mb-0">Para usar Kolegium necesitamos tus datos personales básicos.</p>
+        {% endif %}
+    </div>
+
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% for categoria, mensaje in mensajes %}
+            <div class="alert alert-{{ 'danger' if categoria == 'error' else categoria }} py-2">{{ mensaje }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('perfil.completar_perfil') }}" id="formPerfil" novalidate>
+
+        <!-- ===== NIVEL 1: Hard Required ===== -->
+        <div class="seccion">
+            <h2><i class="ph ph-user"></i> Datos personales <span class="badge bg-danger bg-opacity-25 text-danger-emphasis ms-auto">Obligatorio</span></h2>
+            <div class="row g-3 mt-1">
+                <div class="col-md-4">
+                    <label class="form-label obligatorio" for="cedula">Cédula</label>
+                    <input type="text" class="form-control" id="cedula" name="cedula" required
+                           data-formato="cedula" placeholder="V-12345678" maxlength="12"
+                           pattern="[VEve]-?[0-9.]{6,11}"
+                           value="{{ v.get('cedula', usuario.cedula or '') }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label obligatorio" for="nombres">Nombres</label>
+                    <input type="text" class="form-control" id="nombres" name="nombres" required
+                           data-formato="nombre" maxlength="100" autocomplete="given-name"
+                           value="{{ v.get('nombres', usuario.nombres or '') }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label obligatorio" for="apellidos">Apellidos</label>
+                    <input type="text" class="form-control" id="apellidos" name="apellidos" required
+                           data-formato="nombre" maxlength="100" autocomplete="family-name"
+                           value="{{ v.get('apellidos', usuario.apellidos or '') }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label obligatorio" for="fecha_nacimiento">Fecha de nacimiento</label>
+                    <input type="date" class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" required
+                           min="1920-01-01" max="{{ hoy_iso }}"
+                           value="{{ v.get('fecha_nacimiento', usuario.fecha_nacimiento.isoformat() if usuario.fecha_nacimiento else '') }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label obligatorio" for="sexo">Sexo</label>
+                    {% set sexo_actual = v.get('sexo', usuario.sexo or '') %}
+                    <select class="form-select" id="sexo" name="sexo" required>
+                        <option value="" disabled {% if not sexo_actual %}selected{% endif %}>Seleccione...</option>
+                        {% for op in opciones_sexo %}
+                            <option value="{{ op }}" {% if sexo_actual == op %}selected{% endif %}>{{ op }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== NIVEL 2: Soft Required ===== -->
+        <div class="seccion seccion-nivel-2">
+            <h2><i class="ph ph-briefcase"></i> Datos ministeriales <span class="badge bg-warning bg-opacity-25 text-warning-emphasis ms-auto">Necesario</span></h2>
+            <div class="alert alert-warning bg-warning bg-opacity-10 border-0 text-warning-emphasis small py-2 d-flex gap-2 align-items-start">
+                <i class="ph ph-warning-circle mt-1"></i>
+                <div>Estos datos son <strong>necesarios</strong> para los reportes al Ministerio. Si ahora no los tienes a la mano, puedes cargarlos después; te lo recordaremos al iniciar sesión.</div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label necesario" for="fecha_ingreso">Fecha de ingreso</label>
+                    <input type="date" class="form-control {% if not usuario.fecha_ingreso %}campo-pendiente{% endif %}"
+                           id="fecha_ingreso" name="fecha_ingreso" max="{{ hoy_iso }}"
+                           value="{{ v.get('fecha_ingreso', usuario.fecha_ingreso.isoformat() if usuario.fecha_ingreso else '') }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label necesario" for="cargo">Cargo</label>
+                    <input type="text" class="form-control {% if not usuario.cargo %}campo-pendiente{% endif %}"
+                           id="cargo" name="cargo" data-formato="cargo" maxlength="100" list="cargosSugeridos"
+                           placeholder="Ej: Docente I" value="{{ v.get('cargo', usuario.cargo or '') }}">
+                    <datalist id="cargosSugeridos">
+                        <option value="Docente I"><option value="Docente II"><option value="Docente III">
+                        <option value="Docente IV"><option value="Docente V"><option value="Docente VI">
+                        <option value="Director"><option value="Subdirector"><option value="Coordinador">
+                        <option value="Secretaria"><option value="Obrero"><option value="Vigilante"><option value="Cocinera">
+                    </datalist>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label necesario" for="codigo_rac">Código RAC</label>
+                    <input type="text" class="form-control {% if not usuario.codigo_rac %}campo-pendiente{% endif %}"
+                           id="codigo_rac" name="codigo_rac" data-formato="codigo" maxlength="50"
+                           value="{{ v.get('codigo_rac', usuario.codigo_rac or '') }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label necesario" for="turno">Turno</label>
+                    {% set turno_actual = v.get('turno', usuario.turno or '') %}
+                    <select class="form-select {% if not usuario.turno %}campo-pendiente{% endif %}" id="turno" name="turno">
+                        <option value="" {% if not turno_actual %}selected{% endif %}>Seleccione...</option>
+                        {% for op in opciones_turno %}
+                            <option value="{{ op }}" {% if turno_actual == op %}selected{% endif %}>{{ op }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-column flex-md-row gap-2">
+            <button type="submit" class="btn btn-primario btn-lg flex-fill rounded-3">Guardar datos</button>
+            {% if nivel_1_ok %}
+                <a href="{{ url_for('perfil.saltar_perfil') }}" class="btn btn-outline-secondary btn-lg flex-fill rounded-3">
+                    No tengo estos datos a la mano, llenar después
+                </a>
+            {% endif %}
+        </div>
+    </form>
+
+    <div class="text-center mt-4">
+        <a href="{{ url_for('auth.logout') }}" class="text-secondary small text-decoration-none">
+            <i class="ph ph-sign-out"></i> Cerrar sesión
+        </a>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/formato_perfil.js') }}"></script>
+<script>
+    // Validación nativa solo del Nivel 1 (los campos con `required`).
+    document.getElementById('formPerfil').addEventListener('submit', function (e) {
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            this.classList.add('was-validated');
+            this.querySelector(':invalid').focus();
+        }
+    });
+</script>
+</body>
+</html>

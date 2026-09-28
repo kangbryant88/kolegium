@@ -55,6 +55,17 @@ class Usuario(db.Model):
     cedula_path = db.Column(db.String(250), nullable=True)
     foto_perfil_path = db.Column(db.String(250), nullable=True)
     cargo_solicitado = db.Column(db.String(100), nullable=True)
+    # Muro de Contención - Nivel 1 (obligatorio para usar el sistema)
+    cedula = db.Column(db.String(20), nullable=True)
+    nombres = db.Column(db.String(100), nullable=True)
+    apellidos = db.Column(db.String(100), nullable=True)
+    fecha_nacimiento = db.Column(db.Date, nullable=True)
+    sexo = db.Column(db.String(20), nullable=True)
+    # Muro de Contención - Nivel 2 (datos ministeriales, se pueden posponer)
+    fecha_ingreso = db.Column(db.Date, nullable=True)
+    cargo = db.Column(db.String(100), nullable=True)
+    codigo_rac = db.Column(db.String(50), nullable=True)
+    turno = db.Column(db.String(20), nullable=True)
 
 class Anuncio(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -60,6 +60,7 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-10 col-xl-8">
+
         
         <div class="card shadow-sm border-0 rounded-4 mb-4">
             <div class="card-body p-4 p-md-5">
@@ -103,9 +104,24 @@
                     </div>
                     <div class="card-body p-4">
                         <form action="{{ url_for('mi_perfil') }}" method="POST">
+                            <div class="row g-3 mb-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label small fw-bold text-muted text-uppercase mb-1" for="nombres">Nombres</label>
+                                    <input type="text" class="form-control bg-light border-0" id="nombres" name="nombres"
+                                           data-formato="nombre" maxlength="100" autocomplete="given-name"
+                                           value="{{ usuario.nombres or '' }}" required>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label small fw-bold text-muted text-uppercase mb-1" for="apellidos">Apellidos</label>
+                                    <input type="text" class="form-control bg-light border-0" id="apellidos" name="apellidos"
+                                           data-formato="nombre" maxlength="100" autocomplete="family-name"
+                                           value="{{ usuario.apellidos or '' }}" required>
+                                </div>
+                            </div>
                             <div class="mb-3">
                                 <label class="form-label small fw-bold text-muted text-uppercase mb-1">Nombre Completo</label>
-                                <input type="text" class="form-control bg-light border-0" name="nombre_completo" value="{{ usuario.nombre_completo }}" required>
+                                <input type="text" class="form-control bg-light border-0 text-muted" value="{{ usuario.nombre_completo }}" readonly disabled>
+                                <div class="form-text">Se genera automáticamente a partir de tus nombres y apellidos.</div>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label small fw-bold text-muted text-uppercase mb-1">Correo Electrónico</label>
@@ -168,4 +184,8 @@
 
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/formato_perfil.js') }}"></script>
 {% endblock %}

@@ -120,16 +120,6 @@
 {% block content %}
 <div class="w-100 px-2 px-md-4 px-lg-5">
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show border-0 rounded-4 shadow-sm" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
 
     <form action="{{ url_for('academico.editar_proyecto_aprendizaje', id=proyecto.id) if proyecto else url_for('academico.crear_proyecto_aprendizaje') }}" method="POST" id="formProyectoAprendizaje">
 
