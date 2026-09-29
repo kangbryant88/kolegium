@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block title %}Importar Personal - Kolegium{% endblock %}
+{% block header_title %}Importar Personal{% endblock %}
+
+{% block content %}
+<div class="content-header mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h2 class="h3 fw-bold mb-1">Importación Masiva de Personal</h2>
+            <p class="mb-0" style="color: var(--text-muted);">Carga el Excel del RAC NOMINAL o de Beneficios para completar los datos del personal</p>
+        </div>
+        <a href="{{ url_for('admin.admin_usuarios') }}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i data-lucide="arrow-left" class="me-1" style="width:16px;height:16px;vertical-align:text-bottom;"></i>
+            Volver a Usuarios
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Formulario de subida -->
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3">
+                    <i data-lucide="file-spreadsheet" class="me-2 text-success" style="width:20px;height:20px;vertical-align:text-bottom;"></i>
+                    Subir archivo
+                </h5>
+                <form action="{{ url_for('admin.importar_personal') }}" method="POST" enctype="multipart/form-data" id="formImportar">
+                    <div class="mb-3">
+                        <label for="archivo" class="form-label small fw-semibold">Archivo Excel (.xlsx, máx. 10 MB)</label>
+                        <input type="file" class="form-control" id="archivo" name="archivo"
+                            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+                    </div>
+                    <div class="form-check form-switch mb-4">
+                        <input class="form-check-input" type="checkbox" role="switch" id="simular" name="simular" checked>
+                        <label class="form-check-label small" for="simular">
+                            <strong>Modo simulación</strong>: muestra lo que pasaría sin guardar nada.
+                            Desactívalo para aplicar los cambios.
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold" id="btnImportar">
+                        <i data-lucide="upload" class="me-1" style="width:16px;height:16px;vertical-align:text-bottom;"></i>
+                        Procesar archivo
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reglas -->
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-body p-4 small">
+                <h5 class="fw-bold mb-3">
+                    <i data-lucide="info" class="me-2 text-primary" style="width:20px;height:20px;vertical-align:text-bottom;"></i>
+                    ¿Cómo funciona?
+                </h5>
+                <ul class="mb-3 ps-3">
+                    <li class="mb-1">La <strong>fila de cabecera se detecta sola</strong>: sirve para el RAC NOMINAL (fila 1) y para Beneficios (fila 5).</li>
+                    <li class="mb-1">Cada persona se busca por <strong>Cédula</strong>. Si no la tiene cargada en Kolegium, se intenta por correo o por nombre completo exacto.</li>
+                    <li class="mb-1"><strong>Si ya existe</strong>: solo se rellenan los campos <em>vacíos</em>. Nada de lo que el usuario ya cargó se sobrescribe.</li>
+                    <li class="mb-1"><strong>Si no existe</strong>: se crea con <strong>usuario y contraseña = su cédula (solo números)</strong>, sin rol. Queda "En Espera" hasta que le asignes un rol.</li>
+                    <li>Los nombres se guardan en formato Título (ej. "María José Pérez").</li>
+                </ul>
+                <p class="mb-1 fw-semibold">Columnas reconocidas:</p>
+                <p class="mb-0" style="color: var(--text-muted);">
+                    Cédula (y Nac.), Nombres, Apellidos (o Apellidos y Nombres), Fecha de Nacimiento, Sexo,
+                    Fecha de Ingreso, Cargo, Código RAC, Turno, Correo.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if resultado %}
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+            <h5 class="fw-bold mb-0">
+                Resultado
+                {% if resultado.simulacion %}
+                <span class="badge bg-warning text-dark ms-2 rounded-pill">Simulación: no se guardó nada</span>
+                {% else %}
+                <span class="badge bg-success ms-2 rounded-pill">Cambios guardados</span>
+                {% endif %}
+            </h5>
+            <span class="small" style="color: var(--text-muted);">
+                Hoja "{{ resultado.hoja }}" · cabecera en la fila {{ resultado.fila_cabecera + 1 }}
+            </span>
+        </div>
+
+        <div class="row g-3 mb-4 text-center">
+            {% for etiqueta, clave, color in [('Actualizados', 'actualizados', 'primary'), ('Creados', 'creados', 'success'), ('Sin cambios', 'sin_cambios', 'secondary'), ('Omitidos', 'omitidos', 'danger')] %}
+            <div class="col-6 col-md-3">
+                <div class="rounded-4 p-3 h-100 border border-{{ color }} border-opacity-25">
+                    <div class="small fw-semibold" style="color: var(--text-muted);">{{ etiqueta }}</div>
+                    <div class="h3 fw-bold mb-0 text-{{ color }}">{{ resultado[clave] }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <p class="small fw-semibold mb-2">Columnas detectadas en el archivo:</p>
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            {% for campo, cabecera in resultado.columnas.items() %}
+            <span class="badge bg-light text-dark border rounded-pill px-3 py-2 fw-normal">
+                <strong>{{ campo }}</strong> ← "{{ cabecera }}"
+            </span>
+            {% endfor %}
+        </div>
+
+        {% if resultado.detalle %}
+        <div class="d-flex gap-2 mb-2 flex-wrap" id="filtrosDetalle">
+            {% for filtro in ['Todos', 'Actualizado', 'Creado', 'Sin cambios', 'Omitido'] %}
+            <button type="button" class="btn btn-sm rounded-pill px-3 {{ 'btn-primary' if loop.first else 'btn-outline-secondary' }}" data-filtro="{{ filtro }}">{{ filtro }}</button>
+            {% endfor %}
+        </div>
+        <div class="table-responsive border rounded-3" style="max-height: 60vh; overflow-y: auto;">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-light sticky-top" style="z-index: 1;">
+                    <tr>
+                        <th class="ps-3 text-nowrap">Fila</th>
+                        <th class="text-nowrap">Estado</th>
+                        <th class="text-nowrap">Cédula</th>
+                        <th style="min-width: 180px;">Nombre</th>
+                        <th style="min-width: 200px;">Detalle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set colores = {'Actualizado': 'primary', 'Creado': 'success', 'Sin cambios': 'secondary', 'Omitido': 'danger'} %}
+                    {% for d in resultado.detalle %}
+                    <tr data-estado="{{ d.estado }}">
+                        <td class="ps-3">{{ d.fila }}</td>
+                        <td><span class="badge bg-{{ colores[d.estado] }} bg-opacity-10 text-{{ colores[d.estado] }} rounded-pill px-3">{{ d.estado }}</span></td>
+                        <td class="text-nowrap">{{ d.cedula }}</td>
+                        <td>{{ d.nombre }}</td>
+                        <td style="color: var(--text-muted);">{{ d.nota }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('formImportar');
+        const btn = document.getElementById('btnImportar');
+        form.addEventListener('submit', function () {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
+        });
+
+        const filtros = document.getElementById('filtrosDetalle');
+        if (filtros) {
+            filtros.addEventListener('click', function (e) {
+                const b = e.target.closest('[data-filtro]');
+                if (!b) return;
+                filtros.querySelectorAll('[data-filtro]').forEach(x => {
+                    x.classList.toggle('btn-primary', x === b);
+                    x.classList.toggle('btn-outline-secondary', x !== b);
+                });
+                document.querySelectorAll('tr[data-estado]').forEach(tr => {
+                    tr.classList.toggle('d-none', b.dataset.filtro !== 'Todos' && tr.dataset.estado !== b.dataset.filtro);
+                });
+            });
+        }
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+</script>
+{% endblock %}

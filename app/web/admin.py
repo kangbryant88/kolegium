@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 from flask_mail import Message
 from werkzeug.security import generate_password_hash
 from app.models import db, Usuario, Rol
+from app.services.importar_personal import importar_personal as importar_personal_desde_excel
 
 # Importamos 'mail' desde extensions (patrón Factory)
 from app.extensions import mail
@@ -224,3 +225,51 @@ def modificar_usuario(id):
         flash(" | ".join(cambios_realizados), "success")
             
     return redirect(url_for('admin.admin_usuarios'))
+
+# ==========================================
+# --- IMPORTACIÓN MASIVA DE PERSONAL (Excel) ---
+# ==========================================
+
+TAMANO_MAXIMO_EXCEL = 10 * 1024 * 1024  # 10 MB
+
+@admin_bp.route('/importar_personal', methods=['GET', 'POST'])
+def importar_personal():
+    if not session.get('logeado'):
+        return redirect(url_for('auth.login'))
+    # Solo el Administrador Supremo: esta herramienta crea cuentas en lote.
+    if session.get('nombre_rol') != 'Administrador Supremo':
+        return '🚫 No autorizado.', 403
+
+    if request.method == 'GET':
+        return render_template('importar_personal.html', resultado=None)
+
+    archivo = request.files.get('archivo')
+    if not archivo or not archivo.filename:
+        flash('Selecciona un archivo Excel (.xlsx) para importar.', 'error')
+        return redirect(url_for('admin.importar_personal'))
+    if not archivo.filename.lower().endswith('.xlsx'):
+        flash('Formato no soportado. Guarda el archivo como Excel .xlsx e inténtalo de nuevo.', 'error')
+        return redirect(url_for('admin.importar_personal'))
+    if request.content_length and request.content_length > TAMANO_MAXIMO_EXCEL:
+        flash('El archivo supera el límite de 10 MB.', 'error')
+        return redirect(url_for('admin.importar_personal'))
+
+    simular = request.form.get('simular') == 'on'
+    try:
+        resultado = importar_personal_desde_excel(archivo, simular=simular)
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), 'error')
+        return redirect(url_for('admin.importar_personal'))
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception('Error importando personal desde Excel')
+        flash('No se pudo procesar el archivo. Verifica que sea un Excel válido y vuelve a intentarlo.', 'danger')
+        return redirect(url_for('admin.importar_personal'))
+
+    prefijo = 'Simulación (no se guardó nada): ' if simular else 'Importación completada: '
+    flash(f"{prefijo}{resultado['actualizados']} usuarios actualizados y "
+          f"{resultado['creados']} usuarios nuevos creados "
+          f"({resultado['sin_cambios']} sin cambios, {resultado['omitidos']} filas omitidas).",
+          'warning' if simular else 'success')
+    return render_template('importar_personal.html', resultado=resultado)

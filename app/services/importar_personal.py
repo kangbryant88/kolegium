@@ -1,0 +1,347 @@
+"""
+Importación masiva de personal desde Excel (RAC NOMINAL, Beneficios, etc.).
+
+- Detecta sola la hoja y la fila de cabecera (RAC NOMINAL la tiene en la
+  fila 0, Beneficios en la fila 4): busca la primera fila con una columna
+  de cédula.
+- Reconoce las columnas por alias (sin importar acentos ni mayúsculas).
+- Upsert: si el usuario existe solo rellena sus campos VACÍOS; si no existe
+  lo crea con usuario y contraseña = dígitos de la cédula, sin rol
+  (queda "En Espera" hasta que el administrador le asigne uno).
+"""
+import re
+import unicodedata
+from datetime import date, datetime, timedelta
+
+import pandas as pd
+from werkzeug.security import generate_password_hash
+
+from app.models import db, Usuario
+from app.web.perfil import formatear_nombre, formatear_cargo, formatear_codigo, formatear_cedula
+
+FILAS_A_ESCANEAR = 15  # filas donde se busca la cabecera real
+
+# Alias normalizados (MAYÚSCULAS, sin acentos, solo letras/números separados por espacio)
+ALIAS_COLUMNAS = {
+    'cedula': {'CEDULA', 'CEDULA DE IDENTIDAD', 'CEDULA IDENTIDAD', 'C I', 'CI', 'NRO CEDULA',
+               'N CEDULA', 'NO CEDULA', 'NUMERO DE CEDULA', 'CEDULA N'},
+    'nacionalidad': {'NAC', 'NACIONALIDAD', 'V E'},
+    'nombres': {'NOMBRES', 'NOMBRE'},
+    'primer_nombre': {'PRIMER NOMBRE', '1ER NOMBRE'},
+    'segundo_nombre': {'SEGUNDO NOMBRE', '2DO NOMBRE'},
+    'apellidos': {'APELLIDOS', 'APELLIDO'},
+    'primer_apellido': {'PRIMER APELLIDO', '1ER APELLIDO'},
+    'segundo_apellido': {'SEGUNDO APELLIDO', '2DO APELLIDO'},
+    'nombre_completo': {'APELLIDOS Y NOMBRES', 'NOMBRES Y APELLIDOS', 'NOMBRE COMPLETO',
+                        'NOMBRE Y APELLIDO', 'APELLIDO Y NOMBRE', 'APELLIDOS NOMBRES',
+                        'NOMBRES APELLIDOS', 'TRABAJADOR', 'NOMBRE DEL TRABAJADOR'},
+    'fecha_nacimiento': {'FECHA DE NACIMIENTO', 'FECHA NACIMIENTO', 'F NACIMIENTO', 'FECHA NAC',
+                         'F NAC', 'FEC NAC', 'NACIMIENTO'},
+    'sexo': {'SEXO', 'GENERO'},
+    'fecha_ingreso': {'FECHA DE INGRESO', 'FECHA INGRESO', 'F INGRESO', 'FEC INGRESO', 'INGRESO',
+                      'FECHA DE INGRESO AL MPPE', 'FECHA INGRESO MPPE', 'FECHA DE INGRESO MPPE'},
+    'cargo': {'CARGO', 'DENOMINACION DEL CARGO', 'DENOMINACION CARGO', 'DENOMINACION',
+              'CARGO NOMINAL', 'DESCRIPCION DEL CARGO', 'DESCRIPCION CARGO'},
+    'codigo_rac': {'CODIGO RAC', 'COD RAC', 'RAC', 'CODIGO DEL RAC', 'N RAC', 'NRO RAC'},
+    'turno': {'TURNO'},
+    'email': {'CORREO', 'CORREO ELECTRONICO', 'EMAIL', 'E MAIL'},
+}
+
+# Si ningún alias coincide exacto, se intenta por palabras contenidas en la cabecera.
+REGLAS_RESPALDO = {
+    'cedula': lambda h: 'CEDULA' in h.split() and 'ESCOLAR' not in h,
+    'codigo_rac': lambda h: 'RAC' in h.split() and 'NOMINAL' not in h,
+    'fecha_ingreso': lambda h: 'INGRESO' in h and 'FECHA' in h,
+    'fecha_nacimiento': lambda h: 'NACIMIENTO' in h and 'LUGAR' not in h,
+    'cargo': lambda h: 'CARGO' in h.split() and 'CODIGO' not in h,
+    'email': lambda h: 'CORREO' in h,
+}
+
+# Cargo del Excel -> area_trabajo de Kolegium (solo para registros nuevos)
+AREAS_POR_CARGO = (
+    (('COCIN', 'PROCESADOR', 'MADRE ELABORADORA'), 'Personal de Cocina'),
+    (('VIGIL', 'SEGURIDAD'), 'Personal de Vigilancia'),
+    (('OBRER', 'ASEADOR', 'MANTENIMIENTO', 'LIMPIEZA', 'JARDINER', 'PORTER'), 'Obrero'),
+    (('DIRECTOR', 'SUBDIRECTOR', 'COORDINADOR'), 'Equipo Directivo (Dirección)'),
+    (('DOCENTE', 'MAESTR', 'PROFESOR'), 'Docente de Aula (1ro a 6to)'),
+    (('SECRETARI', 'ADMINISTRATIV', 'ASISTENTE', 'AUXILIAR', 'OFICINISTA'), 'Administrativo'),
+)
+AREA_POR_DEFECTO = 'Por Asignar'
+
+# Campos del Muro de Contención que se rellenan si están vacíos
+CAMPOS_ACTUALIZABLES = ('cedula', 'nombres', 'apellidos', 'fecha_nacimiento', 'sexo',
+                        'fecha_ingreso', 'cargo', 'codigo_rac', 'turno')
+
+
+# ==========================================
+# --- NORMALIZACIÓN DE VALORES ---
+# ==========================================
+
+def _normalizar_cabecera(valor):
+    texto = unicodedata.normalize('NFKD', str(valor)).encode('ascii', 'ignore').decode()
+    return ' '.join(re.sub(r'[^A-Z0-9]+', ' ', texto.upper()).split())
+
+
+def _vacio(valor):
+    if valor is None:
+        return True
+    try:
+        if pd.isna(valor):
+            return True
+    except (TypeError, ValueError):
+        pass
+    return str(valor).strip() == ''
+
+
+def _texto(valor):
+    """Celda -> str limpio. 12345678.0 -> '12345678'."""
+    if _vacio(valor):
+        return ''
+    if isinstance(valor, float) and valor.is_integer():
+        valor = int(valor)
+    return ' '.join(str(valor).split())
+
+
+def _cedula(valor, nacionalidad=''):
+    texto = _texto(valor)
+    if texto.isdigit() and nacionalidad[:1].upper() in ('V', 'E'):
+        texto = nacionalidad[:1].upper() + texto
+    return formatear_cedula(texto)
+
+
+def _fecha(valor):
+    """Timestamp / datetime / serial de Excel / texto dd/mm/aaaa -> date (o None)."""
+    if _vacio(valor):
+        return None
+    resultado = None
+    if isinstance(valor, datetime):
+        resultado = valor.date()
+    elif isinstance(valor, date):
+        resultado = valor
+    elif isinstance(valor, (int, float)):
+        if 1000 < valor < 80000:  # número de serie de Excel
+            resultado = (datetime(1899, 12, 30) + timedelta(days=int(valor))).date()
+    else:
+        texto = _texto(valor).split(' ')[0]
+        for formato in ('%d/%m/%Y', '%d-%m-%Y', '%d.%m.%Y', '%Y-%m-%d', '%Y/%m/%d', '%d/%m/%y', '%d-%m-%y'):
+            try:
+                resultado = datetime.strptime(texto, formato).date()
+                break
+            except ValueError:
+                continue
+    if resultado and 1900 <= resultado.year <= date.today().year:
+        return resultado
+    return None
+
+
+def _sexo(valor):
+    texto = _normalizar_cabecera(_texto(valor))
+    if texto in ('F', 'FEM', 'FEMENINO', 'MUJER'):
+        return 'Femenino'
+    if texto in ('M', 'MAS', 'MASC', 'MASCULINO', 'HOMBRE'):
+        return 'Masculino'
+    return None
+
+
+def _turno(valor):
+    texto = _normalizar_cabecera(_texto(valor))
+    if not texto:
+        return None
+    if 'INTEGRAL' in texto or ('MANANA' in texto and 'TARDE' in texto):
+        return 'Integral'
+    if texto.startswith('M') or 'MANANA' in texto:
+        return 'Mañana'
+    if texto.startswith('T') or 'TARDE' in texto:
+        return 'Tarde'
+    return None
+
+
+def _area_por_cargo(cargo):
+    texto = _normalizar_cabecera(cargo)
+    for claves, area in AREAS_POR_CARGO:
+        if any(c in texto for c in claves):
+            return area
+    return AREA_POR_DEFECTO
+
+
+# ==========================================
+# --- LECTURA DEL EXCEL ---
+# ==========================================
+
+def _mapear_columnas(cabeceras):
+    """{campo: índice de columna} a partir de la fila de cabecera."""
+    normalizadas = [_normalizar_cabecera(h) if not _vacio(h) else '' for h in cabeceras]
+    mapa = {}
+    for campo, alias in ALIAS_COLUMNAS.items():
+        for i, h in enumerate(normalizadas):
+            if h in alias and i not in mapa.values():
+                mapa[campo] = i
+                break
+    for campo, regla in REGLAS_RESPALDO.items():
+        if campo in mapa:
+            continue
+        for i, h in enumerate(normalizadas):
+            if h and i not in mapa.values() and regla(h):
+                mapa[campo] = i
+                break
+    return mapa
+
+
+def leer_excel(archivo):
+    """
+    Devuelve (nombre_hoja, fila_cabecera, mapa_columnas, cabeceras, filas).
+    Lanza ValueError si ninguna hoja tiene una columna de cédula.
+    """
+    hojas = pd.read_excel(archivo, sheet_name=None, header=None, dtype=object, engine='openpyxl')
+    for nombre_hoja, df in hojas.items():
+        for fila_cabecera in range(min(FILAS_A_ESCANEAR, len(df))):
+            cabeceras = list(df.iloc[fila_cabecera])
+            mapa = _mapear_columnas(cabeceras)
+            if 'cedula' in mapa:
+                filas = df.iloc[fila_cabecera + 1:].values.tolist()
+                return nombre_hoja, fila_cabecera, mapa, cabeceras, filas
+    raise ValueError('No se encontró una columna "Cédula" en las primeras '
+                     f'{FILAS_A_ESCANEAR} filas de ninguna hoja del archivo.')
+
+
+def _datos_de_fila(fila, mapa):
+    def celda(campo):
+        return fila[mapa[campo]] if campo in mapa and mapa[campo] < len(fila) else None
+
+    nombres = _texto(celda('nombres')) or ' '.join(
+        filter(None, (_texto(celda('primer_nombre')), _texto(celda('segundo_nombre')))))
+    apellidos = _texto(celda('apellidos')) or ' '.join(
+        filter(None, (_texto(celda('primer_apellido')), _texto(celda('segundo_apellido')))))
+    nombres, apellidos = formatear_nombre(nombres), formatear_nombre(apellidos)
+    nombre_completo = (f'{nombres} {apellidos}'.strip()
+                       or formatear_nombre(_texto(celda('nombre_completo'))))
+
+    return {
+        'cedula': _cedula(celda('cedula'), _texto(celda('nacionalidad'))),
+        'nombres': nombres or None,
+        'apellidos': apellidos or None,
+        'nombre_completo': nombre_completo,
+        'fecha_nacimiento': _fecha(celda('fecha_nacimiento')),
+        'sexo': _sexo(celda('sexo')),
+        'fecha_ingreso': _fecha(celda('fecha_ingreso')),
+        'cargo': formatear_cargo(_texto(celda('cargo'))) or None,
+        'codigo_rac': formatear_codigo(_texto(celda('codigo_rac'))) or None,
+        'turno': _turno(celda('turno')),
+        'email': _texto(celda('email')).lower() or None,
+    }
+
+
+# ==========================================
+# --- UPSERT ---
+# ==========================================
+
+def _digitos(cedula):
+    return re.sub(r'\D', '', cedula or '')
+
+
+def importar_personal(archivo, simular=False):
+    """Procesa el Excel y hace el upsert. Con simular=True no guarda nada."""
+    nombre_hoja, fila_cabecera, mapa, cabeceras, filas = leer_excel(archivo)
+
+    usuarios = Usuario.query.all()
+    por_cedula = {_digitos(u.cedula): u for u in usuarios if _digitos(u.cedula)}
+    por_email = {u.email.lower(): u for u in usuarios if u.email}
+    # Usuarios que aún no llenaron su cédula: se vinculan por nombre exacto (si es único)
+    sin_cedula = {}
+    for u in usuarios:
+        if not u.cedula and u.nombre_completo:
+            sin_cedula.setdefault(_normalizar_cabecera(u.nombre_completo), []).append(u)
+    usernames = {u.username.lower() for u in usuarios}
+    emails = set(por_email)
+
+    resultado = {'hoja': nombre_hoja, 'fila_cabecera': fila_cabecera, 'simulacion': simular,
+                 'columnas': {campo: _texto(cabeceras[i]) for campo, i in mapa.items()},
+                 'actualizados': 0, 'creados': 0, 'sin_cambios': 0, 'omitidos': 0, 'detalle': []}
+    vistos = set()
+
+    def anotar(n_fila, estado, nombre, cedula, nota=''):
+        resultado['detalle'].append({'fila': n_fila, 'estado': estado, 'nombre': nombre,
+                                     'cedula': cedula or '', 'nota': nota})
+
+    for i, fila in enumerate(filas):
+        n_fila = fila_cabecera + i + 2  # número de fila tal como se ve en Excel
+        if all(_vacio(v) for v in fila):
+            continue
+        try:
+            datos = _datos_de_fila(fila, mapa)
+        except Exception as e:  # celda con formato inesperado: se omite la fila, no el archivo
+            resultado['omitidos'] += 1
+            anotar(n_fila, 'Omitido', '', '', f'Error leyendo la fila: {e}')
+            continue
+
+        cedula, digitos = datos['cedula'], _digitos(datos['cedula'])
+        if not cedula:
+            resultado['omitidos'] += 1
+            anotar(n_fila, 'Omitido', datos['nombre_completo'], _texto(fila[mapa['cedula']]),
+                   'Cédula vacía o inválida')
+            continue
+        if digitos in vistos:
+            resultado['omitidos'] += 1
+            anotar(n_fila, 'Omitido', datos['nombre_completo'], cedula, 'Cédula repetida en el archivo')
+            continue
+        vistos.add(digitos)
+
+        usuario, vinculo = por_cedula.get(digitos), ''
+        if not usuario and datos['email'] and datos['email'] in por_email:
+            usuario, vinculo = por_email[datos['email']], 'vinculado por correo'
+        if not usuario and datos['nombre_completo']:
+            candidatos = sin_cedula.get(_normalizar_cabecera(datos['nombre_completo']), [])
+            if len(candidatos) == 1:
+                usuario, vinculo = candidatos[0], 'vinculado por nombre'
+        if usuario and usuario.cedula and _digitos(usuario.cedula) != digitos:
+            # Coincidió por correo pero es otra cédula: no se mezclan personas
+            usuario, vinculo = None, ''
+
+        if usuario:
+            cambios = [c for c in CAMPOS_ACTUALIZABLES
+                       if not getattr(usuario, c) and datos.get(c)]
+            for c in cambios:
+                setattr(usuario, c, datos[c])
+            if not usuario.nombre_completo and datos['nombre_completo']:
+                usuario.nombre_completo = datos['nombre_completo']
+            por_cedula[digitos] = usuario
+            if cambios:
+                resultado['actualizados'] += 1
+                anotar(n_fila, 'Actualizado', usuario.nombre_completo, cedula,
+                       ', '.join(cambios) + (f' ({vinculo})' if vinculo else ''))
+            else:
+                resultado['sin_cambios'] += 1
+                anotar(n_fila, 'Sin cambios', usuario.nombre_completo, cedula, 'Ya tenía los datos completos')
+            continue
+
+        # --- Nuevo registro ---
+        username = digitos
+        sufijo = 1
+        while username in usernames:
+            sufijo += 1
+            username = f'{digitos}_{sufijo}'
+        usernames.add(username)
+
+        email = datos['email'] if datos['email'] and datos['email'] not in emails else f'{username}@sin-correo.kolegium'
+        emails.add(email)
+
+        nuevo = Usuario(
+            username=username,
+            nombre_completo=datos['nombre_completo'] or f'Personal {cedula}',
+            email=email,
+            area_trabajo=_area_por_cargo(datos['cargo'] or ''),
+            password=generate_password_hash(digitos, method='pbkdf2:sha256'),
+            activo=True,
+            **{c: datos[c] for c in CAMPOS_ACTUALIZABLES},
+        )
+        db.session.add(nuevo)
+        por_cedula[digitos] = nuevo
+        resultado['creados'] += 1
+        anotar(n_fila, 'Creado', nuevo.nombre_completo, cedula,
+               f'Usuario: {username} · Área: {nuevo.area_trabajo}')
+
+    if simular:
+        db.session.rollback()
+    else:
+        db.session.commit()
+    return resultado
