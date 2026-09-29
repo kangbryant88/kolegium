@@ -372,6 +372,11 @@
                                 <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Nombre de Usuario</label>
                                 <input type="text" name="username" value="{{ usuario.username }}" class="edu-input mb-3" style="width: 100%;" required placeholder="Nuevo usuario">
 
+                                <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Cédula</label>
+                                <input type="text" name="cedula" value="{{ usuario.cedula or '' }}" class="edu-input mb-3" style="width: 100%; text-transform: uppercase;"
+                                    placeholder="V-12345678" maxlength="20" pattern="\s*[VvEe]?[\s.\-]*[\d.\s]{6,12}\s*"
+                                    title="Formato: V-12345678 o E-12345678 (se aceptan puntos y espacios)">
+
                                 <div class="form-check form-switch mb-3">
                                     <input class="form-check-input" type="checkbox" role="switch" id="activo_{{ usuario.id }}" name="activo" {% if usuario.activo %}checked{% endif %}>
                                     <label class="form-check-label" for="activo_{{ usuario.id }}" style="font-size:0.8rem;">Usuario Activo</label>

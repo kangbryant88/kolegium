@@ -239,6 +239,60 @@ def _digitos(cedula):
     return re.sub(r'\D', '', cedula or '')
 
 
+# Partículas que no identifican a nadie: no cuentan para validar un match parcial
+PARTICULAS_NOMBRE = {'DE', 'DEL', 'LA', 'LAS', 'LOS', 'Y', 'DA', 'DI'}
+MIN_PALABRAS_MATCH_PARCIAL = 2  # "Daissy" solo es demasiado ambiguo
+
+
+def _palabras(nombre):
+    """'Daissy Mercedes Reyna Bohórquez' -> {'DAISSY', 'MERCEDES', 'REYNA', 'BOHORQUEZ'}
+    (sin acentos ni mayúsculas/minúsculas)."""
+    return set(_normalizar_cabecera(nombre or '').split())
+
+
+def buscar_usuario_existente(datos, digitos, por_cedula, por_email, sin_cedula):
+    """
+    Busca al usuario de una fila del Excel. Devuelve (usuario | None, vínculo).
+    Orden: 1) cédula  2) correo  3) nombre completo exacto  4) match parcial.
+    Los pasos 3 y 4 solo miran usuarios que aún NO tienen cédula y solo
+    aceptan el resultado si hay un único candidato.
+    """
+    usuario = por_cedula.get(digitos)
+    if usuario:
+        return usuario, ''
+
+    usuario = por_email.get(datos['email']) if datos['email'] else None
+    if usuario and (not usuario.cedula or _digitos(usuario.cedula) == digitos):
+        return usuario, 'vinculado por correo'
+
+    nombre_excel = datos['nombre_completo']
+    if not nombre_excel:
+        return None, ''
+
+    # 3) Nombre completo exacto
+    nombre_norm = _normalizar_cabecera(nombre_excel)
+    exactos = [u for u in sin_cedula if _normalizar_cabecera(u.nombre_completo) == nombre_norm]
+    if len(exactos) == 1:
+        return exactos[0], 'vinculado por nombre'
+    if len(exactos) > 1:
+        return None, ''  # homónimos: mejor crear/revisar que mezclar personas
+
+    # 4) Match parcial: TODAS las palabras del nombre registrado ('Daissy Reyna')
+    #    aparecen en el nombre legal del Excel ('Daissy Mercedes Reyna Bohorquez').
+    palabras_excel = _palabras(nombre_excel)
+    parciales = []
+    for u in sin_cedula:
+        palabras_registro = _palabras(u.nombre_completo)
+        if len(palabras_registro - PARTICULAS_NOMBRE) < MIN_PALABRAS_MATCH_PARCIAL:
+            continue
+        if palabras_registro <= palabras_excel:
+            parciales.append(u)
+    if len(parciales) == 1:
+        return parciales[0], f'vinculado por nombre parcial "{parciales[0].nombre_completo}"'
+
+    return None, ''
+
+
 def importar_personal(archivo, simular=False):
     """Procesa el Excel y hace el upsert. Con simular=True no guarda nada."""
     nombre_hoja, fila_cabecera, mapa, cabeceras, filas = leer_excel(archivo)
@@ -246,11 +300,8 @@ def importar_personal(archivo, simular=False):
     usuarios = Usuario.query.all()
     por_cedula = {_digitos(u.cedula): u for u in usuarios if _digitos(u.cedula)}
     por_email = {u.email.lower(): u for u in usuarios if u.email}
-    # Usuarios que aún no llenaron su cédula: se vinculan por nombre exacto (si es único)
-    sin_cedula = {}
-    for u in usuarios:
-        if not u.cedula and u.nombre_completo:
-            sin_cedula.setdefault(_normalizar_cabecera(u.nombre_completo), []).append(u)
+    # Usuarios que aún no llenaron su cédula: candidatos a vincular por nombre
+    sin_cedula = [u for u in usuarios if not u.cedula and u.nombre_completo]
     usernames = {u.username.lower() for u in usuarios}
     emails = set(por_email)
 
@@ -286,16 +337,10 @@ def importar_personal(archivo, simular=False):
             continue
         vistos.add(digitos)
 
-        usuario, vinculo = por_cedula.get(digitos), ''
-        if not usuario and datos['email'] and datos['email'] in por_email:
-            usuario, vinculo = por_email[datos['email']], 'vinculado por correo'
-        if not usuario and datos['nombre_completo']:
-            candidatos = sin_cedula.get(_normalizar_cabecera(datos['nombre_completo']), [])
-            if len(candidatos) == 1:
-                usuario, vinculo = candidatos[0], 'vinculado por nombre'
-        if usuario and usuario.cedula and _digitos(usuario.cedula) != digitos:
-            # Coincidió por correo pero es otra cédula: no se mezclan personas
-            usuario, vinculo = None, ''
+        usuario, vinculo = buscar_usuario_existente(datos, digitos, por_cedula, por_email, sin_cedula)
+        if usuario in sin_cedula:
+            # Ya quedó vinculado a esta cédula: no puede reclamarlo otra fila
+            sin_cedula.remove(usuario)
 
         if usuario:
             cambios = [c for c in CAMPOS_ACTUALIZABLES

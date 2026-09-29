@@ -1,7 +1,11 @@
+import re
+
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 from flask_mail import Message
+from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 from app.models import db, Usuario, Rol
+from app.web.perfil import formatear_cedula
 from app.services.importar_personal import importar_personal as importar_personal_desde_excel
 
 # Importamos 'mail' desde extensions (patrón Factory)
@@ -190,6 +194,27 @@ def modificar_usuario(id):
         flash("No puedes desactivar al creador del sistema.", "error")
         return redirect(url_for('admin.admin_usuarios'))
 
+    # Cédula: se valida ANTES de tocar cualquier otro campo para que un error
+    # no deje la edición a medias. Vacío = no se modifica la cédula actual.
+    cedula_raw = (request.form.get('cedula') or '').strip()
+    nueva_cedula = None
+    if cedula_raw:
+        nueva_cedula = formatear_cedula(cedula_raw)
+        if not nueva_cedula:
+            flash("La cédula no es válida. Formato esperado: V-12345678 o E-12345678.", "error")
+            return redirect(url_for('admin.admin_usuarios'))
+        # Se compara por dígitos: hay cédulas antiguas guardadas sin normalizar ("12345678", "V12345678")
+        digitos = re.sub(r'\D', '', nueva_cedula)
+        duenio = next((u for u in Usuario.query.filter(Usuario.cedula.isnot(None), Usuario.id != usuario.id)
+                       if re.sub(r'\D', '', u.cedula) == digitos), None)
+        if duenio:
+            flash(f"La cédula {nueva_cedula} ya pertenece a {duenio.nombre_completo} (usuario '{duenio.username}').", "error")
+            return redirect(url_for('admin.admin_usuarios'))
+
+    if nueva_cedula and usuario.cedula != nueva_cedula:
+        cambios_realizados.append(f"Cédula cambiada de '{usuario.cedula or 'Sin cédula'}' a '{nueva_cedula}'")
+        usuario.cedula = nueva_cedula
+
     if usuario.activo != nuevo_activo:
         usuario.activo = nuevo_activo
         cambios_realizados.append(f"Estatus cambiado a {'Activo' if nuevo_activo else 'Inactivo'}")
@@ -221,9 +246,14 @@ def modificar_usuario(id):
             cambios_realizados.append(f"Depto cambiado de '{old_depto}' a '{new_depto}'")
 
     if cambios_realizados:
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            flash("No se pudo guardar: el usuario o la cédula ya están en uso por otra cuenta.", "error")
+            return redirect(url_for('admin.admin_usuarios'))
         flash(" | ".join(cambios_realizados), "success")
-            
+
     return redirect(url_for('admin.admin_usuarios'))
 
 # ==========================================
