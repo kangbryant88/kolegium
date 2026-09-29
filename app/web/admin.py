@@ -184,7 +184,6 @@ def modificar_usuario(id):
         return '🚫 No autorizado.', 403
     
     usuario = Usuario.query.get_or_404(id)
-    nuevo_username = request.form.get('username')
     nuevo_departamento = request.form.get('departamento_asignado')
     nuevo_activo = 'activo' in request.form
 
@@ -194,47 +193,76 @@ def modificar_usuario(id):
         flash("No puedes desactivar al creador del sistema.", "error")
         return redirect(url_for('admin.admin_usuarios'))
 
-    # Cédula: se valida ANTES de tocar cualquier otro campo para que un error
-    # no deje la edición a medias. Vacío = no se modifica la cédula actual.
+    # ---- Validación: TODO se revisa antes de tocar el usuario, para que un
+    # error no deje la edición a medias. Campo vacío = no se modifica. ----
+    def rechazar(mensaje):
+        flash(mensaje, "error")
+        return redirect(url_for('admin.admin_usuarios'))
+
+    # Cédula
     cedula_raw = (request.form.get('cedula') or '').strip()
     nueva_cedula = None
     if cedula_raw:
         nueva_cedula = formatear_cedula(cedula_raw)
         if not nueva_cedula:
-            flash("La cédula no es válida. Formato esperado: V-12345678 o E-12345678.", "error")
-            return redirect(url_for('admin.admin_usuarios'))
+            return rechazar("La cédula no es válida. Formato esperado: V-12345678 o E-12345678.")
         # Se compara por dígitos: hay cédulas antiguas guardadas sin normalizar ("12345678", "V12345678")
         digitos = re.sub(r'\D', '', nueva_cedula)
         duenio = next((u for u in Usuario.query.filter(Usuario.cedula.isnot(None), Usuario.id != usuario.id)
                        if re.sub(r'\D', '', u.cedula) == digitos), None)
         if duenio:
-            flash(f"La cédula {nueva_cedula} ya pertenece a {duenio.nombre_completo} (usuario '{duenio.username}').", "error")
-            return redirect(url_for('admin.admin_usuarios'))
+            return rechazar(f"La cédula {nueva_cedula} ya pertenece a {duenio.nombre_completo} (usuario '{duenio.username}').")
 
+    # Usuario (login): el login lo compara en minúsculas
+    nuevo_username_raw = (request.form.get('username') or '').strip()
+    nuevo_username = None
+    if nuevo_username_raw:
+        if ' ' in nuevo_username_raw:
+            return rechazar("El nombre de usuario no puede contener espacios.")
+        nuevo_username = nuevo_username_raw.lower()
+        duenio = Usuario.query.filter(db.func.lower(Usuario.username) == nuevo_username,
+                                      Usuario.id != usuario.id).first()
+        if duenio:
+            return rechazar(f"El usuario '{nuevo_username}' ya está en uso por {duenio.nombre_completo}.")
+
+    # Correo
+    nuevo_email_raw = (request.form.get('email') or '').strip()
+    nuevo_email = None
+    if nuevo_email_raw:
+        nuevo_email = nuevo_email_raw.lower()
+        if not re.fullmatch(r'[^@\s]+@[^@\s]+\.[^@\s]+', nuevo_email):
+            return rechazar("El correo no tiene un formato válido (ej. nombre@dominio.com).")
+        duenio = Usuario.query.filter(db.func.lower(Usuario.email) == nuevo_email,
+                                      Usuario.id != usuario.id).first()
+        if duenio:
+            return rechazar(f"El correo {nuevo_email} ya está registrado por {duenio.nombre_completo}.")
+
+    # Contraseña (opcional). El login hace strip() de la clave ingresada,
+    # así que se guarda sin espacios en los extremos para que coincida.
+    nueva_contrasena = (request.form.get('nueva_contrasena') or '').strip()
+    if nueva_contrasena and len(nueva_contrasena) < 6:
+        return rechazar("La nueva contraseña debe tener al menos 6 caracteres.")
+
+    # ---- Aplicar cambios ----
     if nueva_cedula and usuario.cedula != nueva_cedula:
         cambios_realizados.append(f"Cédula cambiada de '{usuario.cedula or 'Sin cédula'}' a '{nueva_cedula}'")
         usuario.cedula = nueva_cedula
 
+    if nuevo_username and usuario.username != nuevo_username:
+        cambios_realizados.append(f"Usuario cambiado de '{usuario.username}' a '{nuevo_username}'")
+        usuario.username = nuevo_username
+
+    if nuevo_email and (usuario.email or '').lower() != nuevo_email:
+        cambios_realizados.append(f"Correo cambiado de '{usuario.email}' a '{nuevo_email}'")
+        usuario.email = nuevo_email
+
+    if nueva_contrasena:
+        usuario.password = generate_password_hash(nueva_contrasena, method='pbkdf2:sha256')
+        cambios_realizados.append("Contraseña actualizada")
+
     if usuario.activo != nuevo_activo:
         usuario.activo = nuevo_activo
         cambios_realizados.append(f"Estatus cambiado a {'Activo' if nuevo_activo else 'Inactivo'}")
-
-    if nuevo_username:
-        nuevo_username_raw = nuevo_username
-        if ' ' in nuevo_username_raw:
-            flash("El nombre de usuario no puede contener espacios.", "error")
-            return redirect(url_for('admin.admin_usuarios'))
-            
-        nuevo_username_clean = nuevo_username_raw.strip().lower()
-        existente = Usuario.query.filter_by(username=nuevo_username_clean).first()
-        
-        if existente and existente.id != usuario.id:
-            flash("Ese nombre de usuario ya está en uso.", "error")
-        else:
-            old_username = usuario.username
-            if old_username != nuevo_username_clean:
-                usuario.username = nuevo_username_clean
-                cambios_realizados.append(f"Usuario cambiado de '{old_username}' a '{nuevo_username_clean}'")
 
     if nuevo_departamento is not None and ('Administrativo' in (usuario.area_trabajo or '') or 'Especialista' in (usuario.area_trabajo or '')):
         # Even if it's an empty string (Ninguno), we save it (or None)
@@ -250,7 +278,7 @@ def modificar_usuario(id):
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
-            flash("No se pudo guardar: el usuario o la cédula ya están en uso por otra cuenta.", "error")
+            flash("No se pudo guardar: el usuario, el correo o la cédula ya están en uso por otra cuenta.", "error")
             return redirect(url_for('admin.admin_usuarios'))
         flash(" | ".join(cambios_realizados), "success")
 

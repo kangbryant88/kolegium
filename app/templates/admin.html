@@ -370,7 +370,20 @@
                             </h5>
                             <form action="{{ url_for('admin.modificar_usuario', id=usuario.id) }}" method="POST" id="formEditUser{{ usuario.id }}">
                                 <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Nombre de Usuario</label>
-                                <input type="text" name="username" value="{{ usuario.username }}" class="edu-input mb-3" style="width: 100%;" required placeholder="Nuevo usuario">
+                                <input type="text" name="username" value="{{ usuario.username }}" class="edu-input mb-3" style="width: 100%;" required placeholder="Nuevo usuario" autocomplete="off">
+
+                                <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Correo</label>
+                                <input type="email" name="email" value="{{ usuario.email or '' }}" class="edu-input mb-1" style="width: 100%;" required placeholder="nombre@dominio.com" autocomplete="off">
+                                {% if (usuario.email or '').endswith('@sin-correo.kolegium') %}
+                                <div class="mb-3" style="font-size:0.72rem; color:#f59e0b;">Correo provisional del importador: reemplázalo por el real.</div>
+                                {% else %}
+                                <div class="mb-3"></div>
+                                {% endif %}
+
+                                <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Nueva contraseña <span style="text-transform:none; font-weight:500;">(opcional)</span></label>
+                                <input type="password" name="nueva_contrasena" value="" class="edu-input mb-1" style="width: 100%;" minlength="6"
+                                    placeholder="Dejar en blanco para no cambiar" autocomplete="new-password">
+                                <div class="mb-3" style="font-size:0.72rem; color:var(--on-surface-variant);">Dejar en blanco para no cambiar. Mínimo 6 caracteres.</div>
 
                                 <label style="font-size:0.75rem; color:var(--on-surface-variant); font-weight:700; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:0.5px;">Cédula</label>
                                 <input type="text" name="cedula" value="{{ usuario.cedula or '' }}" class="edu-input mb-3" style="width: 100%; text-transform: uppercase;"
