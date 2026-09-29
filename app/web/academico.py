@@ -328,6 +328,76 @@ def api_estudiantes_por_grado(grado_id):
     }
     return jsonify(resultado)
 
+def separar_grado_seccion(nombre_grado):
+    """Grado.nombre se guarda como '<grado> <sección>' (ej. '1er Grado A').
+    Devuelve (grado, seccion) para mostrarlos por separado."""
+    if not nombre_grado:
+        return ('Sin Asignar', '-')
+    partes = nombre_grado.rsplit(' ', 1)
+    return (partes[0], partes[1]) if len(partes) == 2 else (nombre_grado, '-')
+
+@academico_bp.route('/buscar_estudiante')
+def buscar_estudiante():
+    """Buscador global: busca en TODOS los estudiantes (Activos y Egresados)
+    por nombre, cédula escolar o cédula del representante."""
+    if not session.get('logeado'):
+        return jsonify({'error': 'No autorizado'}), 401
+
+    q = (request.args.get('q') or '').strip()
+    if len(q) < 2:
+        return jsonify({'total': 0, 'resultados': []})
+
+    patron = f'%{q}%'
+    estudiantes = (Estudiante.query
+                   .outerjoin(Representante, Estudiante.representante_id == Representante.id)
+                   .filter(db.or_(Estudiante.nombre_completo.ilike(patron),
+                                  Estudiante.cedula_escolar.ilike(patron),
+                                  Representante.cedula.ilike(patron)))
+                   .order_by(Estudiante.nombre_completo.asc())
+                   .limit(50).all())
+
+    resultados = []
+    for est in estudiantes:
+        grado, seccion = separar_grado_seccion(est.grado.nombre if est.grado else None)
+        resultados.append({
+            'id': est.id,
+            'cedula_escolar': est.cedula_escolar,
+            'nombre_completo': est.nombre_completo,
+            'grado': grado,
+            'seccion': seccion,
+            'estatus': est.estatus or 'Activo'
+        })
+    return jsonify({'total': len(resultados), 'resultados': resultados})
+
+@academico_bp.route('/cambiar_grado/<int:id>', methods=['POST'])
+def cambiar_grado(id):
+    """Cambio rápido de grado/sección sin editar el perfil completo.
+    Como la sección forma parte de Grado.nombre, el selector 'Nueva Sección'
+    envía directamente el id del Grado destino (grado_id)."""
+    if not session.get('logeado'): return redirect(url_for('auth.login'))
+    est = Estudiante.query.get_or_404(id)
+
+    grado_destino = Grado.query.get(request.form.get('grado_id', type=int) or 0)
+    if not grado_destino:
+        flash('Debe seleccionar un grado y una sección válidos.', 'error')
+        return redirect(url_for('academico.estadistica_global'))
+
+    if est.grado_id == grado_destino.id:
+        flash(f'{est.nombre_completo} ya pertenece a {grado_destino.nombre}.', 'info')
+        return redirect(url_for('academico.estadistica_global'))
+
+    try:
+        est.grado_id = grado_destino.id
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception('Error al cambiar de grado al estudiante %s', est.id)
+        flash('No se pudo cambiar el grado del estudiante. Intente nuevamente.', 'danger')
+        return redirect(url_for('academico.estadistica_global'))
+
+    flash(f'{est.nombre_completo} fue movido a {grado_destino.nombre}.', 'success')
+    return redirect(url_for('academico.estadistica_global'))
+
 @academico_bp.route('/registrar_estudiante', methods=['POST'])
 def registrar_estudiante():
     if not session.get('logeado'):

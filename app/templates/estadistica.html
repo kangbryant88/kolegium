@@ -19,7 +19,49 @@
     </div>
 </div>
 
+<!-- Buscador Global de Estudiantes (Activos y Egresados) -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-3 p-md-4">
+        <form id="formBuscarEstudiante" class="d-flex flex-column flex-sm-row gap-2" autocomplete="off">
+            <div class="input-group">
+                <span class="input-group-text border-end-0"><i data-lucide="search" style="width:18px;height:18px;"></i></span>
+                <input type="search" id="inputBuscarEstudiante" class="form-control border-start-0"
+                    placeholder="Buscar en todos los estudiantes por nombre o cédula (incluye egresados)..." minlength="2">
+            </div>
+            <button type="submit" class="btn btn-primary px-4 fw-semibold">Buscar</button>
+        </form>
+        <div id="busqueda-resultados" class="d-none mt-3">
+            <p class="small mb-2" style="color: var(--text-muted);" id="busqueda-resumen"></p>
+            <div class="table-responsive" style="max-height: 50vh; overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light sticky-top" style="z-index: 1;">
+                        <tr>
+                            <th class="ps-3 text-nowrap">Cédula Escolar</th>
+                            <th style="min-width: 180px;">Nombre</th>
+                            <th class="text-nowrap">Grado</th>
+                            <th class="text-nowrap">Sección</th>
+                            <th class="text-nowrap">Estatus</th>
+                            <th class="text-end pe-3 text-nowrap">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="busqueda-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
+    /* Reparación del scroll en el modal de lista por sección */
+    #modalEstudiantes .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    #modalEstudiantes .table-responsive {
+        overflow-y: visible;
+    }
+
     .premium-card {
         background-color: #1a1f2b;
         border-radius: 1rem;
@@ -316,7 +358,7 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-0">
+                <div class="modal-body p-0" style="max-height: 70vh; overflow-y: auto;">
                     <!-- Spinner de Carga -->
                     <div id="modal-loading" class="text-center py-5">
                         <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem;">
@@ -458,6 +500,37 @@
     </div> <!-- Cierre de col-12 col-xl-5 -->
 </div> <!-- Cierre de row g-4 mb-4 -->
 
+<!-- Mini-Modal: Cambio Rápido de Grado / Sección -->
+<div class="modal fade" id="modalMoverEstudiante" tabindex="-1" aria-labelledby="modalMoverLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <form id="formMoverEstudiante" method="POST" class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-bottom px-4 pt-4 pb-3">
+                <h5 class="modal-title fw-bold" id="modalMoverLabel">
+                    <i data-lucide="arrow-left-right" class="me-1" style="width:18px;height:18px;vertical-align:text-bottom;"></i>
+                    Mover Estudiante
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <p class="small fw-semibold mb-3" id="mover-nombre-estudiante"></p>
+                <div class="mb-3">
+                    <label for="moverGrado" class="form-label small fw-semibold">Nuevo Grado</label>
+                    <select id="moverGrado" class="form-select" required></select>
+                </div>
+                <div class="mb-1">
+                    <label for="moverSeccion" class="form-label small fw-semibold">Nueva Sección</label>
+                    <!-- El value de cada opción es el id del Grado destino (grado + sección) -->
+                    <select id="moverSeccion" name="grado_id" class="form-select" required></select>
+                </div>
+            </div>
+            <div class="modal-footer px-4 py-3 border-top-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary rounded-pill px-3 fw-semibold">Mover</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Modal Registro Nuevo Estudiante -->
 <div class="modal fade" id="modalRegistro" tabindex="-1" aria-labelledby="modalRegistroLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-fullscreen-lg-down">
@@ -506,7 +579,29 @@
     // ============================================
     // MODAL DINÁMICO DE ESTUDIANTES (Fetch API)
     // ============================================
+    // Catálogo de grados: Grado.nombre = '<grado> <sección>' (ej. '1er Grado A')
+    const GRADOS_CATALOGO = [
+        {% for g in grados %}{ id: {{ g.id }}, nombre: {{ g.nombre|tojson }} },
+        {% endfor %}
+    ].map(g => {
+        const i = g.nombre.lastIndexOf(' ');
+        return i > 0
+            ? { id: g.id, nombre: g.nombre, grado: g.nombre.slice(0, i), seccion: g.nombre.slice(i + 1) }
+            : { id: g.id, nombre: g.nombre, grado: g.nombre, seccion: '-' };
+    });
+
+    function escapeHtml(str) {
+        return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        // Los modales se mueven a <body> para que ningún contenedor padre
+        // (row/col/card) limite su altura ni bloquee el scroll interno.
+        ['modalEstudiantes', 'modalHistorial', 'modalMoverEstudiante'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.parentElement !== document.body) document.body.appendChild(el);
+        });
+
         const modalEl = document.getElementById('modalEstudiantes');
         if (!modalEl) return;
 
@@ -574,6 +669,12 @@
                                 <span class="badge ${badgeClass} rounded-pill px-3 py-2 fw-semibold">${est.estatus}</span>
                             </td>
                             <td class="text-end pe-4 text-nowrap">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-1 btn-mover-estudiante"
+                                    data-est-id="${est.id}" data-est-nombre="${escapeHtml(est.nombre_completo)}" data-grado-id="${gradoId}"
+                                    title="Cambiar de grado / sección">
+                                    <i data-lucide="arrow-left-right" class="me-1" style="width:14px;height:14px;"></i>
+                                    Mover
+                                </button>
                                 <a href="/academico/perfil_estudiante/${est.id}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
                                     <i data-lucide="eye" class="me-1" style="width:14px;height:14px;"></i>
                                     Detalles
@@ -710,6 +811,104 @@
                     console.error('Error cargando aula:', err);
                 });
         };
+
+        // ============================================
+        // BUSCADOR GLOBAL (Activos y Egresados)
+        // ============================================
+        const formBuscar = document.getElementById('formBuscarEstudiante');
+        if (formBuscar) {
+            formBuscar.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const q = document.getElementById('inputBuscarEstudiante').value.trim();
+                const wrap = document.getElementById('busqueda-resultados');
+                const resumen = document.getElementById('busqueda-resumen');
+                const tbody = document.getElementById('busqueda-tbody');
+
+                wrap.classList.remove('d-none');
+                tbody.innerHTML = '';
+                if (q.length < 2) {
+                    resumen.textContent = 'Escribe al menos 2 caracteres.';
+                    return;
+                }
+                resumen.textContent = 'Buscando...';
+
+                fetch(`/academico/buscar_estudiante?q=${encodeURIComponent(q)}`)
+                    .then(res => {
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        return res.json();
+                    })
+                    .then(data => {
+                        resumen.textContent = data.total
+                            ? `${data.total} resultado${data.total !== 1 ? 's' : ''} para "${q}"${data.total >= 50 ? ' (mostrando los primeros 50)' : ''}`
+                            : `No se encontraron estudiantes para "${q}".`;
+
+                        tbody.innerHTML = data.resultados.map(r => {
+                            const egresado = r.estatus === 'Egreso';
+                            const badge = egresado ? 'bg-danger bg-opacity-10 text-danger' : 'bg-success bg-opacity-10 text-success';
+                            const accion = egresado
+                                ? `<a href="/academico/perfil_estudiante/${r.id}" class="btn btn-sm btn-warning rounded-pill px-3 fw-semibold" title="Abrir perfil para reingresar">
+                                       <i data-lucide="log-in" class="me-1" style="width:14px;height:14px;"></i>Ver / Reingresar</a>`
+                                : `<a href="/academico/perfil_estudiante/${r.id}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                       <i data-lucide="eye" class="me-1" style="width:14px;height:14px;"></i>Perfil</a>`;
+                            return `
+                                <tr>
+                                    <td class="ps-3 fw-medium text-nowrap">${escapeHtml(r.cedula_escolar)}</td>
+                                    <td class="text-wrap">${escapeHtml(r.nombre_completo)}</td>
+                                    <td class="text-nowrap">${escapeHtml(r.grado)}</td>
+                                    <td class="text-nowrap">${escapeHtml(r.seccion)}</td>
+                                    <td class="text-nowrap"><span class="badge ${badge} rounded-pill px-3 py-2 fw-semibold">${escapeHtml(r.estatus)}</span></td>
+                                    <td class="text-end pe-3 text-nowrap">${accion}</td>
+                                </tr>`;
+                        }).join('');
+
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    })
+                    .catch(err => {
+                        console.error('Error en búsqueda:', err);
+                        resumen.textContent = 'Error al buscar. Intenta nuevamente.';
+                    });
+            });
+        }
+
+        // ============================================
+        // CAMBIO RÁPIDO DE GRADO / SECCIÓN (Mover)
+        // ============================================
+        const modalMoverEl = document.getElementById('modalMoverEstudiante');
+        const selGrado = document.getElementById('moverGrado');
+        const selSeccion = document.getElementById('moverSeccion');
+
+        const gradosBase = [...new Set(GRADOS_CATALOGO.map(g => g.grado))];
+        selGrado.innerHTML = '<option value="">-- Seleccionar --</option>' +
+            gradosBase.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
+
+        function cargarSecciones(gradoBase, seleccionadoId) {
+            const secciones = GRADOS_CATALOGO.filter(g => g.grado === gradoBase);
+            selSeccion.innerHTML = '<option value="">-- Seleccionar --</option>' +
+                secciones.map(g => `<option value="${g.id}" ${g.id === seleccionadoId ? 'selected' : ''}>${escapeHtml(g.seccion)}</option>`).join('');
+        }
+        selGrado.addEventListener('change', () => cargarSecciones(selGrado.value, null));
+
+        // Delegación: los botones 'Mover' se inyectan dinámicamente en la tabla del modal
+        document.getElementById('tabla-estudiantes-body').addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-mover-estudiante');
+            if (!btn) return;
+
+            const gradoActualId = parseInt(btn.dataset.gradoId, 10);
+            const actual = GRADOS_CATALOGO.find(g => g.id === gradoActualId);
+
+            document.getElementById('formMoverEstudiante').action = `/academico/cambiar_grado/${btn.dataset.estId}`;
+            document.getElementById('mover-nombre-estudiante').textContent =
+                `${btn.dataset.estNombre}${actual ? ' — actualmente en ' + actual.nombre : ''}`;
+            selGrado.value = actual ? actual.grado : '';
+            cargarSecciones(selGrado.value, actual ? actual.id : null);
+
+            // Cerrar la lista y abrir el mini-modal (Bootstrap no apila modales)
+            modalEl.addEventListener('hidden.bs.modal', function abrirMover() {
+                modalEl.removeEventListener('hidden.bs.modal', abrirMover);
+                bootstrap.Modal.getOrCreateInstance(modalMoverEl).show();
+            });
+            bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        });
 
         // ============================================
         // TOGGLE NEURODIVERGENCIA
