@@ -20,12 +20,15 @@ from app.models import db, Usuario
 from app.web.perfil import formatear_nombre, formatear_cargo, formatear_codigo, formatear_cedula, formatear_telefono
 from app.services.ficha_ministerial import CAMPOS as CAMPOS_FICHA, HORAS_MAXIMAS
 
-FILAS_A_ESCANEAR = 15  # filas donde se busca la cabecera real
+FILAS_A_ESCANEAR = 30  # filas donde se busca la cabecera real
 
-# Alias normalizados (MAYÚSCULAS, sin acentos, solo letras/números separados por espacio)
+# Alias de cada columna. Se escriben como en el Excel (con o sin acentos):
+# al cargar el módulo pasan por _normalizar_cabecera, igual que las cabeceras.
 ALIAS_COLUMNAS = {
     'cedula': {'CEDULA', 'CEDULA DE IDENTIDAD', 'CEDULA IDENTIDAD', 'C I', 'CI', 'NRO CEDULA',
-               'N CEDULA', 'NO CEDULA', 'NUMERO DE CEDULA', 'CEDULA N'},
+               'N CEDULA', 'NO CEDULA', 'NUMERO DE CEDULA', 'CEDULA N', 'C I DEL TRABAJADOR',
+               'CI DEL TRABAJADOR', 'C I TRABAJADOR', 'CI TRABAJADOR', 'IDENTIFICACION',
+               'DOCUMENTO DE IDENTIDAD', 'NO DE CEDULA', 'N DE CEDULA', 'NRO DE CEDULA'},
     'nacionalidad': {'NAC', 'NACIONALIDAD', 'V E'},
     'nombres': {'NOMBRES', 'NOMBRE'},
     'primer_nombre': {'PRIMER NOMBRE', '1ER NOMBRE'},
@@ -97,7 +100,8 @@ ALIAS_COLUMNAS = {
 
 # Si ningún alias coincide exacto, se intenta por palabras contenidas en la cabecera.
 REGLAS_RESPALDO = {
-    'cedula': lambda h: 'CEDULA' in h.split() and 'ESCOLAR' not in h,
+    'cedula': lambda h: ('CEDULA' in h.split() or h.startswith(('C I ', 'CI '))) and 'ESCOLAR' not in h
+                        and 'REPRESENTANTE' not in h,
     'codigo_rac': lambda h: 'RAC' in h.split() and 'NOMINAL' not in h,
     'fecha_ingreso': lambda h: 'INGRES' in h and 'FECHA' in h,  # INGRESO / INGRES (truncado)
     'turno': lambda h: 'TURNO' in h.split(),
@@ -308,11 +312,16 @@ def _area_por_cargo(cargo):
 # --- LECTURA DEL EXCEL ---
 # ==========================================
 
+# Las claves de los alias se limpian con la misma función que las cabeceras
+# del Excel: un alias escrito con acentos ('Cédula') nunca deja de coincidir.
+ALIAS_NORMALIZADOS = {campo: {_normalizar_cabecera(a) for a in alias} for campo, alias in ALIAS_COLUMNAS.items()}
+
+
 def _mapear_columnas(cabeceras):
     """{campo: índice de columna} a partir de la fila de cabecera."""
     normalizadas = [_normalizar_cabecera(h) if not _vacio(h) else '' for h in cabeceras]
     mapa = {}
-    for campo, alias in ALIAS_COLUMNAS.items():
+    for campo, alias in ALIAS_NORMALIZADOS.items():
         for i, h in enumerate(normalizadas):
             if h in alias and i not in mapa.values():
                 mapa[campo] = i
@@ -333,15 +342,24 @@ def leer_excel(archivo):
     Lanza ValueError si ninguna hoja tiene una columna de cédula.
     """
     hojas = pd.read_excel(archivo, sheet_name=None, header=None, dtype=object, engine='openpyxl')
+    candidatas = []  # por hoja, la fila con más celdas de texto: para explicar el error
     for nombre_hoja, df in hojas.items():
+        mejor = (0, None, [])
         for fila_cabecera in range(min(FILAS_A_ESCANEAR, len(df))):
             cabeceras = list(df.iloc[fila_cabecera])
             mapa = _mapear_columnas(cabeceras)
             if 'cedula' in mapa:
                 filas = df.iloc[fila_cabecera + 1:].values.tolist()
                 return nombre_hoja, fila_cabecera, mapa, cabeceras, filas
+            textos = [_texto(h) for h in cabeceras if isinstance(h, str) and h.strip()]
+            if len(textos) > mejor[0]:
+                mejor = (len(textos), fila_cabecera, textos)
+        if mejor[1] is not None:
+            vistas = ', '.join(f'"{t}"' for t in mejor[2][:12]) + (' …' if len(mejor[2]) > 12 else '')
+            candidatas.append(f'hoja "{nombre_hoja}", fila {mejor[1] + 1}: {vistas}')
     raise ValueError('No se encontró una columna "Cédula" en las primeras '
-                     f'{FILAS_A_ESCANEAR} filas de ninguna hoja del archivo.')
+                     f'{FILAS_A_ESCANEAR} filas de ninguna hoja del archivo. '
+                     + ('Encabezados encontrados: ' + ' | '.join(candidatas) if candidatas else 'El archivo parece vacío.'))
 
 
 def _datos_de_fila(fila, mapa):
