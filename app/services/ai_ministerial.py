@@ -20,7 +20,9 @@ from app.services.ficha_ministerial import CAMPOS as CAMPOS_FICHA
 
 load_dotenv()
 
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+# REST y no gRPC: PythonAnywhere solo deja salir a internet por su proxy HTTP,
+# que no deja pasar gRPC.
+genai.configure(api_key=os.getenv('GEMINI_API_KEY'), transport='rest')
 
 # gemini-1.5-flash y 2.5-flash ya no estan disponibles; el alias "latest" sigue al Flash
 # vigente. Para fijar una version: GEMINI_MODEL=... en .env
@@ -145,6 +147,7 @@ def analizar_formato_ministerio(instrucciones_usuario, encabezados_por_hoja):
         texto = respuesta.text
         validado = validar_respuesta(json.loads(texto), encabezados_por_hoja)
         if not validado:
+            print(f'[ai_ministerial] Estructura inesperada de Gemini ({MODELO}): {texto[:500]}')
             return {'error_api': f'Gemini ({MODELO}) respondió con una estructura inesperada: {texto[:500]}',
                     'tipo_error': 'EstructuraInvalida'}
         return validado

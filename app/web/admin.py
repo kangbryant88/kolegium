@@ -492,7 +492,9 @@ def gestor_ministerial():
         return fallar(f'Las instrucciones no pueden superar {LARGO_MAXIMO_INSTRUCCIONES} caracteres.')
 
     try:
-        salida, resumen = generar_reporte(archivo, instrucciones)
+        salida, resumen = generar_reporte(
+            archivo, instrucciones,
+            mostrar_error_tecnico=session.get('nombre_rol') == 'Administrador Supremo')
     except ErrorGestor as e:
         return fallar(str(e))
     except Exception:

@@ -34,6 +34,9 @@ class ErrorGestor(Exception):
     """Error que se le puede mostrar tal cual al administrador."""
 
 
+MENSAJE_IA_NO_DISPONIBLE = 'El asistente de IA no está disponible en este momento. Por favor, intente más tarde.'
+
+
 def _normalizar(texto):
     texto = unicodedata.normalize('NFKD', str(texto or '')).encode('ascii', 'ignore').decode()
     return ' '.join(re.sub(r'[^a-z0-9]+', ' ', texto.lower()).split())
@@ -177,11 +180,13 @@ def leer_pestanas(libro):
     return pestanas
 
 
-def generar_reporte(archivo, instrucciones):
+def generar_reporte(archivo, instrucciones, mostrar_error_tecnico=False):
     """
     Devuelve (BytesIO con el Excel relleno, resumen para mostrar al usuario).
     Lanza ErrorGestor con un mensaje claro si algo impide generar el reporte;
     en ese caso no se entrega ningún archivo a medias.
+    mostrar_error_tecnico: si Gemini falla, el mensaje lleva el error crudo
+    (solo para el Administrador Supremo); si no, un aviso amigable.
     """
     try:
         libro = load_workbook(archivo)
@@ -198,12 +203,11 @@ def generar_reporte(archivo, instrucciones):
                for nombre, (fila, encabezados, numeracion) in pestanas.items()}
 
     analisis = analizar_formato_ministerio(instrucciones, para_ia)
-    if 'error_api' in analisis:
-        # Diagnóstico: se muestra el fallo técnico real de Gemini, sin traducir
-        raise ErrorGestor(f"Error de Gemini [{analisis.get('tipo_error', '?')}]: {analisis['error_api']}")
-    if not analisis:
-        raise ErrorGestor('El Cerebro (Gemini) no respondió. Puede ser la cuota de la API, la clave '
-                          'o la conexión; intenta de nuevo en un minuto.')
+    if 'error_api' in analisis or not analisis:
+        if mostrar_error_tecnico and 'error_api' in analisis:
+            # Diagnóstico: el fallo técnico real de Gemini, sin traducir
+            raise ErrorGestor(f"Error de Gemini [{analisis.get('tipo_error', '?')}]: {analisis['error_api']}")
+        raise ErrorGestor(MENSAJE_IA_NO_DISPONIBLE)
     hojas_ia = analisis.get('hojas_a_procesar', {})
     if not hojas_ia:
         raise ErrorGestor('El Cerebro no encontró ninguna pestaña que rellenar con datos del personal. '
