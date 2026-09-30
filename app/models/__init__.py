@@ -66,6 +66,7 @@ class Usuario(db.Model):
     cargo = db.Column(db.String(100), nullable=True)
     codigo_rac = db.Column(db.String(50), nullable=True)
     turno = db.Column(db.String(20), nullable=True)
+    telefono = db.Column(db.String(20), nullable=True)
 
 class Anuncio(db.Model):
     id = db.Column(db.Integer, primary_key=True)

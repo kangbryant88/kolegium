@@ -1,11 +1,14 @@
 import re
+from collections import Counter
+from datetime import date, datetime
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 from flask_mail import Message
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 from app.models import db, Usuario, Rol
-from app.web.perfil import formatear_cedula
+from app.web.perfil import (formatear_cedula, formatear_cargo, formatear_codigo,
+                            formatear_telefono, OPCIONES_TURNO)
 from app.services.importar_personal import importar_personal as importar_personal_desde_excel
 
 # Importamos 'mail' desde extensions (patrón Factory)
@@ -331,3 +334,110 @@ def importar_personal():
           f"({resultado['sin_cambios']} sin cambios, {resultado['omitidos']} filas omitidas).",
           'warning' if simular else 'success')
     return render_template('importar_personal.html', resultado=resultado)
+
+
+# ==========================================
+# --- GESTOR MINISTERIAL: TABLERO DE NÓMINA ---
+# ==========================================
+
+# Columnas que el tablero audita: si falta alguna, la fila se marca incompleta
+CAMPOS_NOMINA = ('cedula', 'cargo', 'codigo_rac', 'fecha_ingreso', 'turno', 'telefono')
+ETIQUETAS_NOMINA = {'cedula': 'Cédula', 'cargo': 'Cargo', 'codigo_rac': 'Código RAC',
+                    'fecha_ingreso': 'Fecha de Ingreso', 'turno': 'Turno', 'telefono': 'Teléfono'}
+SIN_CARGO = '__sin_cargo__'  # valor del filtro para quienes no tienen cargo
+
+
+@admin_bp.route('/nomina_ministerial')
+def nomina_ministerial():
+    if 'admin' not in session.get('permisos', ''):
+        return '🚫 No autorizado.', 403
+
+    usuarios = sorted(Usuario.query.all(),
+                      key=lambda u: ((u.apellidos or u.nombre_completo or '').lower(), (u.nombres or '').lower()))
+    faltantes = {u.id: [ETIQUETAS_NOMINA[c] for c in CAMPOS_NOMINA if not getattr(u, c)] for u in usuarios}
+    conteo_cargos = Counter(u.cargo for u in usuarios if u.cargo)
+
+    resumen = {
+        'total': len(usuarios),
+        'completos': sum(1 for u in usuarios if not faltantes[u.id]),
+        'sin_cargo': sum(1 for u in usuarios if not u.cargo),
+        'sin_rac': sum(1 for u in usuarios if not u.codigo_rac),
+        'sin_telefono': sum(1 for u in usuarios if not u.telefono),
+    }
+
+    return render_template('nomina_ministerial.html',
+                           usuarios=usuarios,
+                           faltantes=faltantes,
+                           cargos=sorted(conteo_cargos.items(), key=lambda c: c[0].lower()),
+                           resumen=resumen,
+                           sin_cargo=SIN_CARGO,
+                           opciones_turno=OPCIONES_TURNO,
+                           hoy_iso=date.today().isoformat())
+
+
+@admin_bp.route('/nomina_ministerial/actualizar/<int:id>', methods=['POST'])
+def actualizar_datos_ministeriales(id):
+    """Edición rápida desde el tablero: SOLO toca los datos ministeriales.
+    Campo vacío = se borra el dato (el tablero es la fuente para auditar)."""
+    if 'admin' not in session.get('permisos', ''):
+        return '🚫 No autorizado.', 403
+
+    usuario = Usuario.query.get_or_404(id)
+    f = request.form
+
+    # Volver al tablero con los mismos filtros y la fila editada a la vista
+    volver = url_for('admin.nomina_ministerial',
+                     **{k: v for k, v in (('q', f.get('volver_q', '').strip()),
+                                          ('cargo', f.get('volver_cargo', '')),
+                                          ('incompletos', f.get('volver_incompletos', ''))) if v},
+                     _anchor=f'fila-{usuario.id}')
+
+    def rechazar(mensaje):
+        flash(f"{usuario.nombre_completo}: {mensaje}", 'error')
+        return redirect(volver)
+
+    # ---- Validación completa antes de tocar el usuario ----
+    nuevos = {
+        'cargo': formatear_cargo(f.get('cargo')) or None,
+        'codigo_rac': formatear_codigo(f.get('codigo_rac')) or None,
+        'turno': f.get('turno') or None,
+    }
+    if nuevos['turno'] and nuevos['turno'] not in OPCIONES_TURNO:
+        return rechazar('El turno seleccionado no es válido.')
+
+    fecha_raw = (f.get('fecha_ingreso') or '').strip()
+    nuevos['fecha_ingreso'] = None
+    if fecha_raw:
+        try:
+            nuevos['fecha_ingreso'] = datetime.strptime(fecha_raw, '%Y-%m-%d').date()
+        except ValueError:
+            return rechazar('La fecha de ingreso no es válida.')
+        if not (1900 <= nuevos['fecha_ingreso'].year and nuevos['fecha_ingreso'] <= date.today()):
+            return rechazar('La fecha de ingreso no puede ser futura ni anterior a 1900.')
+
+    telefono_raw = (f.get('telefono') or '').strip()
+    nuevos['telefono'] = None
+    if telefono_raw:
+        nuevos['telefono'] = formatear_telefono(telefono_raw)
+        if not nuevos['telefono']:
+            return rechazar('El teléfono no es válido. Formato esperado: 0414-1234567.')
+
+    # ---- Aplicar cambios ----
+    def mostrar(campo, valor):
+        if not valor:
+            return 'vacío'
+        return valor.strftime('%d/%m/%Y') if campo == 'fecha_ingreso' else valor
+
+    cambios = []
+    for campo, valor in nuevos.items():
+        actual = getattr(usuario, campo)
+        if actual != valor:
+            cambios.append(f"{ETIQUETAS_NOMINA[campo]}: '{mostrar(campo, actual)}' → '{mostrar(campo, valor)}'")
+            setattr(usuario, campo, valor)
+
+    if cambios:
+        db.session.commit()
+        flash(f"{usuario.nombre_completo} — " + ' | '.join(cambios), 'success')
+    else:
+        flash(f"{usuario.nombre_completo}: no hubo cambios.", 'info')
+    return redirect(volver)

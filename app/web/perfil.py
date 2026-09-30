@@ -61,6 +61,21 @@ def formatear_codigo(texto):
     return re.sub(r'\s+', '', texto or '').upper()
 
 
+def formatear_telefono(texto):
+    """
+    Teléfono venezolano normalizado a "0414-1234567". Acepta "04141234567",
+    "414 123 45 67", "+58 414-1234567". Devuelve None si no es válido.
+    """
+    digitos = re.sub(r'\D', '', texto or '')
+    if len(digitos) == 12 and digitos.startswith('58'):
+        digitos = '0' + digitos[2:]
+    elif len(digitos) == 10 and not digitos.startswith('0'):
+        digitos = '0' + digitos
+    if not re.fullmatch(r'0[24]\d{9}', digitos):
+        return None
+    return f"{digitos[:4]}-{digitos[4:]}"
+
+
 def formatear_cedula(texto):
     """
     Cédula venezolana normalizada a "V-12345678" / "E-12345678". Acepta

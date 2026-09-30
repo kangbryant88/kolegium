@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% block title %}Tablero de Nómina - Kolegium{% endblock %}
+{% block header_title %}Gestor Ministerial{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nomina-stat {
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 14px 18px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        height: 100%;
+    }
+    .nomina-stat .valor { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
+    .nomina-stat .etiqueta { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--on-surface-variant); }
+
+    .nomina-scroll { max-height: 70vh; overflow: auto; }
+    .edu-table.nomina-table { min-width: 1150px; }
+    .edu-table.nomina-table thead th {
+        position: sticky; top: 0; z-index: 2;
+        background: var(--surface-container-high);
+        white-space: nowrap;
+        padding: 12px 14px !important;
+        font-size: 0.75rem !important;
+    }
+    .edu-table.nomina-table tbody td {
+        padding: 10px 14px !important;
+        font-size: 0.9rem !important;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+    .nomina-table tr:target td { background: rgba(16, 185, 129, 0.12); }
+    .nomina-table .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .dato-falta {
+        display: inline-block; font-size: 0.72rem; font-weight: 700;
+        color: #b45309; background: rgba(245, 158, 11, 0.14);
+        padding: 2px 8px; border-radius: 999px;
+    }
+    .badge-inactivo {
+        font-size: 0.68rem; font-weight: 700; color: #b91c1c;
+        background: rgba(239, 68, 68, 0.12); padding: 1px 7px; border-radius: 999px;
+    }
+    .modal-label {
+        font-size: 0.75rem; color: var(--on-surface-variant); font-weight: 700;
+        margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 1500px;">
+
+    <div class="page-header mb-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h3 class="title">Tablero de Nómina</h3>
+            <p class="subtitle mb-0">Audita los datos ministeriales del personal antes de que el Gestor Ministerial los use.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            {% if session.get('nombre_rol') == 'Administrador Supremo' %}
+            <a href="{{ url_for('admin.importar_personal') }}" class="btn btn-outline-success rounded-pill px-4 fw-semibold">
+                <i data-lucide="file-spreadsheet" class="me-1" style="width:16px;height:16px;vertical-align:text-bottom;"></i>
+                Importar Excel
+            </a>
+            {% endif %}
+            <a href="{{ url_for('admin.admin_usuarios') }}" class="btn btn-outline-secondary rounded-pill px-4">
+                <i data-lucide="arrow-left" class="me-1" style="width:16px;height:16px;vertical-align:text-bottom;"></i>
+                Volver a Usuarios
+            </a>
+        </div>
+    </div>
+
+    <!-- Resumen de auditoría -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md">
+            <div class="nomina-stat"><div class="valor">{{ resumen.total }}</div><div class="etiqueta">Personal registrado</div></div>
+        </div>
+        <div class="col-6 col-md">
+            <div class="nomina-stat"><div class="valor" style="color:#10b981;">{{ resumen.completos }}</div><div class="etiqueta">Ficha completa</div></div>
+        </div>
+        <div class="col-4 col-md">
+            <div class="nomina-stat"><div class="valor" style="color:#f59e0b;">{{ resumen.sin_cargo }}</div><div class="etiqueta">Sin cargo</div></div>
+        </div>
+        <div class="col-4 col-md">
+            <div class="nomina-stat"><div class="valor" style="color:#f59e0b;">{{ resumen.sin_rac }}</div><div class="etiqueta">Sin código RAC</div></div>
+        </div>
+        <div class="col-4 col-md">
+            <div class="nomina-stat"><div class="valor" style="color:#f59e0b;">{{ resumen.sin_telefono }}</div><div class="etiqueta">Sin teléfono</div></div>
+        </div>
+    </div>
+
+    <!-- Buscador y filtros -->
+    <div class="table-card p-3 mb-3">
+        <div class="row g-2 align-items-center">
+            <div class="col-12 col-lg-5">
+                <input type="search" id="buscadorNomina" class="edu-input w-100" autocomplete="off"
+                    placeholder="Buscar por nombre, cédula o cargo…" aria-label="Buscar en la nómina">
+            </div>
+            <div class="col-12 col-md-7 col-lg-4">
+                <select id="filtroCargo" class="edu-select w-100" aria-label="Filtrar por cargo">
+                    <option value="">Todos los cargos</option>
+                    {% for cargo, cantidad in cargos %}
+                    <option value="{{ cargo }}">{{ cargo }} ({{ cantidad }})</option>
+                    {% endfor %}
+                    {% if resumen.sin_cargo %}
+                    <option value="{{ sin_cargo }}">— Sin cargo — ({{ resumen.sin_cargo }})</option>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="col-12 col-md-5 col-lg-3 d-flex align-items-center justify-content-between gap-2">
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="soloIncompletos">
+                    <label class="form-check-label small" for="soloIncompletos">Solo incompletos</label>
+                </div>
+                <small id="contadorNomina" class="text-nowrap" style="color: var(--on-surface-variant);"></small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-card">
+        <div class="table-responsive nomina-scroll">
+            <table class="edu-table nomina-table" id="tablaNomina">
+                <thead>
+                    <tr>
+                        <th>Cédula</th>
+                        <th>Nombre Completo</th>
+                        <th>Cargo</th>
+                        <th>Código RAC</th>
+                        <th>Fecha de Ingreso</th>
+                        <th>Turno</th>
+                        <th>Teléfono</th>
+                        <th style="text-align:right;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    {% set faltan = faltantes[u.id] %}
+                    <tr id="fila-{{ u.id }}"
+                        data-busqueda="{{ [u.nombre_completo, u.nombres, u.apellidos, u.cedula, u.cargo, u.username]|select|join(' ') }}"
+                        data-cargo="{{ u.cargo or sin_cargo }}"
+                        data-incompleto="{{ 1 if faltan else 0 }}">
+                        <td class="mono">{{ u.cedula or '' }}{% if not u.cedula %}<span class="dato-falta">Falta</span>{% endif %}</td>
+                        <td>
+                            <div class="fw-semibold">{{ u.nombre_completo }}</div>
+                            <small style="color: var(--on-surface-variant);">
+                                {{ u.username }}{% if not u.activo %} · <span class="badge-inactivo">Inactivo</span>{% endif %}
+                            </small>
+                        </td>
+                        <td class="fw-semibold">{{ u.cargo or '' }}{% if not u.cargo %}<span class="dato-falta">Falta</span>{% endif %}</td>
+                        <td class="mono">{{ u.codigo_rac or '' }}{% if not u.codigo_rac %}<span class="dato-falta">Falta</span>{% endif %}</td>
+                        <td>{% if u.fecha_ingreso %}{{ u.fecha_ingreso.strftime('%d/%m/%Y') }}{% else %}<span class="dato-falta">Falta</span>{% endif %}</td>
+                        <td>{{ u.turno or '' }}{% if not u.turno %}<span class="dato-falta">Falta</span>{% endif %}</td>
+                        <td class="mono">{{ u.telefono or '' }}{% if not u.telefono %}<span class="dato-falta">Falta</span>{% endif %}</td>
+                        <td style="text-align:right;">
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 text-nowrap"
+                                data-bs-toggle="modal" data-bs-target="#modalNomina"
+                                data-url="{{ url_for('admin.actualizar_datos_ministeriales', id=u.id) }}"
+                                data-nombre="{{ u.nombre_completo }}"
+                                data-cedula="{{ u.cedula or 'Sin cédula' }}"
+                                data-cargo="{{ u.cargo or '' }}"
+                                data-codigo-rac="{{ u.codigo_rac or '' }}"
+                                data-fecha-ingreso="{{ u.fecha_ingreso.isoformat() if u.fecha_ingreso else '' }}"
+                                data-turno="{{ u.turno or '' }}"
+                                data-telefono="{{ u.telefono or '' }}"
+                                {% if faltan %}title="Falta: {{ faltan|join(', ') }}"{% endif %}>
+                                <i data-lucide="pencil" style="width:14px;height:14px;vertical-align:text-bottom;"></i>
+                                Editar Detalles
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div id="nominaVacia" class="text-center py-5 d-none" style="color: var(--on-surface-variant);">
+                <i data-lucide="search-x" style="width:32px;height:32px;"></i>
+                <p class="mt-2 mb-0">Nadie coincide con la búsqueda o el filtro.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal único de edición: el JS lo rellena con los datos de la fila -->
+<div class="modal fade" id="modalNomina" tabindex="-1" aria-labelledby="modalNominaTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
+            <div class="modal-body p-4 text-start">
+                <h5 id="modalNominaTitulo" style="font-weight:800; color:#4318FF; display:flex; align-items:center; gap:6px;">
+                    <i data-lucide="briefcase" style="width:20px;height:20px;"></i> Datos Ministeriales
+                </h5>
+                <p class="mb-3 small" style="color: var(--on-surface-variant);">
+                    <strong id="nominaNombre"></strong> · <span id="nominaCedula" class="mono"></span>
+                </p>
+
+                <form action="" method="POST" id="formNomina">
+                    <!-- Para volver al tablero con los mismos filtros -->
+                    <input type="hidden" name="volver_q" id="volverQ">
+                    <input type="hidden" name="volver_cargo" id="volverCargo">
+                    <input type="hidden" name="volver_incompletos" id="volverIncompletos">
+
+                    <label class="modal-label" for="nominaCargo">Cargo</label>
+                    <input type="text" name="cargo" id="nominaCargo" class="edu-input mb-3 w-100" data-formato="cargo"
+                        maxlength="100" list="cargosExistentes" placeholder="Ej: Docente VI" autocomplete="off">
+                    <datalist id="cargosExistentes">
+                        {% for cargo, cantidad in cargos %}<option value="{{ cargo }}">{% endfor %}
+                    </datalist>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="modal-label" for="nominaRac">Código RAC</label>
+                            <input type="text" name="codigo_rac" id="nominaRac" class="edu-input w-100" data-formato="codigo"
+                                maxlength="50" autocomplete="off">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="modal-label" for="nominaFecha">Fecha de Ingreso</label>
+                            <input type="date" name="fecha_ingreso" id="nominaFecha" class="edu-input w-100"
+                                min="1900-01-01" max="{{ hoy_iso }}">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="modal-label" for="nominaTurno">Turno</label>
+                            <select name="turno" id="nominaTurno" class="edu-select w-100">
+                                <option value="">Sin asignar</option>
+                                {% for op in opciones_turno %}<option value="{{ op }}">{{ op }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="modal-label" for="nominaTelefono">Teléfono</label>
+                            <input type="tel" name="telefono" id="nominaTelefono" class="edu-input w-100" data-formato="telefono"
+                                maxlength="20" placeholder="0414-1234567" autocomplete="off">
+                        </div>
+                    </div>
+                    <div style="font-size:0.72rem; color:var(--on-surface-variant);">
+                        Dejar un campo vacío borra ese dato. Solo se modifican los datos ministeriales.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
+                <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNomina" class="btn-auth w-50" style="display:flex; justify-content:center; align-items:center; background: linear-gradient(135deg, #10b981, #059669); border:none;">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/formato_perfil.js') }}"></script>
+<script src="{{ url_for('static', filename='js/nomina_ministerial.js') }}"></script>
+{% endblock %}

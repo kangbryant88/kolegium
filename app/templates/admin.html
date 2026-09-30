@@ -206,12 +206,18 @@
             <h3 class="title">Control de Accesos y Roles</h3>
             <p class="subtitle mb-0">Gestiona los permisos o da de baja a los profesores del plantel.</p>
         </div>
-        {% if session.get('nombre_rol') == 'Administrador Supremo' %}
-        <a href="{{ url_for('admin.importar_personal') }}" class="btn btn-success rounded-pill px-4 fw-semibold">
-            <i data-lucide="file-spreadsheet" class="me-1" style="width:16px;height:16px;vertical-align:text-bottom;"></i>
-            Importar Personal (Excel)
-        </a>
-        {% endif %}
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('admin.nomina_ministerial') }}" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                <i data-lucide="clipboard-list" class="me-1" style="width:16px;height:16px;vertical-align:text-bottom;"></i>
+                Tablero de Nómina
+            </a>
+            {% if session.get('nombre_rol') == 'Administrador Supremo' %}
+            <a href="{{ url_for('admin.importar_personal') }}" class="btn btn-success rounded-pill px-4 fw-semibold">
+                <i data-lucide="file-spreadsheet" class="me-1" style="width:16px;height:16px;vertical-align:text-bottom;"></i>
+                Importar Personal (Excel)
+            </a>
+            {% endif %}
+        </div>
     </div>
 
 {% set ns = namespace(g=0, c=0, d=0, e=0, def=0, p=0, o=0) %}

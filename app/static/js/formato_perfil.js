@@ -1,7 +1,7 @@
 // Formateo estricto de datos del personal (tolerancia cero a la mala escritura).
-// Mismas reglas que formatear_nombre / _cargo / _codigo / _cedula en
+// Mismas reglas que formatear_nombre / _cargo / _codigo / _cedula / _telefono en
 // app/web/perfil.py; el backend vuelve a aplicarlas al guardar.
-// Uso: <input data-formato="nombre|cargo|codigo|cedula">
+// Uso: <input data-formato="nombre|cargo|codigo|cedula|telefono">
 
 function formatearNombre(texto, final) {
     let t = texto.toLowerCase();
@@ -22,7 +22,14 @@ function formatearCedula(texto, final) {
     const m = t.match(/^([VE])(\d{6,9})$/);
     return m ? m[1] + '-' + m[2] : t;
 }
-const FORMATOS = { nombre: formatearNombre, cargo: formatearCargo, codigo: formatearCodigo, cedula: formatearCedula };
+function formatearTelefono(texto, final) {
+    if (!final) return texto.replace(/[^\d+\-\s()]/g, '');
+    let d = texto.replace(/\D/g, '');
+    if (d.length === 12 && d.startsWith('58')) d = '0' + d.slice(2);
+    else if (d.length === 10 && !d.startsWith('0')) d = '0' + d;
+    return /^0[24]\d{9}$/.test(d) ? d.slice(0, 4) + '-' + d.slice(4) : texto.trim();
+}
+const FORMATOS = { nombre: formatearNombre, cargo: formatearCargo, codigo: formatearCodigo, cedula: formatearCedula, telefono: formatearTelefono };
 
 function aplicarFormato(input, final) {
     const fn = FORMATOS[input.dataset.formato];

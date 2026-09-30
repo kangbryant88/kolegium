@@ -17,7 +17,7 @@ import pandas as pd
 from werkzeug.security import generate_password_hash
 
 from app.models import db, Usuario
-from app.web.perfil import formatear_nombre, formatear_cargo, formatear_codigo, formatear_cedula
+from app.web.perfil import formatear_nombre, formatear_cargo, formatear_codigo, formatear_cedula, formatear_telefono
 
 FILAS_A_ESCANEAR = 15  # filas donde se busca la cabecera real
 
@@ -45,6 +45,8 @@ ALIAS_COLUMNAS = {
     'codigo_rac': {'CODIGO RAC', 'COD RAC', 'RAC', 'CODIGO DEL RAC', 'N RAC', 'NRO RAC'},
     'turno': {'TURNO'},
     'email': {'CORREO', 'CORREO ELECTRONICO', 'EMAIL', 'E MAIL'},
+    'telefono': {'TELEFONO', 'TELF', 'TLF', 'TELEFONO CELULAR', 'CELULAR', 'TELEFONO MOVIL', 'MOVIL',
+                 'NRO TELEFONO', 'N TELEFONO', 'TELEFONO DE CONTACTO', 'TELEFONO CONTACTO'},
 }
 
 # Si ningún alias coincide exacto, se intenta por palabras contenidas en la cabecera.
@@ -55,6 +57,7 @@ REGLAS_RESPALDO = {
     'fecha_nacimiento': lambda h: 'NACIMIENTO' in h and 'LUGAR' not in h,
     'cargo': lambda h: 'CARGO' in h.split() and 'CODIGO' not in h,
     'email': lambda h: 'CORREO' in h,
+    'telefono': lambda h: 'TELEFONO' in h or 'CELULAR' in h,
 }
 
 # Cargo del Excel -> area_trabajo de Kolegium (solo para registros nuevos)
@@ -70,7 +73,7 @@ AREA_POR_DEFECTO = 'Por Asignar'
 
 # Campos del Muro de Contención que se rellenan si están vacíos
 CAMPOS_ACTUALIZABLES = ('cedula', 'nombres', 'apellidos', 'fecha_nacimiento', 'sexo',
-                        'fecha_ingreso', 'cargo', 'codigo_rac', 'turno')
+                        'fecha_ingreso', 'cargo', 'codigo_rac', 'turno', 'telefono')
 
 
 # ==========================================
@@ -228,6 +231,7 @@ def _datos_de_fila(fila, mapa):
         'codigo_rac': formatear_codigo(_texto(celda('codigo_rac'))) or None,
         'turno': _turno(celda('turno')),
         'email': _texto(celda('email')).lower() or None,
+        'telefono': formatear_telefono(_texto(celda('telefono'))),
     }
 
 
