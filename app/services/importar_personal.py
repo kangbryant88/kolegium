@@ -21,6 +21,10 @@ from app.web.perfil import formatear_nombre, formatear_cargo, formatear_codigo, 
 from app.services.ficha_ministerial import CAMPOS as CAMPOS_FICHA, HORAS_MAXIMAS
 
 FILAS_A_ESCANEAR = 30  # filas donde se busca la cabecera real
+# Una cabecera real es corta ('TIPO DE MATERIAL DE LA VIVIENDA' = 31). Una celda
+# más larga es un párrafo de advertencias del ministerio ('...no nos hacemos
+# responsables por numeros de cedula errados...') y no debe tomarse como cabecera.
+LARGO_MAXIMO_CABECERA = 40
 
 # Alias de cada columna. Se escriben como en el Excel (con o sin acentos):
 # al cargar el módulo pasan por _normalizar_cabecera, igual que las cabeceras.
@@ -320,6 +324,7 @@ ALIAS_NORMALIZADOS = {campo: {_normalizar_cabecera(a) for a in alias} for campo,
 def _mapear_columnas(cabeceras):
     """{campo: índice de columna} a partir de la fila de cabecera."""
     normalizadas = [_normalizar_cabecera(h) if not _vacio(h) else '' for h in cabeceras]
+    normalizadas = [h if len(h) <= LARGO_MAXIMO_CABECERA else '' for h in normalizadas]
     mapa = {}
     for campo, alias in ALIAS_NORMALIZADOS.items():
         for i, h in enumerate(normalizadas):
