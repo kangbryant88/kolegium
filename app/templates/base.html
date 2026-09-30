@@ -193,6 +193,11 @@
                     <i data-lucide="clipboard-list"></i>
                     <span class="link-label">Tablero de Nómina</span>
                 </a>
+                <a href="{{ url_for('admin.gestor_ministerial') }}"
+                    class="sidebar-link admin-link {% if request.path == url_for('admin.gestor_ministerial') %}active{% endif %}">
+                    <i data-lucide="sparkles"></i>
+                    <span class="link-label">Gestor Ministerial</span>
+                </a>
                 {% endif %}
             </nav>
 

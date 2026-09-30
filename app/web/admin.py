@@ -1,17 +1,21 @@
+import json
 import re
 from collections import Counter
 from datetime import date
+from urllib.parse import quote
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
+from flask import (Blueprint, render_template, request, redirect, url_for, session, flash, current_app,
+                   jsonify, send_file)
 from flask_mail import Message
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 from app.models import db, Usuario, Rol
-from app.web.perfil import formatear_cedula, formatear_nombre
-from app.services.ficha_ministerial import (CAMPOS as CAMPOS_FICHA, PESTANAS as PESTANAS_FICHA,
+from app.web.perfil import formatear_cedula
+from app.services.ficha_ministerial import (CAMPOS as CAMPOS_FICHA, PESTANAS as PESTANAS_FICHA, nombre_para_mostrar,
                                             limpiar_valor, valor_para_formulario, formatear_horas,
                                             FORMATOS_JS)
 from app.services.importar_personal import importar_personal as importar_personal_desde_excel
+from app.services.gestor_ministerial import generar_reporte, ErrorGestor
 
 # Importamos 'mail' desde extensions (patrón Factory)
 from app.extensions import mail
@@ -349,13 +353,6 @@ ETIQUETAS_NOMINA = {'cedula': 'Cédula', 'cargo': 'Cargo', 'codigo_rac': 'Códig
 SIN_CARGO = '__sin_cargo__'  # valor del filtro para quienes no tienen cargo
 
 
-def nombre_para_mostrar(usuario):
-    """Nombre legal en Title Case: "Nombres Apellidos" si están cargados, si no
-    el nombre_completo. Nunca el usuario de login."""
-    legal = ' '.join(filter(None, (usuario.nombres, usuario.apellidos)))
-    return formatear_nombre(legal or usuario.nombre_completo or '') or 'Sin nombre'
-
-
 @admin_bp.route('/nomina_ministerial')
 def nomina_ministerial():
     if 'admin' not in session.get('permisos', ''):
@@ -455,3 +452,55 @@ def actualizar_datos_ministeriales(id):
     else:
         flash(f"{nombre}: no hubo cambios.", 'info')
     return redirect(volver)
+
+
+# ==========================================
+# --- GESTOR MINISTERIAL: PLANTILLAS DE LA ZONA EDUCATIVA ---
+# ==========================================
+
+LARGO_MAXIMO_INSTRUCCIONES = 2000
+
+
+@admin_bp.route('/gestor_ministerial', methods=['GET', 'POST'])
+def gestor_ministerial():
+    if 'admin' not in session.get('permisos', ''):
+        return '🚫 No autorizado.', 403
+    if request.method == 'GET':
+        return render_template('gestor_ministerial.html', largo_maximo=LARGO_MAXIMO_INSTRUCCIONES)
+
+    # La vista envía con fetch (para el indicador de carga y la descarga); sin
+    # JavaScript el formulario funciona igual y los errores llegan como flash.
+    es_fetch = request.headers.get('X-Requested-With') == 'fetch'
+
+    def fallar(mensaje, codigo=400):
+        if es_fetch:
+            return jsonify(error=mensaje), codigo
+        flash(mensaje, 'error')
+        return redirect(url_for('admin.gestor_ministerial'))
+
+    archivo = request.files.get('plantilla')
+    instrucciones = (request.form.get('instrucciones') or '').strip()
+    if not archivo or not archivo.filename:
+        return fallar('Selecciona la plantilla Excel (.xlsx) de la Zona Educativa.')
+    if not archivo.filename.lower().endswith('.xlsx'):
+        return fallar('Formato no soportado. Guarda la plantilla como Excel .xlsx e inténtalo de nuevo.')
+    if request.content_length and request.content_length > TAMANO_MAXIMO_EXCEL:
+        return fallar('El archivo supera el límite de 10 MB.')
+    if not instrucciones:
+        return fallar('Escribe las instrucciones de la Zona Educativa.')
+    if len(instrucciones) > LARGO_MAXIMO_INSTRUCCIONES:
+        return fallar(f'Las instrucciones no pueden superar {LARGO_MAXIMO_INSTRUCCIONES} caracteres.')
+
+    try:
+        salida, resumen = generar_reporte(archivo, instrucciones)
+    except ErrorGestor as e:
+        return fallar(str(e))
+    except Exception:
+        current_app.logger.exception('Error generando reporte del Gestor Ministerial')
+        return fallar('No se pudo generar el reporte por un error inesperado. Inténtalo de nuevo.', 500)
+
+    respuesta = send_file(salida, as_attachment=True, download_name='Reporte_Ministerial_Generado.xlsx',
+                          mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    # Lo que decidió el Cerebro, para mostrarlo en pantalla (cabecera HTTP => URL-encoded)
+    respuesta.headers['X-Gestor-Resumen'] = quote(json.dumps(resumen, ensure_ascii=False))
+    return respuesta

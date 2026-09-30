@@ -158,6 +158,13 @@ _FORMATO_EN_NAVEGADOR = {formatear_nombre: 'nombre', formatear_cargo: 'cargo',
 FORMATOS_JS = {nombre: _FORMATO_EN_NAVEGADOR.get(campo.formato) for nombre, campo in CAMPOS.items()}
 
 
+def nombre_para_mostrar(usuario):
+    """Nombre legal en Title Case: "Nombres Apellidos" si están cargados, si no
+    el nombre_completo. Nunca el usuario de login."""
+    legal = ' '.join(filter(None, (usuario.nombres, usuario.apellidos)))
+    return formatear_nombre(legal or usuario.nombre_completo or '') or 'Sin nombre'
+
+
 def valor_para_formulario(usuario, nombre):
     """Valor de la BD tal como lo espera el input del modal."""
     valor = getattr(usuario, nombre)

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Gestor Ministerial - Kolegium{% endblock %}
+{% block header_title %}Gestor Ministerial{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gestor-label {
+        font-size: 0.75rem; color: var(--on-surface-variant); font-weight: 700;
+        margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .gestor-resumen dt { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); }
+    .gestor-resumen dd { margin-bottom: 0.75rem; }
+    .gestor-chip {
+        display: inline-block; font-size: 0.78rem; padding: 3px 10px; border-radius: 999px; margin: 0 4px 4px 0;
+        background: rgba(67, 24, 255, 0.08); color: var(--text-main);
+    }
+    .gestor-chip.gris { background: rgba(100, 116, 139, 0.12); color: var(--on-surface-variant); }
+    .gestor-chip code { font-size: 0.75rem; color: #4318FF; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width: 1100px;">
+
+    <div class="page-header mb-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h3 class="title">Gestor Ministerial</h3>
+            <p class="subtitle mb-0">Sube la plantilla de la Zona Educativa y describe qué necesitan: Kolegium la rellena con la nómina.</p>
+        </div>
+        <a href="{{ url_for('admin.nomina_ministerial') }}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i data-lucide="clipboard-list" class="me-1" style="width:16px;height:16px;vertical-align:text-bottom;"></i>
+            Auditar Nómina
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Formulario -->
+        <div class="col-12 col-lg-7">
+            <div class="table-card p-4 h-100">
+                <form action="{{ url_for('admin.gestor_ministerial') }}" method="POST" enctype="multipart/form-data" id="formGestor">
+                    <label class="gestor-label" for="plantilla">Plantilla Excel (.xlsx, máx. 10 MB)</label>
+                    <input type="file" class="form-control mb-4" id="plantilla" name="plantilla" required
+                        accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+
+                    <label class="gestor-label" for="instrucciones">Instrucciones de la Zona Educativa</label>
+                    <textarea class="edu-input w-100 mb-1" id="instrucciones" name="instrucciones" rows="5" required
+                        maxlength="{{ largo_maximo }}"
+                        placeholder="Ej: Generar reporte solo de obreros activos con sus tallas de uniforme."></textarea>
+                    <div class="mb-4" style="font-size:0.72rem; color:var(--on-surface-variant);">
+                        Indica a quiénes incluir (cargo, activos o todos). Los datos de cada columna se deducen de los encabezados de la plantilla.
+                    </div>
+
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-semibold d-inline-flex align-items-center gap-2" id="btnGenerar">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerGenerar"></span>
+                        <i data-lucide="sparkles" style="width:16px;height:16px;" id="iconoGenerar"></i>
+                        <span id="textoGenerar">Generar reporte</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Cómo funciona / Resultado -->
+        <div class="col-12 col-lg-5">
+            <div class="table-card p-4 h-100 small" id="panelAyuda">
+                <h6 class="fw-bold mb-3">
+                    <i data-lucide="info" class="me-1 text-primary" style="width:18px;height:18px;vertical-align:text-bottom;"></i>
+                    ¿Cómo funciona?
+                </h6>
+                <ol class="ps-3 mb-3">
+                    <li class="mb-1">Se detecta la fila de encabezados en las primeras 10 filas de la primera hoja.</li>
+                    <li class="mb-1">La IA recibe <strong>solo los encabezados y tus instrucciones</strong> (ningún dato personal) y decide qué dato va en cada columna.</li>
+                    <li class="mb-1">Kolegium escribe un trabajador por fila debajo de los encabezados, conservando logos, bordes y estilos.</li>
+                    <li>La columna "N°" se numera sola. El personal "En Espera" (sin rol) nunca se incluye.</li>
+                </ol>
+                <p class="mb-0" style="color: var(--on-surface-variant);">
+                    Deja suficientes filas vacías debajo de los encabezados: si hay contenido (p. ej. firmas) donde deben ir los datos, el reporte no se genera.
+                </p>
+            </div>
+
+            <div class="table-card p-4 h-100 small d-none" id="panelResumen" aria-live="polite">
+                <h6 class="fw-bold mb-3 text-success">
+                    <i data-lucide="check-circle-2" class="me-1" style="width:18px;height:18px;vertical-align:text-bottom;"></i>
+                    Reporte generado y descargado
+                </h6>
+                <dl class="gestor-resumen mb-0">
+                    <dt>Trabajadores incluidos</dt><dd id="resTotal"></dd>
+                    <dt>Filtro aplicado</dt><dd id="resFiltro"></dd>
+                    <dt>Criterio de la IA</dt><dd id="resExplicacion"></dd>
+                    <dt>Columnas rellenadas</dt><dd id="resColumnas"></dd>
+                    <dt id="resSinMapearTitulo">Columnas que quedaron vacías</dt><dd id="resSinMapear"></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-danger border-0 border-start border-4 border-danger rounded-3 shadow-sm mt-4 d-none" role="alert" id="errorGestor"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/gestor_ministerial.js') }}"></script>
+{% endblock %}
