@@ -15,7 +15,7 @@
     .nomina-stat .etiqueta { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--on-surface-variant); }
 
     .nomina-scroll { max-height: 70vh; overflow: auto; }
-    .edu-table.nomina-table { min-width: 1150px; }
+    .edu-table.nomina-table { min-width: 1350px; }
     .edu-table.nomina-table thead th {
         position: sticky; top: 0; z-index: 2;
         background: var(--surface-container-high);
@@ -40,6 +40,9 @@
         font-size: 0.68rem; font-weight: 700; color: #b91c1c;
         background: rgba(239, 68, 68, 0.12); padding: 1px 7px; border-radius: 999px;
     }
+    .ficha-tabs { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; }
+    .ficha-tabs .nav-link { white-space: nowrap; font-weight: 600; font-size: 0.85rem; color: var(--on-surface-variant); }
+    .ficha-tabs .nav-link.active { color: #4318FF; }
     .modal-label {
         font-size: 0.75rem; color: var(--on-surface-variant); font-weight: 700;
         margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.5px;
@@ -125,10 +128,12 @@
                         <th>Cédula</th>
                         <th>Nombre Completo</th>
                         <th>Cargo</th>
+                        <th>Tipo de Personal</th>
                         <th>Código RAC</th>
                         <th>Fecha de Ingreso</th>
                         <th>Turno</th>
                         <th>Teléfono</th>
+                        <th>Situación</th>
                         <th style="text-align:right;">Acciones</th>
                     </tr>
                 </thead>
@@ -136,32 +141,28 @@
                     {% for u in usuarios %}
                     {% set faltan = faltantes[u.id] %}
                     <tr id="fila-{{ u.id }}"
-                        data-busqueda="{{ [u.nombre_completo, u.nombres, u.apellidos, u.cedula, u.cargo, u.username]|select|join(' ') }}"
+                        data-busqueda="{{ [nombres[u.id], u.nombre_completo, u.cedula, u.cargo, u.tipo_personal]|select|join(' ') }}"
                         data-cargo="{{ u.cargo or sin_cargo }}"
                         data-incompleto="{{ 1 if faltan else 0 }}">
                         <td class="mono">{{ u.cedula or '' }}{% if not u.cedula %}<span class="dato-falta">Falta</span>{% endif %}</td>
                         <td>
-                            <div class="fw-semibold">{{ u.nombre_completo }}</div>
-                            <small style="color: var(--on-surface-variant);">
-                                {{ u.username }}{% if not u.activo %} · <span class="badge-inactivo">Inactivo</span>{% endif %}
-                            </small>
+                            <span class="fw-semibold">{{ nombres[u.id] }}</span>
+                            {% if not u.activo %}<span class="badge-inactivo ms-1">Inactivo</span>{% endif %}
                         </td>
                         <td class="fw-semibold">{{ u.cargo or '' }}{% if not u.cargo %}<span class="dato-falta">Falta</span>{% endif %}</td>
+                        <td>{{ u.tipo_personal or '—' }}</td>
                         <td class="mono">{{ u.codigo_rac or '' }}{% if not u.codigo_rac %}<span class="dato-falta">Falta</span>{% endif %}</td>
                         <td>{% if u.fecha_ingreso %}{{ u.fecha_ingreso.strftime('%d/%m/%Y') }}{% else %}<span class="dato-falta">Falta</span>{% endif %}</td>
                         <td>{{ u.turno or '' }}{% if not u.turno %}<span class="dato-falta">Falta</span>{% endif %}</td>
                         <td class="mono">{{ u.telefono or '' }}{% if not u.telefono %}<span class="dato-falta">Falta</span>{% endif %}</td>
+                        <td>{{ u.situacion_trabajador or '—' }}</td>
                         <td style="text-align:right;">
                             <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 text-nowrap"
                                 data-bs-toggle="modal" data-bs-target="#modalNomina"
+                                data-id="{{ u.id }}"
                                 data-url="{{ url_for('admin.actualizar_datos_ministeriales', id=u.id) }}"
-                                data-nombre="{{ u.nombre_completo }}"
+                                data-nombre="{{ nombres[u.id] }}"
                                 data-cedula="{{ u.cedula or 'Sin cédula' }}"
-                                data-cargo="{{ u.cargo or '' }}"
-                                data-codigo-rac="{{ u.codigo_rac or '' }}"
-                                data-fecha-ingreso="{{ u.fecha_ingreso.isoformat() if u.fecha_ingreso else '' }}"
-                                data-turno="{{ u.turno or '' }}"
-                                data-telefono="{{ u.telefono or '' }}"
                                 {% if faltan %}title="Falta: {{ faltan|join(', ') }}"{% endif %}>
                                 <i data-lucide="pencil" style="width:14px;height:14px;vertical-align:text-bottom;"></i>
                                 Editar Detalles
@@ -179,63 +180,91 @@
     </div>
 </div>
 
-<!-- Modal único de edición: el JS lo rellena con los datos de la fila -->
+<!-- Ficha completa de cada persona: el JS rellena el modal desde aquí -->
+<script type="application/json" id="fichasNomina">{{ fichas|tojson }}</script>
+
+<!-- Modal único de edición, con la ficha dividida en pestañas -->
 <div class="modal fade" id="modalNomina" tabindex="-1" aria-labelledby="modalNominaTitulo" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
         <div class="modal-content border-0 shadow-lg" style="background: var(--surface); border-radius: 12px;">
-            <div class="modal-body p-4 text-start">
+            <div class="modal-header border-0 px-4 pt-4 pb-0 d-block">
                 <h5 id="modalNominaTitulo" style="font-weight:800; color:#4318FF; display:flex; align-items:center; gap:6px;">
-                    <i data-lucide="briefcase" style="width:20px;height:20px;"></i> Datos Ministeriales
+                    <i data-lucide="briefcase" style="width:20px;height:20px;"></i> Ficha Ministerial
                 </h5>
                 <p class="mb-3 small" style="color: var(--on-surface-variant);">
                     <strong id="nominaNombre"></strong> · <span id="nominaCedula" class="mono"></span>
                 </p>
+                <ul class="nav nav-tabs ficha-tabs" id="fichaTabs" role="tablist">
+                    {% for clave, titulo, icono in pestanas %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if loop.first %}active{% endif %}" id="tab-{{ clave }}"
+                            data-bs-toggle="tab" data-bs-target="#pane-{{ clave }}" type="button" role="tab"
+                            aria-controls="pane-{{ clave }}" aria-selected="{{ 'true' if loop.first else 'false' }}">
+                            <i data-lucide="{{ icono }}" style="width:15px;height:15px;vertical-align:text-bottom;"></i>
+                            {{ titulo }}
+                        </button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
 
-                <form action="" method="POST" id="formNomina">
+            <div class="modal-body px-4 pt-3 text-start">
+                <form action="" method="POST" id="formNomina" novalidate>
                     <!-- Para volver al tablero con los mismos filtros -->
                     <input type="hidden" name="volver_q" id="volverQ">
                     <input type="hidden" name="volver_cargo" id="volverCargo">
                     <input type="hidden" name="volver_incompletos" id="volverIncompletos">
 
-                    <label class="modal-label" for="nominaCargo">Cargo</label>
-                    <input type="text" name="cargo" id="nominaCargo" class="edu-input mb-3 w-100" data-formato="cargo"
-                        maxlength="100" list="cargosExistentes" placeholder="Ej: Docente VI" autocomplete="off">
-                    <datalist id="cargosExistentes">
-                        {% for cargo, cantidad in cargos %}<option value="{{ cargo }}">{% endfor %}
-                    </datalist>
-
-                    <div class="row g-3 mb-3">
-                        <div class="col-sm-6">
-                            <label class="modal-label" for="nominaRac">Código RAC</label>
-                            <input type="text" name="codigo_rac" id="nominaRac" class="edu-input w-100" data-formato="codigo"
-                                maxlength="50" autocomplete="off">
+                    <div class="tab-content">
+                        {% for clave, titulo, icono in pestanas %}
+                        <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="pane-{{ clave }}"
+                            role="tabpanel" aria-labelledby="tab-{{ clave }}" tabindex="0">
+                            <div class="row g-3">
+                                {% for nombre, campo in campos.items() if campo.pestana == clave %}
+                                {% set sugerencias = sugerencias_extra.get(nombre) or campo.sugerencias %}
+                                <div class="{{ 'col-12' if campo.tipo == 'area' else 'col-sm-6' }}">
+                                    <label class="modal-label" for="f-{{ nombre }}">{{ campo.etiqueta }}</label>
+                                    {% if campo.tipo == 'turno' %}
+                                    <select name="{{ nombre }}" id="f-{{ nombre }}" class="edu-select w-100" data-campo>
+                                        <option value="">Sin asignar</option>
+                                        {% for op in campo.sugerencias %}<option value="{{ op }}">{{ op }}</option>{% endfor %}
+                                    </select>
+                                    {% elif campo.tipo == 'area' %}
+                                    <textarea name="{{ nombre }}" id="f-{{ nombre }}" class="edu-input w-100" rows="3" data-campo></textarea>
+                                    {% elif campo.tipo == 'fecha' %}
+                                    <input type="date" name="{{ nombre }}" id="f-{{ nombre }}" class="edu-input w-100" data-campo
+                                        min="1900-01-01" max="{{ hoy_iso }}">
+                                    {% elif campo.tipo == 'horas' %}
+                                    <input type="number" name="{{ nombre }}" id="f-{{ nombre }}" class="edu-input w-100" data-campo
+                                        min="0" max="80" step="0.5" inputmode="decimal">
+                                    {% else %}
+                                    <input type="{{ 'tel' if campo.tipo == 'telefono' else 'text' }}" name="{{ nombre }}" id="f-{{ nombre }}"
+                                        class="edu-input w-100" data-campo autocomplete="off"
+                                        {% if largos[nombre] %}maxlength="{{ largos[nombre] }}"{% endif %}
+                                        {% if formatos_js[nombre] %}data-formato="{{ formatos_js[nombre] }}"{% endif %}
+                                        {% if campo.tipo == 'telefono' %}placeholder="0414-1234567"{% endif %}
+                                        {% if sugerencias %}list="sug-{{ nombre }}"{% endif %}>
+                                    {% if sugerencias %}
+                                    <datalist id="sug-{{ nombre }}">
+                                        {% for op in sugerencias %}<option value="{{ op }}">{% endfor %}
+                                    </datalist>
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
-                        <div class="col-sm-6">
-                            <label class="modal-label" for="nominaFecha">Fecha de Ingreso</label>
-                            <input type="date" name="fecha_ingreso" id="nominaFecha" class="edu-input w-100"
-                                min="1900-01-01" max="{{ hoy_iso }}">
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="modal-label" for="nominaTurno">Turno</label>
-                            <select name="turno" id="nominaTurno" class="edu-select w-100">
-                                <option value="">Sin asignar</option>
-                                {% for op in opciones_turno %}<option value="{{ op }}">{{ op }}</option>{% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="modal-label" for="nominaTelefono">Teléfono</label>
-                            <input type="tel" name="telefono" id="nominaTelefono" class="edu-input w-100" data-formato="telefono"
-                                maxlength="20" placeholder="0414-1234567" autocomplete="off">
-                        </div>
-                    </div>
-                    <div style="font-size:0.72rem; color:var(--on-surface-variant);">
-                        Dejar un campo vacío borra ese dato. Solo se modifican los datos ministeriales.
+                        {% endfor %}
                     </div>
                 </form>
             </div>
-            <div class="modal-footer border-0 px-4 pb-4 d-flex gap-2">
-                <button type="button" class="btn-cancel-modal w-50" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" form="formNomina" class="btn-auth w-50" style="display:flex; justify-content:center; align-items:center; background: linear-gradient(135deg, #10b981, #059669); border:none;">Guardar</button>
+
+            <div class="modal-footer border-0 px-4 pb-4 d-flex flex-column flex-sm-row gap-2">
+                <div class="me-sm-auto" style="font-size:0.72rem; color:var(--on-surface-variant);">
+                    Se guardan las 4 pestañas juntas. Dejar un campo vacío borra ese dato.
+                </div>
+                <button type="button" class="btn-cancel-modal px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNomina" class="btn-auth px-4" style="display:flex; justify-content:center; align-items:center; background: linear-gradient(135deg, #10b981, #059669); border:none;">Guardar</button>
             </div>
         </div>
     </div>

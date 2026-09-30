@@ -18,6 +18,7 @@ from werkzeug.security import generate_password_hash
 
 from app.models import db, Usuario
 from app.web.perfil import formatear_nombre, formatear_cargo, formatear_codigo, formatear_cedula, formatear_telefono
+from app.services.ficha_ministerial import CAMPOS as CAMPOS_FICHA, HORAS_MAXIMAS
 
 FILAS_A_ESCANEAR = 15  # filas donde se busca la cabecera real
 
@@ -46,7 +47,49 @@ ALIAS_COLUMNAS = {
     'turno': {'TURNO'},
     'email': {'CORREO', 'CORREO ELECTRONICO', 'EMAIL', 'E MAIL'},
     'telefono': {'TELEFONO', 'TELF', 'TLF', 'TELEFONO CELULAR', 'CELULAR', 'TELEFONO MOVIL', 'MOVIL',
-                 'NRO TELEFONO', 'N TELEFONO', 'TELEFONO DE CONTACTO', 'TELEFONO CONTACTO'},
+                 'NRO TELEFONO', 'N TELEFONO', 'TELEFONO DE CONTACTO', 'TELEFONO CONTACTO',
+                 'TLF CELULAR', 'TELF CELULAR', 'TLF MOVIL', 'TELF MOVIL'},
+    # --- Ficha completa: RAC Nominal ---
+    'tipo_personal': {'TIPO PERSONAL', 'TIPO DE PERSONAL', 'TIPO TRABAJADOR', 'TIPO DE TRABAJADOR'},
+    'horas_academicas': {'HORAS ACADEMICAS', 'HORAS ACAD', 'HRS ACADEMICAS', 'HRS ACAD', 'H ACADEMICAS',
+                         'HORAS DOCENTES', 'HORAS DE AULA'},
+    'horas_adm': {'HORAS ADM', 'HORAS ADMINISTRATIVAS', 'HRS ADM', 'HRS ADMINISTRATIVAS', 'H ADM',
+                  'H ADMINISTRATIVAS', 'HORAS ADMINISTRATIVA'},
+    'grado_imparte': {'GRADO', 'GRADO QUE IMPARTE', 'GRADO IMPARTE', 'GRADO QUE ATIENDE', 'ANO GRADO',
+                      'GRADO ANO', 'GRADO O ANO'},
+    'seccion_imparte': {'SECCION', 'SECCION QUE IMPARTE', 'SECCION IMPARTE', 'SECCION QUE ATIENDE'},
+    'especialidad': {'ESPECIALIDAD', 'MENCION', 'AREA DE ESPECIALIDAD'},
+    'situacion_trabajador': {'SITUACION DEL TRABAJADOR', 'SITUACION TRABAJADOR', 'SITUACION',
+                             'SITUACION ACTUAL', 'ESTATUS', 'ESTATUS DEL TRABAJADOR', 'ESTADO DEL TRABAJADOR'},
+    'observacion': {'OBSERVACION', 'OBSERVACIONES', 'OBS'},
+    # --- Ficha completa: datos personales ---
+    'lugar_nacimiento': {'LUGAR DE NACIMIENTO', 'LUGAR NACIMIENTO', 'LUGAR DE NAC', 'LUGAR NAC'},
+    'estado_civil': {'ESTADO CIVIL', 'EDO CIVIL', 'E CIVIL'},
+    'nivel_instruccion': {'NIVEL DE INSTRUCCION', 'NIVEL INSTRUCCION', 'GRADO DE INSTRUCCION',
+                          'NIVEL ACADEMICO', 'INSTRUCCION'},
+    'profesion': {'PROFESION', 'PROFESION U OFICIO', 'TITULO', 'TITULO OBTENIDO'},
+    'telefono_habitacion': {'TELEFONO DE HABITACION', 'TELEFONO HABITACION', 'TELF HABITACION',
+                            'TLF HABITACION', 'TLF HAB', 'TELF HAB', 'TELEFONO HAB', 'TELEFONO LOCAL',
+                            'TELEFONO FIJO'},
+    'telefono_oficina': {'TELEFONO DE OFICINA', 'TELEFONO OFICINA', 'TELF OFICINA', 'TLF OFICINA',
+                         'TLF OFIC', 'TELF OFIC', 'TELEFONO OFIC', 'TELEFONO DE TRABAJO'},
+    # --- Ficha completa: RAC Beneficios ---
+    'talla_camisa': {'TALLA DE CAMISA', 'TALLA CAMISA', 'CAMISA', 'TALLA DE CHEMISE', 'TALLA CHEMISE'},
+    'talla_pantalon': {'TALLA DE PANTALON', 'TALLA PANTALON', 'PANTALON'},
+    'talla_zapato': {'TALLA DE ZAPATO', 'TALLA ZAPATO', 'ZAPATO', 'TALLA DE CALZADO', 'TALLA CALZADO', 'CALZADO'},
+    'actividad_deportiva': {'ACTIVIDAD DEPORTIVA', 'ACTIVIDADES DEPORTIVAS', 'DEPORTE', 'DEPORTES',
+                            'PRACTICA ALGUN DEPORTE'},
+    'actividad_cultural': {'ACTIVIDAD CULTURAL', 'ACTIVIDADES CULTURALES', 'CULTURA'},
+    'tipo_vivienda': {'TIPO DE VIVIENDA', 'TIPO VIVIENDA', 'VIVIENDA'},
+    'condicion_vivienda': {'CONDICION DE VIVIENDA', 'CONDICION VIVIENDA', 'CONDICION DE LA VIVIENDA',
+                           'TENENCIA DE VIVIENDA', 'TENENCIA DE LA VIVIENDA'},
+    'tipo_material': {'TIPO DE MATERIAL', 'TIPO MATERIAL', 'MATERIAL', 'MATERIAL DE CONSTRUCCION',
+                      'MATERIAL DE LA VIVIENDA', 'TIPO DE MATERIAL DE LA VIVIENDA'},
+    'tipo_enfermedad': {'TIPO DE ENFERMEDAD', 'TIPO ENFERMEDAD', 'ENFERMEDAD', 'ENFERMEDADES',
+                        'PADECE ALGUNA ENFERMEDAD'},
+    'medicamento': {'MEDICAMENTO', 'MEDICAMENTOS', 'TRATAMIENTO', 'MEDICAMENTO QUE CONSUME'},
+    'posee_discapacidad': {'POSEE DISCAPACIDAD', 'POSEE ALGUNA DISCAPACIDAD', 'DISCAPACIDAD',
+                           'TIPO DE DISCAPACIDAD'},
 }
 
 # Si ningún alias coincide exacto, se intenta por palabras contenidas en la cabecera.
@@ -57,7 +100,31 @@ REGLAS_RESPALDO = {
     'fecha_nacimiento': lambda h: 'NACIMIENTO' in h and 'LUGAR' not in h,
     'cargo': lambda h: 'CARGO' in h.split() and 'CODIGO' not in h,
     'email': lambda h: 'CORREO' in h,
-    'telefono': lambda h: 'TELEFONO' in h or 'CELULAR' in h,
+    # Los teléfonos fijos van antes que el celular para que este no se los lleve
+    'telefono_habitacion': lambda h: ('TELEFONO' in h or 'TLF' in h or 'TELF' in h) and 'HAB' in h,
+    'telefono_oficina': lambda h: ('TELEFONO' in h or 'TLF' in h or 'TELF' in h) and 'OFIC' in h,
+    'telefono': lambda h: ('TELEFONO' in h or 'CELULAR' in h) and 'HAB' not in h and 'OFIC' not in h,
+    'lugar_nacimiento': lambda h: 'LUGAR' in h and 'NAC' in h,
+    'estado_civil': lambda h: 'CIVIL' in h,
+    'nivel_instruccion': lambda h: 'INSTRUCCION' in h,
+    'profesion': lambda h: 'PROFESION' in h,
+    'tipo_personal': lambda h: 'TIPO' in h and 'PERSONAL' in h,
+    'horas_academicas': lambda h: ('HORAS' in h or 'HRS' in h.split()) and 'ACAD' in h,
+    'horas_adm': lambda h: ('HORAS' in h or 'HRS' in h.split()) and 'ADM' in h,
+    'situacion_trabajador': lambda h: 'SITUACION' in h,
+    'especialidad': lambda h: 'ESPECIALIDAD' in h,
+    'observacion': lambda h: 'OBSERVACION' in h,
+    'talla_camisa': lambda h: 'CAMISA' in h or 'CHEMISE' in h,
+    'talla_pantalon': lambda h: 'PANTALON' in h,
+    'talla_zapato': lambda h: 'ZAPATO' in h or 'CALZADO' in h,
+    'actividad_deportiva': lambda h: 'DEPORT' in h,
+    'actividad_cultural': lambda h: 'CULTURA' in h,
+    'condicion_vivienda': lambda h: 'VIVIENDA' in h and ('CONDICION' in h or 'TENENCIA' in h),
+    'tipo_material': lambda h: 'MATERIAL' in h,
+    'tipo_vivienda': lambda h: 'VIVIENDA' in h and 'TIPO' in h,
+    'tipo_enfermedad': lambda h: 'ENFERMEDAD' in h,
+    'medicamento': lambda h: 'MEDICAMENTO' in h,
+    'posee_discapacidad': lambda h: 'DISCAPACIDAD' in h,
 }
 
 # Cargo del Excel -> area_trabajo de Kolegium (solo para registros nuevos)
@@ -71,9 +138,9 @@ AREAS_POR_CARGO = (
 )
 AREA_POR_DEFECTO = 'Por Asignar'
 
-# Campos del Muro de Contención que se rellenan si están vacíos
-CAMPOS_ACTUALIZABLES = ('cedula', 'nombres', 'apellidos', 'fecha_nacimiento', 'sexo',
-                        'fecha_ingreso', 'cargo', 'codigo_rac', 'turno', 'telefono')
+# Campos que se rellenan si están vacíos: Muro de Contención nivel 1 + la
+# ficha ministerial completa (RAC Nominal y Beneficios)
+CAMPOS_ACTUALIZABLES = ('cedula', 'nombres', 'apellidos', 'fecha_nacimiento', 'sexo') + tuple(CAMPOS_FICHA)
 
 
 # ==========================================
@@ -159,6 +226,17 @@ def _turno(valor):
     return None
 
 
+def _horas(valor):
+    """36 / 36.0 / '36,5' -> float (o None si no es un número razonable)."""
+    if _vacio(valor):
+        return None
+    try:
+        horas = float(valor) if isinstance(valor, (int, float)) else float(_texto(valor).replace(',', '.'))
+    except ValueError:
+        return None
+    return horas if 0 <= horas <= HORAS_MAXIMAS else None
+
+
 def _area_por_cargo(cargo):
     texto = _normalizar_cabecera(cargo)
     for claves, area in AREAS_POR_CARGO:
@@ -219,7 +297,7 @@ def _datos_de_fila(fila, mapa):
     nombre_completo = (f'{nombres} {apellidos}'.strip()
                        or formatear_nombre(_texto(celda('nombre_completo'))))
 
-    return {
+    datos = {
         'cedula': _cedula(celda('cedula'), _texto(celda('nacionalidad'))),
         'nombres': nombres or None,
         'apellidos': apellidos or None,
@@ -233,6 +311,15 @@ def _datos_de_fila(fila, mapa):
         'email': _texto(celda('email')).lower() or None,
         'telefono': formatear_telefono(_texto(celda('telefono'))),
     }
+    # Resto de la ficha ministerial: cada campo con su formato (ficha_ministerial.py)
+    for nombre, campo in CAMPOS_FICHA.items():
+        if nombre in datos:
+            continue
+        if campo.tipo == 'horas':
+            datos[nombre] = _horas(celda(nombre))
+        else:
+            datos[nombre] = campo.formato(_texto(celda(nombre))) or None
+    return datos
 
 
 # ==========================================

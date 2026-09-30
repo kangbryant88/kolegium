@@ -1,5 +1,5 @@
 // Tablero de Nómina (Gestor Ministerial): búsqueda en tiempo real, filtro
-// por cargo y modal único de edición rápida.
+// por cargo y modal único de edición (ficha completa en 4 pestañas).
 // Los filtros viajan en la URL (?q=&cargo=&incompletos=1) para que, al
 // guardar desde el modal, el tablero vuelva exactamente como estaba.
 
@@ -77,23 +77,27 @@
         if (fila && !fila.hidden) fila.scrollIntoView({ block: 'center' });
     }
 
-    // ---- Modal de edición: se rellena con los data-* del botón pulsado ----
+    // ---- Modal de edición: se rellena con la ficha (JSON) de la fila pulsada ----
+    const fichas = JSON.parse(document.getElementById('fichasNomina').textContent);
     const modal = document.getElementById('modalNomina');
     const form = document.getElementById('formNomina');
+    const campos = form.querySelectorAll('[data-campo]');
+    const primeraPestana = document.querySelector('#fichaTabs .nav-link');
+
     modal.addEventListener('show.bs.modal', evento => {
         const d = evento.relatedTarget.dataset;
+        const ficha = fichas[d.id] || {};
         form.action = d.url;
         document.getElementById('nominaNombre').textContent = d.nombre;
         document.getElementById('nominaCedula').textContent = d.cedula;
-        document.getElementById('nominaCargo').value = d.cargo;
-        document.getElementById('nominaRac').value = d.codigoRac;
-        document.getElementById('nominaFecha').value = d.fechaIngreso;
-        document.getElementById('nominaTurno').value = d.turno;
-        document.getElementById('nominaTelefono').value = d.telefono;
+        campos.forEach(input => { input.value = ficha[input.name] ?? ''; });
 
         document.getElementById('volverQ').value = buscador.value.trim();
         document.getElementById('volverCargo').value = filtroCargo.value;
         document.getElementById('volverIncompletos').value = soloIncompletos.checked ? '1' : '';
+
+        // Siempre abrir en "Datos Personales"
+        bootstrap.Tab.getOrCreateInstance(primeraPestana).show();
+        modal.querySelector('.modal-body').scrollTop = 0;
     });
-    modal.addEventListener('shown.bs.modal', () => document.getElementById('nominaCargo').focus());
 })();

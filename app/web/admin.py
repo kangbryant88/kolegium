@@ -1,14 +1,16 @@
 import re
 from collections import Counter
-from datetime import date, datetime
+from datetime import date
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 from flask_mail import Message
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 from app.models import db, Usuario, Rol
-from app.web.perfil import (formatear_cedula, formatear_cargo, formatear_codigo,
-                            formatear_telefono, OPCIONES_TURNO)
+from app.web.perfil import formatear_cedula, formatear_nombre
+from app.services.ficha_ministerial import (CAMPOS as CAMPOS_FICHA, PESTANAS as PESTANAS_FICHA,
+                                            limpiar_valor, valor_para_formulario, formatear_horas,
+                                            FORMATOS_JS)
 from app.services.importar_personal import importar_personal as importar_personal_desde_excel
 
 # Importamos 'mail' desde extensions (patrón Factory)
@@ -347,6 +349,13 @@ ETIQUETAS_NOMINA = {'cedula': 'Cédula', 'cargo': 'Cargo', 'codigo_rac': 'Códig
 SIN_CARGO = '__sin_cargo__'  # valor del filtro para quienes no tienen cargo
 
 
+def nombre_para_mostrar(usuario):
+    """Nombre legal en Title Case: "Nombres Apellidos" si están cargados, si no
+    el nombre_completo. Nunca el usuario de login."""
+    legal = ' '.join(filter(None, (usuario.nombres, usuario.apellidos)))
+    return formatear_nombre(legal or usuario.nombre_completo or '') or 'Sin nombre'
+
+
 @admin_bp.route('/nomina_ministerial')
 def nomina_ministerial():
     if 'admin' not in session.get('permisos', ''):
@@ -354,8 +363,16 @@ def nomina_ministerial():
 
     usuarios = sorted(Usuario.query.all(),
                       key=lambda u: ((u.apellidos or u.nombre_completo or '').lower(), (u.nombres or '').lower()))
+    nombres = {u.id: nombre_para_mostrar(u) for u in usuarios}
     faltantes = {u.id: [ETIQUETAS_NOMINA[c] for c in CAMPOS_NOMINA if not getattr(u, c)] for u in usuarios}
     conteo_cargos = Counter(u.cargo for u in usuarios if u.cargo)
+    cargos = sorted(conteo_cargos.items(), key=lambda c: c[0].lower())
+
+    # Ficha completa de cada persona para rellenar el modal (se pasa como JSON)
+    fichas = {u.id: {c: valor_para_formulario(u, c) for c in CAMPOS_FICHA} for u in usuarios}
+
+    # Largo máximo de cada columna de texto -> maxlength de los inputs
+    largos = {c: getattr(Usuario.__table__.c[c].type, 'length', None) for c in CAMPOS_FICHA}
 
     resumen = {
         'total': len(usuarios),
@@ -367,22 +384,30 @@ def nomina_ministerial():
 
     return render_template('nomina_ministerial.html',
                            usuarios=usuarios,
+                           nombres=nombres,
                            faltantes=faltantes,
-                           cargos=sorted(conteo_cargos.items(), key=lambda c: c[0].lower()),
+                           fichas=fichas,
+                           cargos=cargos,
                            resumen=resumen,
                            sin_cargo=SIN_CARGO,
-                           opciones_turno=OPCIONES_TURNO,
+                           pestanas=PESTANAS_FICHA,
+                           campos=CAMPOS_FICHA,
+                           largos=largos,
+                           formatos_js=FORMATOS_JS,
+                           sugerencias_extra={'cargo': [c for c, _ in cargos]},
                            hoy_iso=date.today().isoformat())
 
 
 @admin_bp.route('/nomina_ministerial/actualizar/<int:id>', methods=['POST'])
 def actualizar_datos_ministeriales(id):
-    """Edición rápida desde el tablero: SOLO toca los datos ministeriales.
-    Campo vacío = se borra el dato (el tablero es la fuente para auditar)."""
+    """Edición desde el tablero: guarda la ficha ministerial completa (los
+    campos de ficha_ministerial.CAMPOS) y nada más. Campo vacío = se borra el
+    dato; un campo que no viene en el formulario no se toca."""
     if 'admin' not in session.get('permisos', ''):
         return '🚫 No autorizado.', 403
 
     usuario = Usuario.query.get_or_404(id)
+    nombre = nombre_para_mostrar(usuario)
     f = request.form
 
     # Volver al tablero con los mismos filtros y la fila editada a la vista
@@ -392,52 +417,41 @@ def actualizar_datos_ministeriales(id):
                                           ('incompletos', f.get('volver_incompletos', ''))) if v},
                      _anchor=f'fila-{usuario.id}')
 
-    def rechazar(mensaje):
-        flash(f"{usuario.nombre_completo}: {mensaje}", 'error')
-        return redirect(volver)
-
     # ---- Validación completa antes de tocar el usuario ----
-    nuevos = {
-        'cargo': formatear_cargo(f.get('cargo')) or None,
-        'codigo_rac': formatear_codigo(f.get('codigo_rac')) or None,
-        'turno': f.get('turno') or None,
-    }
-    if nuevos['turno'] and nuevos['turno'] not in OPCIONES_TURNO:
-        return rechazar('El turno seleccionado no es válido.')
-
-    fecha_raw = (f.get('fecha_ingreso') or '').strip()
-    nuevos['fecha_ingreso'] = None
-    if fecha_raw:
+    nuevos, errores = {}, []
+    for campo in CAMPOS_FICHA:
+        if campo not in f:
+            continue
         try:
-            nuevos['fecha_ingreso'] = datetime.strptime(fecha_raw, '%Y-%m-%d').date()
-        except ValueError:
-            return rechazar('La fecha de ingreso no es válida.')
-        if not (1900 <= nuevos['fecha_ingreso'].year and nuevos['fecha_ingreso'] <= date.today()):
-            return rechazar('La fecha de ingreso no puede ser futura ni anterior a 1900.')
-
-    telefono_raw = (f.get('telefono') or '').strip()
-    nuevos['telefono'] = None
-    if telefono_raw:
-        nuevos['telefono'] = formatear_telefono(telefono_raw)
-        if not nuevos['telefono']:
-            return rechazar('El teléfono no es válido. Formato esperado: 0414-1234567.')
+            nuevos[campo] = limpiar_valor(campo, f.get(campo),
+                                          getattr(Usuario.__table__.c[campo].type, 'length', None))
+        except ValueError as e:
+            errores.append(str(e))
+    if errores:
+        flash(f"{nombre}: no se guardó nada. " + ' | '.join(errores), 'error')
+        return redirect(volver)
 
     # ---- Aplicar cambios ----
     def mostrar(campo, valor):
-        if not valor:
+        if valor is None or valor == '':
             return 'vacío'
-        return valor.strftime('%d/%m/%Y') if campo == 'fecha_ingreso' else valor
+        tipo = CAMPOS_FICHA[campo].tipo
+        if tipo == 'fecha':
+            return valor.strftime('%d/%m/%Y')
+        if tipo == 'horas':
+            return formatear_horas(valor)
+        return valor if len(valor) <= 40 else valor[:37] + '…'
 
     cambios = []
     for campo, valor in nuevos.items():
         actual = getattr(usuario, campo)
         if actual != valor:
-            cambios.append(f"{ETIQUETAS_NOMINA[campo]}: '{mostrar(campo, actual)}' → '{mostrar(campo, valor)}'")
+            cambios.append(f"{CAMPOS_FICHA[campo].etiqueta}: '{mostrar(campo, actual)}' → '{mostrar(campo, valor)}'")
             setattr(usuario, campo, valor)
 
     if cambios:
         db.session.commit()
-        flash(f"{usuario.nombre_completo} — " + ' | '.join(cambios), 'success')
+        flash(f"{nombre} — " + ' | '.join(cambios), 'success')
     else:
-        flash(f"{usuario.nombre_completo}: no hubo cambios.", 'info')
+        flash(f"{nombre}: no hubo cambios.", 'info')
     return redirect(volver)
