@@ -135,14 +135,19 @@ def analizar_formato_ministerio(instrucciones_usuario, encabezados_por_hoja):
     """
     encabezados_por_hoja: {'NombreDePestaña': ['encabezado1', ...], ...}
     Devuelve {'hojas_a_procesar': {pestaña: {'filtros': {...}, 'mapeo_columnas': {...}}}}
-    o {} si la API falla o responde algo inutilizable.
+    o, si algo falla, {'error_api': mensaje exacto, 'tipo_error': clase} (diagnóstico).
     """
     try:
         respuesta = modelo.generate_content(
             _construir_prompt(instrucciones_usuario, encabezados_por_hoja),
             generation_config={"response_mime_type": "application/json"},
         )
-        return validar_respuesta(json.loads(respuesta.text), encabezados_por_hoja)
+        texto = respuesta.text
+        validado = validar_respuesta(json.loads(texto), encabezados_por_hoja)
+        if not validado:
+            return {'error_api': f'Gemini ({MODELO}) respondió con una estructura inesperada: {texto[:500]}',
+                    'tipo_error': 'EstructuraInvalida'}
+        return validado
     except Exception as e:
-        print(f'[ai_ministerial] Error consultando Gemini ({MODELO}): {e}')
-        return {}
+        print(f'[ai_ministerial] Error consultando Gemini ({MODELO}): {type(e).__name__}: {e}')
+        return {'error_api': str(e), 'tipo_error': type(e).__name__}

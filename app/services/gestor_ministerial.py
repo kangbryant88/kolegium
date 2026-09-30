@@ -198,6 +198,9 @@ def generar_reporte(archivo, instrucciones):
                for nombre, (fila, encabezados, numeracion) in pestanas.items()}
 
     analisis = analizar_formato_ministerio(instrucciones, para_ia)
+    if 'error_api' in analisis:
+        # Diagnóstico: se muestra el fallo técnico real de Gemini, sin traducir
+        raise ErrorGestor(f"Error de Gemini [{analisis.get('tipo_error', '?')}]: {analisis['error_api']}")
     if not analisis:
         raise ErrorGestor('El Cerebro (Gemini) no respondió. Puede ser la cuota de la API, la clave '
                           'o la conexión; intenta de nuevo en un minuto.')
