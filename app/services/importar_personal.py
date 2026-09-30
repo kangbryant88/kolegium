@@ -194,8 +194,19 @@ def _cedula(valor, nacionalidad=''):
     return formatear_cedula(texto)
 
 
+def _es_anio(numero):
+    return 1900 <= numero <= date.today().year
+
+
 def _fecha(valor):
-    """Timestamp / datetime / serial de Excel / texto dd/mm/aaaa -> date (o None)."""
+    """
+    Timestamp / datetime / serial de Excel / texto -> date (o None).
+    Limpieza de los formatos sucios del ministerio:
+    - '01 04 2022', '01 / 04 / 2022', '01.04.2022' -> separadores unificados a '/'.
+    - Solo el año (2022 o '2022') -> 01/01/2022. Un número entre 1900 y el año
+      actual es un año, no un serial de Excel (2022 como serial sería 1905).
+    - Se descarta la hora: '2022-04-01 00:00:00' -> 2022-04-01.
+    """
     if _vacio(valor):
         return None
     resultado = None
@@ -204,19 +215,52 @@ def _fecha(valor):
     elif isinstance(valor, date):
         resultado = valor
     elif isinstance(valor, (int, float)):
-        if 1000 < valor < 80000:  # número de serie de Excel
+        if float(valor).is_integer() and _es_anio(int(valor)):
+            resultado = date(int(valor), 1, 1)
+        elif 1000 < valor < 80000:  # número de serie de Excel
             resultado = (datetime(1899, 12, 30) + timedelta(days=int(valor))).date()
     else:
-        texto = _texto(valor).split(' ')[0]
-        for formato in ('%d/%m/%Y', '%d-%m-%Y', '%d.%m.%Y', '%Y-%m-%d', '%Y/%m/%d', '%d/%m/%y', '%d-%m-%y'):
+        texto = re.sub(r'[\sT]+\d{1,2}:\d{2}.*$', '', _texto(valor))       # quitar la hora
+        texto = re.sub(r'\s*[/.\-]\s*|\s+', '/', texto.strip())             # espacios y separadores -> '/'
+        if re.fullmatch(r'\d{4}', texto) and _es_anio(int(texto)):
+            resultado = date(int(texto), 1, 1)
+        for formato in ('%d/%m/%Y', '%Y/%m/%d', '%d/%m/%y'):
+            if resultado:
+                break
             try:
                 resultado = datetime.strptime(texto, formato).date()
-                break
             except ValueError:
                 continue
     if resultado and 1900 <= resultado.year <= date.today().year:
         return resultado
     return None
+
+
+# Número guardado como texto: '4.24328395e+09', '4,24328395E+09', '4243283950.0'
+_NUMERO_COMO_TEXTO = re.compile(r'\d+(?:[.,]\d+)?[eE][+-]?\d+|\d+[.,]0+')
+
+
+def _telefono(valor):
+    """
+    Celda de teléfono -> '0424-3283950' (o None). Pandas entrega los números
+    como float (4243283950.0 o 4.24328395e+09) y pierde el 0 inicial:
+    float -> int -> str, y si quedan 10 dígitos se antepone el 0.
+    """
+    if _vacio(valor):
+        return None
+    if isinstance(valor, str) and _NUMERO_COMO_TEXTO.fullmatch(valor.strip()):
+        texto = valor.strip().replace(',', '.')
+        mantisa, _, exponente = texto.lower().partition('e')
+        # Texto científico recortado ('4.14555E+09'): los dígitos reales ya se
+        # perdieron en el Excel; mejor vacío que un teléfono inventado con ceros.
+        if exponente and len(re.sub(r'\D', '', mantisa)) < int(exponente) + 1:
+            return None
+        valor = float(texto)
+    if isinstance(valor, (int, float)) and not isinstance(valor, bool):
+        valor = str(int(valor))
+        if len(valor) == 10:
+            valor = '0' + valor
+    return formatear_telefono(_texto(valor))
 
 
 def _sexo(valor):
@@ -324,7 +368,7 @@ def _datos_de_fila(fila, mapa):
         'codigo_rac': formatear_codigo(_texto(celda('codigo_rac'))) or None,
         'turno': _turno(celda('turno')),
         'email': _texto(celda('email')).lower() or None,
-        'telefono': formatear_telefono(_texto(celda('telefono'))),
+        'telefono': _telefono(celda('telefono')),
     }
     # Resto de la ficha ministerial: cada campo con su formato (ficha_ministerial.py)
     for nombre, campo in CAMPOS_FICHA.items():
@@ -332,6 +376,8 @@ def _datos_de_fila(fila, mapa):
             continue
         if campo.tipo == 'horas':
             datos[nombre] = _horas(celda(nombre))
+        elif campo.tipo == 'telefono':
+            datos[nombre] = _telefono(celda(nombre))
         else:
             datos[nombre] = campo.formato(_texto(celda(nombre))) or None
     return datos
