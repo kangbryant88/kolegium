@@ -40,11 +40,14 @@ ALIAS_COLUMNAS = {
                          'F NAC', 'FEC NAC', 'NACIMIENTO'},
     'sexo': {'SEXO', 'GENERO'},
     'fecha_ingreso': {'FECHA DE INGRESO', 'FECHA INGRESO', 'F INGRESO', 'FEC INGRESO', 'INGRESO',
-                      'FECHA DE INGRESO AL MPPE', 'FECHA INGRESO MPPE', 'FECHA DE INGRESO MPPE'},
+                      'FECHA DE INGRESO AL MPPE', 'FECHA INGRESO MPPE', 'FECHA DE INGRESO MPPE',
+                      # Errores tipográficos reales de los Excel del ministerio
+                      # ('FECHA DE INGRES0' con cero llega aquí ya corregido a 'O')
+                      'FECHA DE INGRES', 'FECHA INGRES', 'FECHA DE INGRESOS'},
     'cargo': {'CARGO', 'DENOMINACION DEL CARGO', 'DENOMINACION CARGO', 'DENOMINACION',
               'CARGO NOMINAL', 'DESCRIPCION DEL CARGO', 'DESCRIPCION CARGO'},
     'codigo_rac': {'CODIGO RAC', 'COD RAC', 'RAC', 'CODIGO DEL RAC', 'N RAC', 'NRO RAC'},
-    'turno': {'TURNO'},
+    'turno': {'TURNO', 'TURNO QUE ATIENDE', 'TURNO ATIENDE', 'TURNO DE TRABAJO', 'TURNO LABORAL'},
     'email': {'CORREO', 'CORREO ELECTRONICO', 'EMAIL', 'E MAIL'},
     'telefono': {'TELEFONO', 'TELF', 'TLF', 'TELEFONO CELULAR', 'CELULAR', 'TELEFONO MOVIL', 'MOVIL',
                  'NRO TELEFONO', 'N TELEFONO', 'TELEFONO DE CONTACTO', 'TELEFONO CONTACTO',
@@ -96,7 +99,8 @@ ALIAS_COLUMNAS = {
 REGLAS_RESPALDO = {
     'cedula': lambda h: 'CEDULA' in h.split() and 'ESCOLAR' not in h,
     'codigo_rac': lambda h: 'RAC' in h.split() and 'NOMINAL' not in h,
-    'fecha_ingreso': lambda h: 'INGRESO' in h and 'FECHA' in h,
+    'fecha_ingreso': lambda h: 'INGRES' in h and 'FECHA' in h,  # INGRESO / INGRES (truncado)
+    'turno': lambda h: 'TURNO' in h.split(),
     'fecha_nacimiento': lambda h: 'NACIMIENTO' in h and 'LUGAR' not in h,
     'cargo': lambda h: 'CARGO' in h.split() and 'CODIGO' not in h,
     'email': lambda h: 'CORREO' in h,
@@ -148,8 +152,19 @@ CAMPOS_ACTUALIZABLES = ('cedula', 'nombres', 'apellidos', 'fecha_nacimiento', 's
 # ==========================================
 
 def _normalizar_cabecera(valor):
+    """
+    Cabecera del Excel -> clave comparable con ALIAS_COLUMNAS:
+    '  Fecha de Ingres0\xa0' -> 'FECHA DE INGRESO'.
+    - Quita acentos y caracteres invisibles (espacio duro, espacio de ancho
+      cero, tabulaciones, saltos de línea) y recorta los extremos.
+    - Mayúsculas y un solo espacio entre palabras; la puntuación cuenta
+      como espacio ('TLF. HAB.' -> 'TLF HAB').
+    - Un cero pegado a letras es una 'O' mal tecleada ('INGRES0', 'TELEF0NO').
+    """
     texto = unicodedata.normalize('NFKD', str(valor)).encode('ascii', 'ignore').decode()
-    return ' '.join(re.sub(r'[^A-Z0-9]+', ' ', texto.upper()).split())
+    texto = re.sub(r'[^A-Z0-9]+', ' ', texto.strip().upper())
+    texto = re.sub(r'(?<=[A-Z])0|0(?=[A-Z])', 'O', texto)
+    return ' '.join(texto.split())
 
 
 def _vacio(valor):
