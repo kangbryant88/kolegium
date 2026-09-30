@@ -1,7 +1,8 @@
 // Gestor Ministerial: envía la plantilla con fetch para poder mostrar el
 // indicador de carga mientras trabaja la IA, descargar el Excel generado y
-// explicar qué decidió el Cerebro (cabecera X-Gestor-Resumen).
-// Sin JavaScript el formulario se envía normal y los errores llegan como flash.
+// explicar, pestaña por pestaña, qué decidió el Cerebro.
+// Respuesta: {archivo: base64, nombre, resumen}. Sin JavaScript el formulario
+// se envía normal, se descarga el archivo y los errores llegan como flash.
 
 (function () {
     const form = document.getElementById('formGestor');
@@ -12,7 +13,6 @@
     const error = document.getElementById('errorGestor');
     const panelAyuda = document.getElementById('panelAyuda');
     const panelResumen = document.getElementById('panelResumen');
-    const NOMBRE_ARCHIVO = 'Reporte_Ministerial_Generado.xlsx';
 
     function cargando(activo) {
         boton.disabled = activo;
@@ -27,44 +27,57 @@
         error.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    function descargar(blob) {
+    function descargar(base64, nombre) {
+        const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = URL.createObjectURL(blob);
         const enlace = document.createElement('a');
         enlace.href = url;
-        enlace.download = NOMBRE_ARCHIVO;
+        enlace.download = nombre;
         document.body.appendChild(enlace);
         enlace.click();
         enlace.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    function chip(contenido, gris) {
-        const span = document.createElement('span');
-        span.className = 'gestor-chip' + (gris ? ' gris' : '');
-        span.append(...contenido);
-        return span;
+    // Todo con textContent: el texto viene de la IA y no se interpreta como HTML.
+    function el(etiqueta, clase, contenido) {
+        const nodo = document.createElement(etiqueta);
+        if (clase) nodo.className = clase;
+        if (contenido !== undefined) nodo.append(...[].concat(contenido));
+        return nodo;
+    }
+    function chip(encabezado, valor, gris) {
+        return el('span', 'gestor-chip' + (gris ? ' gris' : ''),
+                  valor === undefined ? encabezado : [encabezado + ' → ', el('code', '', valor)]);
     }
 
-    // Todo con textContent: el texto viene de la IA y no se interpreta como HTML.
+    function tarjetaHoja(h) {
+        const filtro = [h.cargo_requerido ? `Cargo: ${h.cargo_requerido}` : 'Todos los cargos',
+                        h.solo_activos ? 'solo activos' : 'activos e inactivos'].join(' · ');
+        const tarjeta = el('div', 'gestor-hoja', [
+            el('h6', '', `${h.hoja} — ${h.total} trabajador(es)`),
+            el('div', 'meta', `${filtro}. Encabezados en la fila ${h.fila_encabezado}.`),
+        ]);
+        if (h.explicacion) tarjeta.append(el('div', 'mb-2', h.explicacion));
+        const columnas = el('div', '');
+        (h.numeracion || []).forEach(t => columnas.append(chip(t, '1, 2, 3…')));
+        Object.entries(h.columnas || {}).forEach(([t, atributo]) => columnas.append(chip(t, atributo)));
+        (h.sin_mapear || []).forEach(t => columnas.append(chip(t + ' (vacía)', undefined, true)));
+        tarjeta.append(columnas);
+        return tarjeta;
+    }
+
     function mostrarResumen(r) {
-        document.getElementById('resTotal').textContent = r.total ?? '—';
-        const partes = [r.cargo_requerido ? `Cargo: ${r.cargo_requerido}` : 'Todos los cargos',
-                        r.solo_activos ? 'solo activos' : 'activos e inactivos'];
-        document.getElementById('resFiltro').textContent = partes.join(' · ');
-        document.getElementById('resExplicacion').textContent = r.explicacion || '—';
+        const hojas = r.hojas || [];
+        document.getElementById('resTotal').textContent = r.total ?? 0;
+        document.getElementById('resNumHojas').textContent = hojas.length;
+        document.getElementById('resHojas').replaceChildren(...hojas.map(tarjetaHoja));
 
-        const columnas = document.getElementById('resColumnas');
-        columnas.replaceChildren();
-        (r.numeracion || []).forEach(t => columnas.append(chip([t + ' → ', Object.assign(document.createElement('code'), { textContent: '1, 2, 3…' })])));
-        Object.entries(r.columnas || {}).forEach(([encabezado, atributo]) => {
-            columnas.append(chip([encabezado + ' → ', Object.assign(document.createElement('code'), { textContent: atributo })]));
-        });
-
-        const sinMapear = r.sin_mapear || [];
-        const contenedor = document.getElementById('resSinMapear');
-        contenedor.replaceChildren(...sinMapear.map(t => chip([t], true)));
-        contenedor.classList.toggle('d-none', !sinMapear.length);
-        document.getElementById('resSinMapearTitulo').classList.toggle('d-none', !sinMapear.length);
+        const sinProcesar = document.getElementById('resSinProcesar');
+        sinProcesar.textContent = (r.sin_procesar || []).length
+            ? `Pestañas sin tocar (portadas o sin datos del personal): ${r.sin_procesar.join(', ')}.` : '';
+        sinProcesar.classList.toggle('d-none', !(r.sin_procesar || []).length);
 
         panelAyuda.classList.add('d-none');
         panelResumen.classList.remove('d-none');
@@ -81,15 +94,12 @@
                 body: new FormData(form),
                 headers: { 'X-Requested-With': 'fetch' },
             });
-            if (!respuesta.ok) {
-                const datos = await respuesta.json().catch(() => ({}));
+            const datos = await respuesta.json().catch(() => ({}));
+            if (!respuesta.ok || !datos.archivo) {
                 throw new Error(datos.error || `Error inesperado del servidor (${respuesta.status}).`);
             }
-            const blob = await respuesta.blob();
-            descargar(blob);
-            let resumen = {};
-            try { resumen = JSON.parse(decodeURIComponent(respuesta.headers.get('X-Gestor-Resumen') || '%7B%7D')); } catch (e) { }
-            mostrarResumen(resumen);
+            descargar(datos.archivo, datos.nombre);
+            mostrarResumen(datos.resumen || {});
         } catch (e) {
             mostrarError(e.message === 'Failed to fetch' ? 'No se pudo conectar con el servidor.' : e.message);
         } finally {

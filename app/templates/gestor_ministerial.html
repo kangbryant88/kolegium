@@ -8,8 +8,9 @@
         font-size: 0.75rem; color: var(--on-surface-variant); font-weight: 700;
         margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px;
     }
-    .gestor-resumen dt { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--on-surface-variant); }
-    .gestor-resumen dd { margin-bottom: 0.75rem; }
+    .gestor-hoja { border: 1px solid var(--outline-variant, rgba(100,116,139,0.25)); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .gestor-hoja h6 { font-weight: 700; margin-bottom: 4px; }
+    .gestor-hoja .meta { color: var(--on-surface-variant); margin-bottom: 8px; }
     .gestor-chip {
         display: inline-block; font-size: 0.78rem; padding: 3px 10px; border-radius: 999px; margin: 0 4px 4px 0;
         background: rgba(67, 24, 255, 0.08); color: var(--text-main);
@@ -67,13 +68,13 @@
                     ¿Cómo funciona?
                 </h6>
                 <ol class="ps-3 mb-3">
-                    <li class="mb-1">Se detecta la fila de encabezados en las primeras 10 filas de la primera hoja.</li>
-                    <li class="mb-1">La IA recibe <strong>solo los encabezados y tus instrucciones</strong> (ningún dato personal) y decide qué dato va en cada columna.</li>
-                    <li class="mb-1">Kolegium escribe un trabajador por fila debajo de los encabezados, conservando logos, bordes y estilos.</li>
+                    <li class="mb-1">En cada pestaña visible se detecta su fila de encabezados (primeras 25 filas).</li>
+                    <li class="mb-1">La IA recibe <strong>solo los encabezados y tus instrucciones</strong> (ningún dato personal) y decide, pestaña por pestaña, a qué personal corresponde (ej. "OBREROS" → Obrero) y qué dato va en cada columna. Las portadas se dejan intactas.</li>
+                    <li class="mb-1">Kolegium escribe un trabajador por fila debajo de los encabezados de cada pestaña, conservando logos, bordes y estilos.</li>
                     <li>La columna "N°" se numera sola. El personal "En Espera" (sin rol) nunca se incluye.</li>
                 </ol>
                 <p class="mb-0" style="color: var(--on-surface-variant);">
-                    Deja suficientes filas vacías debajo de los encabezados: si hay contenido (p. ej. firmas) donde deben ir los datos, el reporte no se genera.
+                    Deja suficientes filas vacías debajo de los encabezados: si en alguna pestaña hay contenido (p. ej. firmas) donde deben ir los datos, el reporte no se genera.
                 </p>
             </div>
 
@@ -82,13 +83,9 @@
                     <i data-lucide="check-circle-2" class="me-1" style="width:18px;height:18px;vertical-align:text-bottom;"></i>
                     Reporte generado y descargado
                 </h6>
-                <dl class="gestor-resumen mb-0">
-                    <dt>Trabajadores incluidos</dt><dd id="resTotal"></dd>
-                    <dt>Filtro aplicado</dt><dd id="resFiltro"></dd>
-                    <dt>Criterio de la IA</dt><dd id="resExplicacion"></dd>
-                    <dt>Columnas rellenadas</dt><dd id="resColumnas"></dd>
-                    <dt id="resSinMapearTitulo">Columnas que quedaron vacías</dt><dd id="resSinMapear"></dd>
-                </dl>
+                <p class="mb-3"><strong id="resTotal"></strong> registros escritos en <strong id="resNumHojas"></strong> pestaña(s).</p>
+                <div id="resHojas"></div>
+                <p class="mb-0 d-none" id="resSinProcesar" style="color: var(--on-surface-variant);"></p>
             </div>
         </div>
     </div>

@@ -2,12 +2,13 @@
 Gestor Ministerial - Fase 2 ("El Cerebro").
 
 Usa Gemini para leer una petición en lenguaje natural ("mándame los docentes
-fuera de aula activos") y los encabezados de un formato Excel vacío del
-ministerio, y devuelve qué filtrar y qué atributo de Usuario va en cada columna.
+fuera de aula activos") y los encabezados de cada pestaña de un formato Excel
+vacío del ministerio, y devuelve, pestaña por pestaña, qué personal filtrar y
+qué atributo de Usuario va en cada columna.
 
 La respuesta de la IA nunca se usa tal cual: validar_respuesta() descarta
-cualquier atributo fuera de ATRIBUTOS_PERMITIDOS (p. ej. password) y cualquier
-encabezado que no exista en el Excel.
+cualquier atributo fuera de ATRIBUTOS_PERMITIDOS (p. ej. password), cualquier
+pestaña que no exista en el libro y cualquier encabezado que no sea de esa pestaña.
 """
 import json
 import os
@@ -48,73 +49,100 @@ ATRIBUTOS_PERMITIDOS = {**ATRIBUTOS_IDENTIDAD,
                         **{nombre: campo.etiqueta for nombre, campo in CAMPOS_FICHA.items()}}
 
 ESTRUCTURA_RESPUESTA = """{
-  "filtros": {
-    "explicacion": "Breve justificación del filtro",
-    "cargo_requerido": "Valor deducido del cargo a filtrar (ej. 'Docente fuera de aula', 'Obrero') o null si se piden todos",
-    "solo_activos": true o false
-  },
-  "mapeo_columnas": {
-    "NOMBRE ORIGINAL DEL ENCABEZADO EXCEL": "atributo_exacto_del_modelo_usuario",
-    "OTRO ENCABEZADO": "otro_atributo"
+  "hojas_a_procesar": {
+    "NombreDePestaña1": {
+      "filtros": {
+        "explicacion": "Breve justificación del filtro de esta pestaña",
+        "cargo_requerido": "Cargo a filtrar (ej. 'Docente fuera de aula', 'Obrero') o null si van todos",
+        "solo_activos": true
+      },
+      "mapeo_columnas": {"ENCABEZADO EXACTO DE ESTA PESTAÑA": "atributo_exacto_del_modelo_usuario"}
+    },
+    "NombreDePestaña2": {
+      "filtros": {"explicacion": "...", "cargo_requerido": "otro valor", "solo_activos": true},
+      "mapeo_columnas": {}
+    }
   }
 }"""
 
 
-def _construir_prompt(instrucciones_usuario, lista_encabezados_excel):
+def _construir_prompt(instrucciones_usuario, encabezados_por_hoja):
     atributos = '\n'.join(f'- {nombre}: {etiqueta}' for nombre, etiqueta in ATRIBUTOS_PERMITIDOS.items())
     return f"""INSTRUCCIONES DEL USUARIO:
 {instrucciones_usuario}
 
-ENCABEZADOS DEL FORMATO EXCEL (cópialos exactamente igual como claves de mapeo_columnas):
-{json.dumps(lista_encabezados_excel, ensure_ascii=False)}
+PESTAÑAS DEL LIBRO EXCEL Y SUS ENCABEZADOS (nombre de pestaña -> encabezados; copia ambos exactamente igual):
+{json.dumps(encabezados_por_hoja, ensure_ascii=False, indent=1)}
 
 ATRIBUTOS PERMITIDOS (los valores de mapeo_columnas deben ser EXACTAMENTE uno de estos nombres):
 {atributos}
 
 REGLAS:
-- Si un encabezado no corresponde a ningún atributo permitido (p. ej. "N°", "Firma"), NO lo incluyas.
-- No inventes atributos que no estén en la lista.
-- Si el usuario no menciona un cargo, cargo_requerido es null.
+- Cada pestaña se llena con su propio personal: deduce el cargo de cada una por su nombre,
+  sus encabezados y las instrucciones (ej. pestaña "OBREROS" -> cargo_requerido "Obrero").
+- Omite de hojas_a_procesar las pestañas que sean portada, instrucciones o resumen, o que no necesiten datos del personal.
+- En mapeo_columnas usa solo encabezados de ESA pestaña. Si un encabezado no corresponde a ningún
+  atributo permitido (p. ej. "N°", "Firma"), NO lo incluyas. No inventes atributos.
+- Si para una pestaña no se deduce ningún cargo, cargo_requerido es null.
 - solo_activos es true salvo que el usuario pida explícitamente incluir inactivos.
 
 Responde con este JSON y nada más:
 {ESTRUCTURA_RESPUESTA}"""
 
 
-def validar_respuesta(respuesta, lista_encabezados_excel):
-    """Deja solo lo que Kolegium puede usar con seguridad. Devuelve {} si la
-    estructura no es la esperada."""
-    if not isinstance(respuesta, dict):
-        return {}
-    filtros = respuesta.get('filtros')
-    mapeo = respuesta.get('mapeo_columnas')
-    if not isinstance(filtros, dict) or not isinstance(mapeo, dict):
-        return {}
-
+def _validar_hoja(datos, encabezados):
+    """Una pestaña de la respuesta -> {'filtros', 'mapeo_columnas'} seguro, o None."""
+    if not isinstance(datos, dict):
+        return None
+    filtros = datos.get('filtros') if isinstance(datos.get('filtros'), dict) else {}
+    mapeo = datos.get('mapeo_columnas')
+    if not isinstance(mapeo, dict):
+        return None
+    mapeo = {encabezado: atributo for encabezado, atributo in mapeo.items()
+             if encabezado in encabezados and atributo in ATRIBUTOS_PERMITIDOS}
+    if not mapeo:
+        return None  # nada que escribir en esta pestaña
     cargo = filtros.get('cargo_requerido')
-    encabezados = set(lista_encabezados_excel)
     return {
         'filtros': {
             'explicacion': str(filtros.get('explicacion') or ''),
             'cargo_requerido': cargo.strip() if isinstance(cargo, str) and cargo.strip() else None,
             'solo_activos': filtros.get('solo_activos') is not False,
         },
-        'mapeo_columnas': {encabezado: atributo for encabezado, atributo in mapeo.items()
-                           if encabezado in encabezados and atributo in ATRIBUTOS_PERMITIDOS},
+        'mapeo_columnas': mapeo,
     }
 
 
-def analizar_formato_ministerio(instrucciones_usuario, lista_encabezados_excel):
+def validar_respuesta(respuesta, encabezados_por_hoja):
     """
-    Devuelve {'filtros': {...}, 'mapeo_columnas': {encabezado: atributo}}
+    Deja solo lo que Kolegium puede usar con seguridad: pestañas que existen
+    en el libro, encabezados de ESA pestaña y atributos de la lista blanca.
+    Devuelve {} si la estructura no es la esperada.
+    """
+    if not isinstance(respuesta, dict) or not isinstance(respuesta.get('hojas_a_procesar'), dict):
+        return {}
+    hojas = {}
+    for nombre, datos in respuesta['hojas_a_procesar'].items():
+        if nombre not in encabezados_por_hoja:
+            continue
+        hoja = _validar_hoja(datos, set(encabezados_por_hoja[nombre]))
+        if hoja:
+            hojas[nombre] = hoja
+    return {'hojas_a_procesar': hojas}
+
+
+def analizar_formato_ministerio(instrucciones_usuario, encabezados_por_hoja):
+    """
+    encabezados_por_hoja: {'NombreDePestaña': ['encabezado1', ...], ...}
+    Devuelve {'hojas_a_procesar': {pestaña: {'filtros': {...}, 'mapeo_columnas': {...}}}}
     o {} si la API falla o responde algo inutilizable.
     """
     try:
         respuesta = modelo.generate_content(
-            _construir_prompt(instrucciones_usuario, lista_encabezados_excel),
+            _construir_prompt(instrucciones_usuario, encabezados_por_hoja),
             generation_config={"response_mime_type": "application/json"},
         )
-        return validar_respuesta(json.loads(respuesta.text), lista_encabezados_excel)
+        return validar_respuesta(json.loads(respuesta.text), encabezados_por_hoja)
     except Exception as e:
         print(f'[ai_ministerial] Error consultando Gemini ({MODELO}): {e}')
         return {}

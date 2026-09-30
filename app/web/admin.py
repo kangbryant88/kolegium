@@ -1,8 +1,7 @@
-import json
+import base64
 import re
 from collections import Counter
 from datetime import date
-from urllib.parse import quote
 
 from flask import (Blueprint, render_template, request, redirect, url_for, session, flash, current_app,
                    jsonify, send_file)
@@ -459,6 +458,7 @@ def actualizar_datos_ministeriales(id):
 # ==========================================
 
 LARGO_MAXIMO_INSTRUCCIONES = 2000
+NOMBRE_REPORTE = 'Reporte_Ministerial_Generado.xlsx'
 
 
 @admin_bp.route('/gestor_ministerial', methods=['GET', 'POST'])
@@ -499,8 +499,10 @@ def gestor_ministerial():
         current_app.logger.exception('Error generando reporte del Gestor Ministerial')
         return fallar('No se pudo generar el reporte por un error inesperado. Inténtalo de nuevo.', 500)
 
-    respuesta = send_file(salida, as_attachment=True, download_name='Reporte_Ministerial_Generado.xlsx',
-                          mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    # Lo que decidió el Cerebro, para mostrarlo en pantalla (cabecera HTTP => URL-encoded)
-    respuesta.headers['X-Gestor-Resumen'] = quote(json.dumps(resumen, ensure_ascii=False))
-    return respuesta
+    if es_fetch:
+        # El resumen de todas las pestañas puede ser grande para una cabecera HTTP
+        # (los proxys la rechazan): va en JSON junto al archivo en base64.
+        return jsonify(archivo=base64.b64encode(salida.getvalue()).decode('ascii'),
+                       nombre=NOMBRE_REPORTE, resumen=resumen)
+    return send_file(salida, as_attachment=True, download_name=NOMBRE_REPORTE,
+                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
