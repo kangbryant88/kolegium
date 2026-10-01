@@ -25,9 +25,9 @@ load_dotenv()
 # que no deja pasar gRPC.
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'), transport='rest')
 
-# gemini-1.5-flash y 2.5-flash ya no estan disponibles; el alias "latest" sigue al Flash
-# vigente. Para fijar una version: GEMINI_MODEL=... en .env
-MODELO = os.getenv('GEMINI_MODEL', 'gemini-flash-latest')
+# La cuota diaria es por modelo: usamos Pro para no depender del limite de Flash.
+# Para cambiarlo sin tocar codigo: GEMINI_MODEL=... en .env
+MODELO = os.getenv('GEMINI_MODEL', 'gemini-1.5-pro')
 
 PROMPT_SISTEMA = (
     'Eres el sistema experto de RRHH de una escuela. Analiza la petición del usuario '
