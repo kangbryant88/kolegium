@@ -12,6 +12,7 @@ pestaña que no exista en el libro y cualquier encabezado que no sea de esa pest
 """
 import json
 import os
+import time
 
 import google.generativeai as genai
 from dotenv import load_dotenv
@@ -133,6 +134,27 @@ def validar_respuesta(respuesta, encabezados_por_hoja):
     return {'hojas_a_procesar': hojas}
 
 
+INTENTOS_MAXIMOS = 3
+ESPERA_CUOTA_SEGUNDOS = 22  # Google castiga ~19 s al pasarse del límite por minuto
+
+
+def _generar_con_reintentos(prompt):
+    """generate_content reintentando ante el 429 (cuota por minuto); otros errores suben de inmediato."""
+    for intento in range(1, INTENTOS_MAXIMOS + 1):
+        try:
+            return modelo.generate_content(
+                prompt,
+                generation_config={"response_mime_type": "application/json"},
+            )
+        except Exception as e:
+            es_cuota = '429' in str(e) or 'TooManyRequests' in type(e).__name__ + str(e)
+            if not es_cuota or intento == INTENTOS_MAXIMOS:
+                raise
+            print(f'[ai_ministerial] 429 de Gemini ({MODELO}), intento {intento}/{INTENTOS_MAXIMOS}; '
+                  f'reintentando en {ESPERA_CUOTA_SEGUNDOS} s')
+            time.sleep(ESPERA_CUOTA_SEGUNDOS)
+
+
 def analizar_formato_ministerio(instrucciones_usuario, encabezados_por_hoja):
     """
     encabezados_por_hoja: {'NombreDePestaña': ['encabezado1', ...], ...}
@@ -140,10 +162,7 @@ def analizar_formato_ministerio(instrucciones_usuario, encabezados_por_hoja):
     o, si algo falla, {'error_api': mensaje exacto, 'tipo_error': clase} (diagnóstico).
     """
     try:
-        respuesta = modelo.generate_content(
-            _construir_prompt(instrucciones_usuario, encabezados_por_hoja),
-            generation_config={"response_mime_type": "application/json"},
-        )
+        respuesta = _generar_con_reintentos(_construir_prompt(instrucciones_usuario, encabezados_por_hoja))
         texto = respuesta.text
         validado = validar_respuesta(json.loads(texto), encabezados_por_hoja)
         if not validado:
